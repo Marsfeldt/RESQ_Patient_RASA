@@ -24,12 +24,11 @@ This installs RASA together with all the machine learning-related dependencies n
 -----
 To run the application I would recommend getting yourself a virtual device to edit code and seeing the changes in instantaneous.
 
-```
 Link to Android Studio - https://developer.android.com/studio
 Link to Node.js - https://nodejs.org/en/download/current
 Link to Chocolatey Package Manager (Windwos) - https://chocolatey.org/
-- Once all of the above is installed you can open a cmd terminal and install the Java SE Development Kit (JDK)
-
+Once all of the above is installed you can open a cmd terminal and install the Java SE Development Kit (JDK)
+```
 choco install -y nodejs-lts microsoft-openjdk11
 ```
 
@@ -73,6 +72,17 @@ The default location location for this folder is:
 ```
 
 Now you need to setup a virtual device to develop the mobile application, which you can do by following these instructions:
+If you are running an intel processor you need "HAXM"
+```
+https://github.com/intel/haxm/wiki/Installation-Instructions-on-Windows
+```
+If you are running an AMD processor you need to enable SVM - Virtualization in your bios settings and enable these windows features
+```
+Hyper-V
+Virtual Machine Platform
+Windows Hypervisor Platform
+```
+
 ```
 https://developer.android.com/studio/run/managing-avds
 ```
