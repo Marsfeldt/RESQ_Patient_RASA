@@ -1,0 +1,47 @@
+version: '3.0'
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
+intents:
+- ask_for_help
+- SSQL_answer
+- give_number
+- change_answer_pls
+- greet
+- goodbye
+- affirm
+- deny
+- mood_great
+- mood_unhappy
+- bot_challenge
+- see_answer_overview
+- see_rasa_functions
+entities:
+- Q_answer
+- get_number
+- question_num
+responses:
+  utter_greet:
+  - text: Hej, lad os starte på spørgeskemaet!
+  utter_did_that_help:
+  - text: Hjalp det dig?
+  utter_goodbye:
+  - text: Farvel og tak for i dag!
+  utter_iamabot:
+  - text: Jeg er en chatbot som er lavet på Aalborg Universitet.
+  utter_which_question:
+  - text: Hvilket spørgsmålsnummer vil du gerne ændre svaret på?
+  utter_helpful_bot:
+  - text: Okay. Sig til, hvis du har brug for hjælp til andet.
+  utter_dont_understand:
+  - text: Undskyld. Jeg kan ikke forstå, hvad du prøver at sige. Kan du venligst omformulere dit spørgsmål? :)
+  utter_want_to_see_answers:
+  - text: Vil du gerne se dine svar?
+actions:
+- AskForNewAnswer
+- ChangeAnswer
+- GiveHelp
+- ValidationOfAnswer
+- AnswerOverview
+- ListOfFunctions
+- utter_which_question
