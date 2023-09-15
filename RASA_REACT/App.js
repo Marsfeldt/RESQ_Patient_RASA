@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef  } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
 import io from 'socket.io-client';
 import MessageItem from './components/MessageItem';
@@ -17,6 +17,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   // Reference to the list of messages to allow for automatic scrolling
   const flatListRef = useRef(null);
+  // Controls the individual socket id for the connected clients
+  const [socketId, setSocketId] = useState('');
 
   // Function to update the 'message' state when user types
   const handleTextInputChange = (text) => {
@@ -30,12 +32,14 @@ function App() {
 
     // On Socket Event 'connect' whenever we connect to a socket server
     newSocket.on('connect', () => {
-      console.log('Connected to server');
+      console.log(newSocket.id + ' Connected to server');
+      // Updates the socket id for the connected client
+      setSocketId(newSocket.id);
     });
 
     // On Socket Event 'disconnect' whenever we disconnect from a socket server
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
+      console.log(newSocket.id + ' Disconnected from server');
     });
 
     // Handle incoming messages
@@ -72,7 +76,7 @@ function App() {
   const renderMessage = ({ item }) => {
     // Check if the message is sent by the user
     const isSentByUser = item.isUser;
-  
+
     const messageTextStyle = {
       fontSize: 16,
       color: isSentByUser ? 'white' : 'black', // Set text color based on sender
@@ -89,9 +93,12 @@ function App() {
       </View>
     );
   };
-  //(text) => setMessage(text)
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Socket ID: {socketId}</Text>
+      </View>
       <FlatList
         ref={flatListRef}
         style={styles.messageList}
@@ -115,6 +122,17 @@ function App() {
 
 // Stylesheet
 const styles = StyleSheet.create({
+  header: {
+    height: 60, // Height of the header
+    backgroundColor: '#007AFF', // Background color of the header
+    justifyContent: 'center', // Center the content vertically
+    alignItems: 'center', // Center the content horizontally
+  },
+  headerText: {
+    color: '#fff', // Text color of the header
+    fontSize: 20, // Font size of the header text
+    fontWeight: 'bold', // Font weight of the header text
+  },
   container: {
     flex: 1,
     padding: 16,
