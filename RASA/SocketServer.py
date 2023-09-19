@@ -26,7 +26,7 @@ def handle_connect():
     print(f'Client connected {client_sid}')
     
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    data = ("Connected", None, timestamp)
+    data = (client_sid, "Connected", None, timestamp)
     dbf.insert_into_database(DATABASE_NAME, data)
 
 @socketio.on('disconnect')

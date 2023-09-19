@@ -1,9 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import React, {useEffect, useState, useRef} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+} from 'react-native';
 import io from 'socket.io-client';
 import MessageItem from './components/MessageItem';
-import { request } from 'http';
-
+import {request} from 'http';
+import { isErrored } from 'stream';
 
 function App() {
   // Defines use state for references to the variables
@@ -19,10 +26,13 @@ function App() {
   const flatListRef = useRef(null);
   // Controls the individual socket id for the connected clients
   const [socketId, setSocketId] = useState('');
+  // Controls whether the string typed in the input field is empty
+  const [isInputEmpty, setIsInputEmpty] = useState(true);
 
   // Function to update the 'message' state when user types
-  const handleTextInputChange = (text) => {
+  const handleTextInputChange = text => {
     setMessage(text);
+    setIsInputEmpty(text.trim() === '');
   };
 
   useEffect(() => {
@@ -43,12 +53,12 @@ function App() {
     });
 
     // Handle incoming messages
-    newSocket.on('message', (data) => {
+    newSocket.on('message', data => {
       console.log('Received message:', data);
       // Update your messages state with the received message by appending it
-      setMessages((prevMessages) => [...prevMessages, data]);
+      setMessages(prevMessages => [...prevMessages, data]);
       setIsLoading(false);
-      flatListRef.current.scrollToEnd({ animated: true });
+      flatListRef.current.scrollToEnd({animated: true});
     });
 
     setSocket(newSocket);
@@ -62,24 +72,36 @@ function App() {
   const sendMessage = () => {
     // Check if the socket is initialized before emitting the message
     if (socket) {
-      setIsLoading(true);
-      setMessages([...messages, { text: message, isUser: true }]);
       if (socket.connected) {
-        socket.emit('message', { text: message });
+        if (!isInputEmpty) {
+          setIsLoading(true);
+          setMessages([...messages, {text: message, isUser: true}]);
+          socket.emit('message', {text: message});
+          setIsLoading(false);
+          setMessage(''); // Clear text input field
+          
+        } else {
+          setMessages([
+            ...messages,
+            {text: 'You have not typed a message yet :D', isUser: false},
+          ]);
+        }
       } else {
-        setMessages([...messages, { text: "You are not connected to the server", isUser: false }]);
-        setIsLoading(false);
-      }
-      
-      // Clear the input field after sending
-      //setMessages((prevMessages) => [...prevMessages, message]);
-      setMessage('');
+        setMessages([
+          ...messages,
+          {text: 'You are not connected to the server, trying to establish connection now...', isUser: false},
+        ]);
+        setTimeout(() => {
+          socket.connect();
+          handleTextInputChange
+        }, 3000); // Try to reconnect after a delay (e.g., 3 seconds)
+      } 
     }
   };
 
   // Controls how the messages are rendered in the chat window, depending on
   // if it is the user or the chatbot who is sending the messages
-  const renderMessage = ({ item }) => {
+  const renderMessage = ({item}) => {
     // Check if the message is sent by the user
     const isSentByUser = item.isUser;
 
@@ -93,8 +115,7 @@ function App() {
         style={[
           styles.messageContainer,
           isSentByUser ? styles.sentMessage : styles.receivedMessage,
-        ]}
-      >
+        ]}>
         <Text style={messageTextStyle}>{item.text}</Text>
       </View>
     );
@@ -112,7 +133,9 @@ function App() {
         renderItem={renderMessage}
         keyExtractor={(item, index) => index.toString()}
       />
-      {isLoading && <Text style={styles.rasaTypingIndicator}>RASA is typing...</Text>}
+      {isLoading && (
+        <Text style={styles.rasaTypingIndicator}>RASA is typing...</Text>
+      )}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
@@ -163,8 +186,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   sendButton: {
-    // Add border radius to the send button
-    borderRadius: 8,
+    backgroundColor: '#007AFF', // Change this to your desired button color
+    borderRadius: 20, // Adjust the border radius to your preference
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3, // Add elevation for a subtle shadow effect (Android)
+    shadowColor: '#000', // Shadow color (iOS)
+    shadowOpacity: 0.2, // Shadow opacity (iOS)
+    shadowOffset: {width: 1, height: 2}, // Shadow offset (iOS)
   },
   messageContainer: {
     maxWidth: '70%', // Adjust the max width to your preference
@@ -201,7 +232,7 @@ const styles = StyleSheet.create({
   rasaTypingIndicator: {
     color: 'black',
     fontSize: 18,
-  }
+  },
 });
 
 export default App;
