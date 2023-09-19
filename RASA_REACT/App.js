@@ -64,7 +64,13 @@ function App() {
     if (socket) {
       setIsLoading(true);
       setMessages([...messages, { text: message, isUser: true }]);
-      socket.emit('message', { text: message });
+      if (socket.connected) {
+        socket.emit('message', { text: message });
+      } else {
+        setMessages([...messages, { text: "You are not connected to the server", isUser: false }]);
+        setIsLoading(false);
+      }
+      
       // Clear the input field after sending
       //setMessages((prevMessages) => [...prevMessages, message]);
       setMessage('');

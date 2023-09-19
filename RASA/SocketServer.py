@@ -2,12 +2,19 @@ from flask import Flask, request, json
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import requests
+import sqlite3
+from DatabaseFunctions import DatabaseFunctions
+import datetime
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 rasa_session = requests.Session()
 rasa_endpoint = 'http://localhost:5005/webhooks/rest/webhook'
+
+DATABASE_NAME = "RASA/interactionsDatabase.db"
+
+dbf = DatabaseFunctions()
 
 
 @socketio.on('connect')
@@ -17,6 +24,10 @@ def handle_connect():
     """
     client_sid = request.sid  # Get the session ID of the connected client
     print(f'Client connected {client_sid}')
+    
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data = ("Connected", None, timestamp)
+    dbf.insert_into_database(DATABASE_NAME, data)
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -25,6 +36,10 @@ def handle_disconnect():
     """
     client_sid = request.sid  # Get the session ID of the connected client
     print(f'Client disconnected {client_sid}')
+
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data = (client_sid, "Disconnected", None, timestamp)
+    dbf.insert_into_database(DATABASE_NAME, data)
  
 @socketio.on('message')
 def handle_message(data):
@@ -37,6 +52,13 @@ def handle_message(data):
         print(f'Received message from {client_sid}:', data)
         # You can broadcast the message to all connected clients if needed
         emit('message', {'text': response})
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        dataFromUser = (client_sid, "Send Message Button", str(data['text']), timestamp)
+        dbf.insert_into_database(DATABASE_NAME, dataFromUser)
+ 
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        dataFromRasa = (None, "Rasa Response", str(response), timestamp)
+        dbf.insert_into_database(DATABASE_NAME, dataFromRasa)
     except Exception as e:
         print(f'Error processing message: {str(e)}')
 

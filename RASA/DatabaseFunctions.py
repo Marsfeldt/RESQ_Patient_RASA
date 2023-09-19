@@ -7,10 +7,6 @@ class DatabaseFunctions:
     DATABASE_TABLE_NAME = ""
     OUTPUT_PATH = "../Output/"
 
-    def __init__(self, databaseName: str, databaseTable: str):
-        self.DATABASE_NAME = databaseName
-        self.DATABASE_TABLE_NAME = databaseTable
-
     def connect_database(self):
         return sqlite3.connect(self.DATABASE_NAME)
 
@@ -51,6 +47,16 @@ class DatabaseFunctions:
         else:
             raise Exception("ERROR: Can only convert the database to csv currently.")
 
+    def insert_into_database(self, databaseName, data):
+        try:
+            connection = sqlite3.connect(databaseName)
+            cursor = connection.cursor()
+            sql = "INSERT INTO interactionLogs (connectionID, interactionType, interactionOutput, timestamp) VALUES (?, ?, ?, ?)"
+            cursor.execute(sql, data)
+            connection.commit()
+            connection.close()
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
 
-dbF = DatabaseFunctions(databaseName="interactionsDatabase.db", databaseTable="interactionLogs")
-dbF.save_data_in_folder(".csv")
+#dbF = DatabaseFunctions(databaseName="interactionsDatabase.db", databaseTable="interactionLogs")
+#dbF.save_data_in_folder(".csv")
