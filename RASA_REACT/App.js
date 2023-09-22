@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,12 @@ import {
   Button,
   FlatList,
   StyleSheet,
+  TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import io from 'socket.io-client';
 import MessageItem from './components/MessageItem';
-import {request} from 'http';
+import { request } from 'http';
 import { isErrored } from 'stream';
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
   const [socket, setSocket] = useState(null);
   // Controls the loading and isLoading from the "rasa is typing..." message in the chat window
   const [isLoading, setIsLoading] = useState(false);
+  // Controls whether to show the quick use buttons for the prom quiestionnaire
+  const [isAnsweringProm, setisAnsweringProm] = useState(false);
   // Reference to the list of messages to allow for automatic scrolling
   const flatListRef = useRef(null);
   // Controls the individual socket id for the connected clients
@@ -31,8 +35,9 @@ function App() {
 
   // Function to update the 'message' state when user types
   const handleTextInputChange = text => {
-    setMessage(text);
     setIsInputEmpty(text.trim() === '');
+    console.log(isInputEmpty)
+    setMessage(text);
   };
 
   useEffect(() => {
@@ -58,7 +63,7 @@ function App() {
       // Update your messages state with the received message by appending it
       setMessages(prevMessages => [...prevMessages, data]);
       setIsLoading(false);
-      flatListRef.current.scrollToEnd({animated: true});
+      flatListRef.current.scrollToEnd({ animated: true });
     });
 
     setSocket(newSocket);
@@ -69,39 +74,49 @@ function App() {
     };
   }, []);
 
+  const testFuction = () => {
+    if (!isAnsweringProm) {
+      setisAnsweringProm(true);
+    } else {
+      setisAnsweringProm(false);
+    }
+
+  }
+
   const sendMessage = () => {
     // Check if the socket is initialized before emitting the message
     if (socket) {
       if (socket.connected) {
         if (!isInputEmpty) {
           setIsLoading(true);
-          setMessages([...messages, {text: message, isUser: true}]);
-          socket.emit('message', {text: message});
+          setMessages([...messages, { text: message, isUser: true }]);
+          flatListRef.current.scrollToEnd({ animated: true });
+          socket.emit('message', { text: message });
           setIsLoading(false);
           setMessage(''); // Clear text input field
-          
+
         } else {
           setMessages([
             ...messages,
-            {text: 'You have not typed a message yet :D', isUser: false},
+            { text: 'You have not typed a message yet :D', isUser: false },
           ]);
         }
       } else {
         setMessages([
           ...messages,
-          {text: 'You are not connected to the server, trying to establish connection now...', isUser: false},
+          { text: 'You are not connected to the server, trying to establish connection now...', isUser: false },
         ]);
         setTimeout(() => {
           socket.connect();
           handleTextInputChange
         }, 3000); // Try to reconnect after a delay (e.g., 3 seconds)
-      } 
+      }
     }
   };
 
   // Controls how the messages are rendered in the chat window, depending on
   // if it is the user or the chatbot who is sending the messages
-  const renderMessage = ({item}) => {
+  const renderMessage = ({ item }) => {
     // Check if the message is sent by the user
     const isSentByUser = item.isUser;
 
@@ -126,6 +141,50 @@ function App() {
       <View style={styles.header}>
         <Text style={styles.headerText}>Socket ID: {socketId}</Text>
       </View>
+      {isAnsweringProm && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.squareButton}
+            onPress={() => {
+              // Add functionality for Button 1
+            }}
+          >
+            <Text style={styles.buttonText}>Strongly Disagree</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.squareButton}
+            onPress={() => {
+              // Add functionality for Button 1
+            }}
+          >
+            <Text style={styles.buttonText}>Disagree</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.squareButton}
+            onPress={() => {
+              // Add functionality for Button 1
+            }}
+          >
+            <Text style={styles.buttonText}>Neutral</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.squareButton}
+            onPress={() => {
+              // Add functionality for Button 1
+            }}
+          >
+            <Text style={styles.buttonText}>Agree</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.squareButton}
+            onPress={() => {
+              // Add functionality for Button 1
+            }}
+          >
+            <Text style={styles.buttonText}>Strongly Agree</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <FlatList
         ref={flatListRef}
         style={styles.messageList}
@@ -143,7 +202,12 @@ function App() {
           value={message}
           onChangeText={handleTextInputChange}
         />
-        <Button style={styles.sendButton} title="Send" onPress={sendMessage} />
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={sendMessage}
+        >
+          <Text style={styles.buttonText}>SEND</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -151,15 +215,37 @@ function App() {
 
 // Stylesheet
 const styles = StyleSheet.create({
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  squareButton: {
+    width: 65, // Set the desired width for square buttons
+    height: 50, // Set the desired height for square buttons
+    backgroundColor: '#007AFF', // Background color for buttons
+    borderRadius: 4, // Border radius for rounded corners
+    alignItems: 'center', // Center content horizontally
+    justifyContent: 'flex-start', // Align text at the top
+  },
+  buttonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white', // Text color for button labels
+    textAlign: 'center', // Center text horizontally
+    textAlignVertical: 'center', // Align text at the top vertically
+    flex: 1, // Allow text to expand vertically
+  },
   header: {
-    height: 60, // Height of the header
+    height: 15, // Height of the header
     backgroundColor: '#007AFF', // Background color of the header
     justifyContent: 'center', // Center the content vertically
     alignItems: 'center', // Center the content horizontally
+    marginBottom: 16,
   },
   headerText: {
     color: '#fff', // Text color of the header
-    fontSize: 20, // Font size of the header text
+    fontSize: 12, // Font size of the header text
     fontWeight: 'bold', // Font weight of the header text
   },
   container: {
@@ -169,7 +255,9 @@ const styles = StyleSheet.create({
   },
   messageList: {
     flex: 1,
-    marginBottom: 16,
+    marginBottom: 8,
+    padding: 8,
+
   },
   inputRow: {
     flexDirection: 'row',
@@ -187,15 +275,15 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: '#007AFF', // Change this to your desired button color
-    borderRadius: 20, // Adjust the border radius to your preference
-    paddingVertical: 10,
+    borderRadius: 10, // Adjust the border radius to your preference
+    paddingVertical: 14,
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3, // Add elevation for a subtle shadow effect (Android)
     shadowColor: '#000', // Shadow color (iOS)
     shadowOpacity: 0.2, // Shadow opacity (iOS)
-    shadowOffset: {width: 1, height: 2}, // Shadow offset (iOS)
+    shadowOffset: { width: 1, height: 2 }, // Shadow offset (iOS)
   },
   messageContainer: {
     maxWidth: '70%', // Adjust the max width to your preference

@@ -1,0 +1,43 @@
+version: "3.1"
+
+rules:
+
+- rule: Say goodbye anytime the user says goodbye
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Say 'I am a bot' anytime the user challenges
+  steps:
+  - intent: bot_challenge
+  - action: utter_iamabot
+
+- rule: Inform user about current stage
+  steps:
+  - intent: inform_user_stage
+  - action: action_inform_stage_user
+
+- rule: Change user stage to 1
+  steps:
+  - intent: change_user_stage_to_1
+  - action: action_change_user_stage_to_1
+
+- rule: Change user stage to 2
+  steps:
+  - intent: change_user_stage_to_2
+  - action: action_change_user_stage_to_2
+
+- rule: Change user stage to 3
+  steps:
+  - intent: change_user_stage_to_3
+  - action: action_change_user_stage_to_3
+
+- rule: Change user stage to 4
+  steps:
+  - intent: change_user_stage_to_4
+  - action: action_change_user_stage_to_4
+
+- rule: Change user stage to 5
+  steps:
+  - intent: change_user_stage_to_5
+  - action: action_change_user_stage_to_5

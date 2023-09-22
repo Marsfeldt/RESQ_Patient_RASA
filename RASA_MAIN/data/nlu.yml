@@ -1,0 +1,137 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+    - moin
+    - hey there
+    - let's go
+    - hey dude
+    - goodmorning
+    - goodevening
+    - good afternoon
+
+- intent: goodbye
+  examples: |
+    - cu
+    - good by
+    - cee you later
+    - good night
+    - bye
+    - goodbye
+    - have a nice day
+    - see you around
+    - bye bye
+    - see you later
+
+- intent: affirm
+  examples: |
+    - yes
+    - y
+    - indeed
+    - of course
+    - that sounds good
+    - correct
+
+- intent: deny
+  examples: |
+    - no
+    - n
+    - never
+    - I don't think so
+    - don't like that
+    - no way
+    - not really
+
+- intent: mood_great
+  examples: |
+    - perfect
+    - great
+    - amazing
+    - feeling like a king
+    - wonderful
+    - I am feeling very good
+    - I am great
+    - I am amazing
+    - I am going to save the world
+    - super stoked
+    - extremely good
+    - so so perfect
+    - so good
+    - so perfect
+
+- intent: mood_unhappy
+  examples: |
+    - my day was horrible
+    - I am sad
+    - I don't feel very well
+    - I am disappointed
+    - super sad
+    - I'm so sad
+    - sad
+    - very sad
+    - unhappy
+    - not good
+    - not very good
+    - extremly sad
+    - so saad
+    - so sad
+
+- intent: bot_challenge
+  examples: |
+    - are you a bot?
+    - are you a human?
+    - am I talking to a bot?
+    - am I talking to a human?
+
+- intent: inform_user_stage
+  examples: |
+    - What stage am I in
+    - Can you tell me what stage I am in
+    - What is my current stage
+    - Which phase am I currently in?
+    - Tell me my current status.
+    - What's my current stage?
+    - Could you inform me about my present phase?
+    - In which stage do I find myself right now?
+    - What phase of the process am I at currently?
+    - Give me information about the stage I'm in.
+    - I'd like to know the stage I'm currently at, please.
+    - Please let me know my current phase.
+    - Inform me of my current status in the process.
+
+- intent: change_user_stage_to_1
+  examples: |
+    - Change my stage to 1
+    - Can you change my stage to 1
+    - I would like to change the stage to 1
+
+- intent: change_user_stage_to_2
+  examples: |
+    - Change my stage to 2
+    - Can you change my stage to 2
+    - I would like to change the stage to 2
+
+- intent: change_user_stage_to_3
+  examples: |
+    - Change my stage to 3
+    - Can you change my stage to 3
+    - I would like to change the stage to 3
+
+- intent: change_user_stage_to_4
+  examples: |
+    - Change my stage to 4
+    - Can you change my stage to 4
+    - I would like to change the stage to 4
+
+- intent: change_user_stage_to_5
+  examples: |
+    - Change my stage to 5
+    - Can you change my stage to 5
+    - I would like to change the stage to 5
