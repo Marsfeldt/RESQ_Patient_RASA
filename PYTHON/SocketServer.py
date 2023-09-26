@@ -3,7 +3,8 @@ from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import requests
 import sqlite3
-from PYTHON.DatabaseFunctions import DatabaseFunctions
+import sys
+from DatabaseFunctions import *
 import datetime
 
 app = Flask(__name__)

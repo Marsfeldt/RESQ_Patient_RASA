@@ -7,17 +7,13 @@ slots:
   userStage:
     type: float
     initial_value: 1
-    influence_conversation: true
+    influence_conversation: false
     mappings:
     - type: custom
 
 actions:
   - action_inform_stage_user
-  - action_change_user_stage_to_1
-  - action_change_user_stage_to_2
-  - action_change_user_stage_to_3
-  - action_change_user_stage_to_4
-  - action_change_user_stage_to_5
+  - action_transition_user_stage
 
 intents:
   - greet
@@ -27,12 +23,8 @@ intents:
   - mood_great
   - mood_unhappy
   - bot_challenge
-  - inform_user_stage
-  - change_user_stage_to_1
-  - change_user_stage_to_2
-  - change_user_stage_to_3
-  - change_user_stage_to_4
-  - change_user_stage_to_5
+  - intent_inform_user_stage
+  - intent_transition_user_stage
 
 responses:
   utter_greet:

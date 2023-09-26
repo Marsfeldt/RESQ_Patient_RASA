@@ -8,10 +8,12 @@
 # This is a simple example for a custom action which utters "Hello World!"
 
 from typing import Any, Text, Dict, List
+import sys
 #
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
+import sqlite3
 #
 #
 # class ActionHelloWorld(Action):
@@ -36,53 +38,32 @@ class ActionInformStageUser(Action):
         response_message = f"Hello, you are in stage {userStage}"
         dispatcher.utter_message(response_message)
         return [SlotSet("userStage", userStage)]
-
-class ActionSetUserStageToOne(Action):
-    def name(self):
-        return "action_change_user_stage_to_1"
-
-    def run(self, dispatcher, tracker, domain):
-        userStage = 1
-        response_message = f"Hello, you are in stage {userStage}"
-        dispatcher.utter_message(response_message)
-        return [SlotSet("userStage", userStage)]
     
-class ActionSetUserStageToTwo(Action):
-    def name(self):
-        return "action_change_user_stage_to_2"
-
-    def run(self, dispatcher, tracker, domain):
-        userStage = 2
-        response_message = f"Hello, you are in stage {userStage}"
-        dispatcher.utter_message(response_message)
-        return [SlotSet("userStage", userStage)]
+class TrainsitionUserToStage(Action):
+    def name(self) -> Text:
+        return "action_transition_user_stage"
     
-class ActionSetUserStageToThree(Action):
-    def name(self):
-        return "action_change_user_stage_to_3"
-
-    def run(self, dispatcher, tracker, domain):
-        userStage = 3
-        response_message = f"Hello, you are in stage {userStage}"
-        dispatcher.utter_message(response_message)
-        return [SlotSet("userStage", userStage)]
-    
-class ActionSetUserStageToFour(Action):
-    def name(self):
-        return "action_change_user_stage_to_4"
-
     def run(self, dispatcher, tracker, domain):
         userStage = 4
-        response_message = f"Hello, you are in stage {userStage}"
-        dispatcher.utter_message(response_message)
-        return [SlotSet("userStage", userStage)]
-    
-class ActionSetUserStageToFive(Action):
-    def name(self):
-        return "action_change_user_stage_to_5"
 
-    def run(self, dispatcher, tracker, domain):
-        userStage = 5
-        response_message = f"Hello, you are in stage {userStage}"
+        connection = sqlite3.connect("../PYTHON/DATABASE/TestDatabase.db")
+        cursor = connection.cursor()
+
+        user_id = "the_coolest_of_ids"
+        cursor.execute("SELECT PromScore FROM userData WHERE UID = ?", (user_id,))
+        result = cursor.fetchone()
+
+        if (result[0] > 20):
+            userStage = 1
+            response_message = f"Hello, you are in stage {userStage}, because value > 20"
+        elif (result[0] < 20):
+            userStage = 2
+            response_message = f"Hello, you are in stage {userStage}, because value < 20"
+        else:
+            userStage = 3
+            response_message = f"Hello, you are in stage {userStage}, because something failed"
+
+        
+
         dispatcher.utter_message(response_message)
         return [SlotSet("userStage", userStage)]

@@ -29,13 +29,6 @@ stories:
   - intent: deny
   - action: utter_goodbye
 
-- story: inform user about stage
-  steps:
-  - intent: greet
-  - action: utter_greet
-  - intent: inform_user_stage
-  - action: action_inform_stage_user
-
 # --------------------------------------
 #               User Stages
 # --------------------------------------

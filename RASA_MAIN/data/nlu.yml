@@ -90,7 +90,7 @@ nlu:
     - am I talking to a bot?
     - am I talking to a human?
 
-- intent: inform_user_stage
+- intent: intent_inform_user_stage
   examples: |
     - What stage am I in
     - Can you tell me what stage I am in
@@ -106,32 +106,10 @@ nlu:
     - Please let me know my current phase.
     - Inform me of my current status in the process.
 
-- intent: change_user_stage_to_1
+- intent: intent_transition_user_stage
   examples: |
-    - Change my stage to 1
-    - Can you change my stage to 1
-    - I would like to change the stage to 1
-
-- intent: change_user_stage_to_2
-  examples: |
-    - Change my stage to 2
-    - Can you change my stage to 2
-    - I would like to change the stage to 2
-
-- intent: change_user_stage_to_3
-  examples: |
-    - Change my stage to 3
-    - Can you change my stage to 3
-    - I would like to change the stage to 3
-
-- intent: change_user_stage_to_4
-  examples: |
-    - Change my stage to 4
-    - Can you change my stage to 4
-    - I would like to change the stage to 4
-
-- intent: change_user_stage_to_5
-  examples: |
-    - Change my stage to 5
-    - Can you change my stage to 5
-    - I would like to change the stage to 5
+    - Transition my user stage
+    - Can you change my stage
+    - I would like to change stage
+    - Can you change my user stage
+    - Modify my user stage
