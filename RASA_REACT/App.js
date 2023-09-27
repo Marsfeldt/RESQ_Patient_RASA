@@ -1,325 +1,164 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import io from 'socket.io-client';
-import MessageItem from './components/MessageItem';
-import { request } from 'http';
-import { isErrored } from 'stream';
+import { GiftedChat } from 'react-native-gifted-chat';
+import { v4 as uuidv4 } from 'uuid';
 
 function App() {
-  // Defines use state for references to the variables
-  // Controls the single messages sent to and from react to socket server
-  const [message, setMessage] = useState('');
-  // Controls the list of messages in the chat window
-  const [messages, setMessages] = useState([]);
-  // Controls an instance of the socket so that they can be referenced
-  const [socket, setSocket] = useState(null);
-  // Controls the loading and isLoading from the "rasa is typing..." message in the chat window
-  const [isLoading, setIsLoading] = useState(false);
-  // Controls whether to show the quick use buttons for the prom quiestionnaire
-  const [isAnsweringProm, setisAnsweringProm] = useState(false);
-  // Reference to the list of messages to allow for automatic scrolling
-  const flatListRef = useRef(null);
-  // Controls the individual socket id for the connected clients
-  const [socketId, setSocketId] = useState('');
-  // Controls whether the string typed in the input field is empty
-  const [isInputEmpty, setIsInputEmpty] = useState(true);
+  const [messages, setMessages] = useState([]); // State to store chat messages
+  const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
+  const [isLoading, setIsLoading] = useState(false); // State to control typing indicator
+  const [socketId, setSocketId] = useState(''); // State to store the socket ID
 
-  // Function to update the 'message' state when user types
-  const handleTextInputChange = text => {
-    setIsInputEmpty(text.trim() === '');
-    console.log(isInputEmpty)
-    setMessage(text);
+  // Function to simulate a typing delay for bot responses
+  const simulateTypingDelay = (message, delay) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(message);
+      }, delay);
+    });
   };
 
   useEffect(() => {
-    // Connect to the WebSocket server
-    // Change the URL to your Flask server's address
-    const newSocket = io('http://10.0.2.2:6969');
+    // Create a new WebSocket connection to the Rasa server
+    const newSocket = io('http://10.0.2.2:5005');
 
-    // On Socket Event 'connect' whenever we connect to a socket server
+    // Handle WebSocket connection events
     newSocket.on('connect', () => {
       console.log(newSocket.id + ' Connected to server');
-      // Updates the socket id for the connected client
       setSocketId(newSocket.id);
     });
 
-    // On Socket Event 'disconnect' whenever we disconnect from a socket server
     newSocket.on('disconnect', () => {
       console.log(newSocket.id + ' Disconnected from server');
     });
 
-    // Handle incoming messages
-    newSocket.on('message', data => {
-      console.log('Received message:', data);
-      // Update your messages state with the received message by appending it
-      setMessages(prevMessages => [...prevMessages, data]);
+    // Handle incoming messages from the bot
+    newSocket.on('bot_uttered', async (data) => {
+      const botMessage = {
+        _id: uuidv4(),
+        text: data.text,
+        createdAt: new Date(),
+        user: { _id: 'bot' },
+      };
+
+      // Simulate a typing delay (e.g., 500 milliseconds) before displaying the bot's message
+      const typingDelay = 500;
+
+      // Show a typing indicator (optional)
+      setIsLoading(true);
+
+      // Simulate the typing delay
+      const delayedBotMessage = await simulateTypingDelay(botMessage, typingDelay);
+
+      // Calculate the time it took for the bot's message to arrive
+      const botMessageReceivedTime = new Date();
+      const messageLatency = botMessageReceivedTime - botMessage.createdAt;
+      console.log('Message latency:', messageLatency, 'ms');
+
+      // Remove the typing indicator (optional)
       setIsLoading(false);
-      flatListRef.current.scrollToEnd({ animated: true });
+
+      // Append the bot's message to the chat messages
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [delayedBotMessage])
+      );
     });
 
     setSocket(newSocket);
 
+    // Clean up the WebSocket connection when the component unmounts
     return () => {
-      // Clean up the socket connection when the component unmounts
       newSocket.disconnect();
     };
   }, []);
 
-  const testFuction = () => {
-    if (!isAnsweringProm) {
-      setisAnsweringProm(true);
-    } else {
-      setisAnsweringProm(false);
-    }
+  // Function to handle sending user messages
+  const onSend = (newMessages) => {
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, newMessages)
+    );
 
-  }
+    const text = newMessages[0].text;
 
-  const sendMessage = () => {
-    // Check if the socket is initialized before emitting the message
-    if (socket) {
-      if (socket.connected) {
-        if (!isInputEmpty) {
-          setIsLoading(true);
-          setMessages([...messages, { text: message, isUser: true }]);
-          flatListRef.current.scrollToEnd({ animated: true });
-          socket.emit('message', { text: message });
+    if (socket && socket.connected) {
+      if (text.trim() !== '') {
+        setIsLoading(true);
+
+        const messageId = uuidv4();
+
+        const newMessage = {
+          _id: messageId,
+          text: text,
+          createdAt: new Date(),
+          user: {
+            _id: socket.id,
+          },
+        };
+
+        // Log the message being sent to Rasa
+        console.log('Sending message to Rasa:', newMessage);
+
+        // Record the time before sending the message
+        const messageSentTime = new Date();
+
+        // Emit the user's message to Rasa
+        // Emit the user's message to Rasa
+        socket.emit('user_uttered', { session_id: socket.id, message: text }, () => {
+          // Calculate the time it took for the message to be acknowledged
+          const acknowledgmentTime = new Date() - messageSentTime;
+          console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
+
+          // Continue with the rest of the code
           setIsLoading(false);
-          setMessage(''); // Clear text input field
-
-        } else {
-          setMessages([
-            ...messages,
-            { text: 'You have not typed a message yet :D', isUser: false },
-          ]);
-        }
+        });
       } else {
-        setMessages([
-          ...messages,
-          { text: 'You are not connected to the server, trying to establish connection now...', isUser: false },
-        ]);
-        setTimeout(() => {
-          socket.connect();
-          handleTextInputChange
-        }, 3000); // Try to reconnect after a delay (e.g., 3 seconds)
+        // Handle empty message case here
       }
+    } else {
+      // Handle not connected to the server here
     }
   };
 
-  // Controls how the messages are rendered in the chat window, depending on
-  // if it is the user or the chatbot who is sending the messages
-  const renderMessage = ({ item }) => {
-    // Check if the message is sent by the user
-    const isSentByUser = item.isUser;
-
-    const messageTextStyle = {
-      fontSize: 16,
-      color: isSentByUser ? 'white' : 'black', // Set text color based on sender
-    };
+  // Function to render the bot's avatar
+  const renderAvatar = () => {
+    // Path to the bot's avatar image in your project folder
+    const botAvatarPath =
+      Platform.OS === 'android'
+        ? require('./assets/bot.png') // Android
+        : require('./assets/bot.png'); // iOS
 
     return (
-      <View
-        style={[
-          styles.messageContainer,
-          isSentByUser ? styles.sentMessage : styles.receivedMessage,
-        ]}>
-        <Text style={messageTextStyle}>{item.text}</Text>
-      </View>
+      <Image
+        source={botAvatarPath}
+        style={{ width: 40, height: 40, borderRadius: 20 }}
+      />
     );
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Socket ID: {socketId}</Text>
-      </View>
-      {isAnsweringProm && (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.squareButton}
-            onPress={() => {
-              // Add functionality for Button 1
-            }}
-          >
-            <Text style={styles.buttonText}>Strongly Disagree</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.squareButton}
-            onPress={() => {
-              // Add functionality for Button 1
-            }}
-          >
-            <Text style={styles.buttonText}>Disagree</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.squareButton}
-            onPress={() => {
-              // Add functionality for Button 1
-            }}
-          >
-            <Text style={styles.buttonText}>Neutral</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.squareButton}
-            onPress={() => {
-              // Add functionality for Button 1
-            }}
-          >
-            <Text style={styles.buttonText}>Agree</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.squareButton}
-            onPress={() => {
-              // Add functionality for Button 1
-            }}
-          >
-            <Text style={styles.buttonText}>Strongly Agree</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      <FlatList
-        ref={flatListRef}
-        style={styles.messageList}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item, index) => index.toString()}
+      <GiftedChat
+        messages={messages}
+        onSend={onSend}
+        user={{ _id: socketId }}
+        isTyping={isLoading}
+        renderAvatar={renderAvatar}
       />
-      {isLoading && (
-        <Text style={styles.rasaTypingIndicator}>RASA is typing...</Text>
-      )}
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          value={message}
-          onChangeText={handleTextInputChange}
-        />
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={sendMessage}
-        >
-          <Text style={styles.buttonText}>SEND</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
-// Stylesheet
 const styles = StyleSheet.create({
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  squareButton: {
-    width: 65, // Set the desired width for square buttons
-    height: 50, // Set the desired height for square buttons
-    backgroundColor: '#007AFF', // Background color for buttons
-    borderRadius: 4, // Border radius for rounded corners
-    alignItems: 'center', // Center content horizontally
-    justifyContent: 'flex-start', // Align text at the top
-  },
-  buttonText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: 'white', // Text color for button labels
-    textAlign: 'center', // Center text horizontally
-    textAlignVertical: 'center', // Align text at the top vertically
-    flex: 1, // Allow text to expand vertically
-  },
-  header: {
-    height: 15, // Height of the header
-    backgroundColor: '#007AFF', // Background color of the header
-    justifyContent: 'center', // Center the content vertically
-    alignItems: 'center', // Center the content horizontally
-    marginBottom: 16,
-  },
-  headerText: {
-    color: '#fff', // Text color of the header
-    fontSize: 12, // Font size of the header text
-    fontWeight: 'bold', // Font weight of the header text
-  },
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#f0f0f0',
-  },
-  messageList: {
-    flex: 1,
-    marginBottom: 8,
-    padding: 8,
-
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    marginRight: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: 'white',
-  },
-  sendButton: {
-    backgroundColor: '#007AFF', // Change this to your desired button color
-    borderRadius: 10, // Adjust the border radius to your preference
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3, // Add elevation for a subtle shadow effect (Android)
-    shadowColor: '#000', // Shadow color (iOS)
-    shadowOpacity: 0.2, // Shadow opacity (iOS)
-    shadowOffset: { width: 1, height: 2 }, // Shadow offset (iOS)
-  },
-  messageContainer: {
-    maxWidth: '70%', // Adjust the max width to your preference
-    borderRadius: 8,
-    marginVertical: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  receivedMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#e0e0e0', // Background color for received messages
-  },
-  sentMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#007AFF', // Background color for sent messages
-    color: 'white', // Text color for sent messages
-  },
-  messageText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  sentMessageText: {
-    color: 'white', // Text color for user messages
-    fontSize: 16,
-  },
-  receivedMessageText: {
-    color: 'black', // Text color for bot's messages
-    fontSize: 16,
-  },
-  loadingIndicator: {
-    alignSelf: 'center',
-    marginVertical: 8,
   },
   rasaTypingIndicator: {
     color: 'black',
     fontSize: 18,
+    alignSelf: 'center',
+    marginVertical: 8,
   },
 });
 

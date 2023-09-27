@@ -1,84 +1,33 @@
-from flask import Flask, request, json
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
-import requests
-import sqlite3
-import sys
-from DatabaseFunctions import *
-import datetime
+import socketio
+import uuid
 
-app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+sio = socketio.Client()
 
-rasa_session = requests.Session()
-rasa_endpoint = 'http://localhost:5005/webhooks/rest/webhook'
+# Event handler for successful connection
+@sio.event
+def connect():
+    print("Connected to Rasa socket server")
 
-DATABASE_NAME = "../RASA/interactionsDatabase.db"
+@sio.event
+def disconnect():
+    print("Disconnected from Rasa socket server")
 
-dbf = DatabaseFunctions()
+# Event handler for receiving bot messages
+@sio.on("bot_uttered")
+def handle_bot_message(data):
+    print(f"\n Bot Response: {data['text']}")
 
+# Connect to the Rasa socket server
+sio.connect("http://localhost:5005")
 
-@socketio.on('connect')
-def handle_connect():
-    """
-    Function to handle the individual socket connection from a client
-    """
-    client_sid = request.sid  # Get the session ID of the connected client
-    print(f'Client connected {client_sid}')
-    
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    data = (client_sid, "Connected", None, timestamp)
-    dbf.insert_into_database(DATABASE_NAME, data)
+# Function to establish a session and get a session ID
+def establish_session():
+    # Generate a unique session ID (e.g., using UUID)
+    session_id = str(uuid.uuid4())
+    # Send a session request to the Rasa server
+    sio.emit("session_request", {"session_id": session_id})
+    print(f"User Connection was Established with the following session id: {session_id}")
+    return session_id
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    """
-    Function to handle the individual socket disconnection from a client
-    """
-    client_sid = request.sid  # Get the session ID of the connected client
-    print(f'Client disconnected {client_sid}')
-
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    data = (client_sid, "Disconnected", None, timestamp)
-    dbf.insert_into_database(DATABASE_NAME, data)
-
-@socketio.on('message')
-def handle_message(data):
-    """
-    Function to handle the messages from the react front-end mobile application
-    """
-    try:
-        response = send_to_rasa(data['text'])
-        client_sid = request.sid  # Get the session ID of the connected client
-        print(f'Received message from {client_sid}:', data)
-        # You can broadcast the message to all connected clients if needed
-        emit('message', {'text': response})
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        dataFromUser = (client_sid, "Send Message Button", str(data['text']), timestamp)
-        dbf.insert_into_database(DATABASE_NAME, dataFromUser)
- 
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        dataFromRasa = (None, "Rasa Response", str(response), timestamp)
-        dbf.insert_into_database(DATABASE_NAME, dataFromRasa)
-    except Exception as e:
-        print(f'Error processing message: {str(e)}')
-
-def send_to_rasa(message):
-    """
-    Function to handle communciation between the socket server and the RASA server
-    So that we can send and revieve messages to and from RASA
-    """
-    payload = {'message': message}
-
-    # Send the request using the session with connection pooling
-    with rasa_session.post(rasa_endpoint, json=payload) as response:
-        response_data = response.json()
-
-    # Extract and return the chatbot's response
-    if response_data:
-        return response_data[0]['text']
-    else:
-        return 'No response from chatbot'
-
-if __name__ == '__main__':
-    socketio.run(app, port=6969, debug=True)
+# Establish a session
+session_id = establish_session()
