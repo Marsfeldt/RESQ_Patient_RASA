@@ -1,33 +1,30 @@
-import socketio
-import uuid
+from flask import Flask, request, jsonify
+from flask_socketio import SocketIO
 
-sio = socketio.Client()
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Event handler for successful connection
-@sio.event
-def connect():
-    print("Connected to Rasa socket server")
+@app.route('/')
+def hello():
+    return 'Hello, World!'
 
-@sio.event
-def disconnect():
-    print("Disconnected from Rasa socket server")
+@socketio.on('user_uttered')
+def handle_user_message(message):
+    # Handle the user's message (e.g., log it, send it to Rasa)
+    # You can also store the message in the database here
+    print('Received user message:', message)
+    
+    # Send the message to Rasa (assuming Rasa is also connected through Socket.IO)
+    socketio.emit('user_uttered', message, namespace='/rasa')
 
-# Event handler for receiving bot messages
-@sio.on("bot_uttered")
-def handle_bot_message(data):
-    print(f"\n Bot Response: {data['text']}")
+@socketio.on('bot_uttered')
+def handle_bot_response(response):
+    # Handle the bot's response (e.g., log it, send it to the React Native app)
+    # You can also store the bot's response in the database here
+    print('Received bot response:', response)
+    
+    # Send the response to the React Native app
+    socketio.emit('bot_uttered', response)
 
-# Connect to the Rasa socket server
-sio.connect("http://localhost:5005")
-
-# Function to establish a session and get a session ID
-def establish_session():
-    # Generate a unique session ID (e.g., using UUID)
-    session_id = str(uuid.uuid4())
-    # Send a session request to the Rasa server
-    sio.emit("session_request", {"session_id": session_id})
-    print(f"User Connection was Established with the following session id: {session_id}")
-    return session_id
-
-# Establish a session
-session_id = establish_session()
+if __name__ == '__main__':
+    socketio.run(app, debug=True)

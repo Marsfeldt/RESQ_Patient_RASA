@@ -21,7 +21,7 @@ function App() {
 
   useEffect(() => {
     // Create a new WebSocket connection to the Rasa server
-    const newSocket = io('http://10.0.2.2:5005');
+    const newSocket = io('http://192.168.0.47:5005');
 
     // Handle WebSocket connection events
     newSocket.on('connect', () => {
@@ -42,11 +42,11 @@ function App() {
         user: { _id: 'bot' },
       };
 
-      // Simulate a typing delay (e.g., 500 milliseconds) before displaying the bot's message
-      const typingDelay = 500;
-
       // Show a typing indicator (optional)
       setIsLoading(true);
+
+      // Simulate a typing delay (e.g., 500 milliseconds) before displaying the bot's message
+      const typingDelay = 500;
 
       // Simulate the typing delay
       const delayedBotMessage = await simulateTypingDelay(botMessage, typingDelay);
@@ -56,13 +56,14 @@ function App() {
       const messageLatency = botMessageReceivedTime - botMessage.createdAt;
       console.log('Message latency:', messageLatency, 'ms');
 
-      // Remove the typing indicator (optional)
-      setIsLoading(false);
-
       // Append the bot's message to the chat messages
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, [delayedBotMessage])
       );
+
+      // Remove the typing indicator (optional)
+      setIsLoading(false);
+      
     });
 
     setSocket(newSocket);
