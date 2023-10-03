@@ -1,5 +1,9 @@
 version: "3.1"
 
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
+
 entities:
   - userStage
 
@@ -14,6 +18,7 @@ slots:
 actions:
   - action_inform_stage_user
   - action_transition_user_stage
+  - action_advise_help_based_on_stage
 
 intents:
   - greet
@@ -23,6 +28,8 @@ intents:
   - mood_great
   - mood_unhappy
   - bot_challenge
+  - request_help
+  - grateful
   - intent_inform_user_stage
   - intent_transition_user_stage
 
@@ -49,6 +56,5 @@ responses:
   utter_behavioural_stage:
   - text: "Your stage is {userStage}"
 
-session_config:
-  session_expiration_time: 60
-  carry_over_slots_to_new_session: true
+  utter_appreciation:
+  - text: "Det var så lidt, spørg endelig hvis du har flere spørgsmål"

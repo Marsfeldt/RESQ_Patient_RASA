@@ -90,6 +90,26 @@ nlu:
     - am I talking to a bot?
     - am I talking to a human?
 
+- intent: request_help
+  examples: |
+    - Hvad kan du hjælpe mig med i dag?
+    - Kan du hjælpe mig med noget?
+    - Hvordan kan du assistere mig i dag?
+    - Brug for hjælp med noget?
+    - Hvordan kan du være til hjælp i dag?
+    - Jeg har brug for assistance.
+
+- intent: grateful
+  examples: |
+    - Tak
+    - Mange tak
+    - Tusind tak
+    - Tak skal du have
+    - Jeg sætter pris på det
+    - Det var meget hjælpsomt
+    - Jeg er taknemmelig
+    - Du har været en stor hjælp
+
 - intent: intent_inform_user_stage
   examples: |
     - What stage am I in

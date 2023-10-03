@@ -67,3 +67,28 @@ class TrainsitionUserToStage(Action):
 
         dispatcher.utter_message(response_message)
         return [SlotSet("userStage", userStage)]
+    
+class AdviseHelpBasedOnStage(Action):
+    def name(self) -> Text:
+        return "action_advise_help_based_on_stage"
+    
+    def run(self, dispatcher, tracker, domain):
+        userStage = tracker.get_slot("userStage")
+        
+        if userStage == 1:
+            response_message = f"Stage 1: Eksempel for hjælp til folk i stadie 1"
+        elif userStage == 2:
+            response_message = f"Stage 2: Eksempel for hjælp til folk i stadie 2"
+        elif userStage == 3:
+            response_message = f"Stage 3: Eksempel for hjælp til folk i stadie 3"
+        elif userStage == 4:
+            response_message = f"Stage 4: Eksempel for hjælp til folk i stadie 4"
+        elif userStage == 5:
+            response_message = f"Stage 5: Eksempel for hjælp til folk i stadie 5"
+        elif userStage == 6:
+            response_message = f"Stage 6: Eksempel for hjælp til folk i stadie 6"
+        elif userStage == 7:
+            response_message = f"Stage 7: Eksempel for hjælp til folk i stadie 7"
+
+        dispatcher.utter_message(response_message)
+        return [SlotSet("userStage", userStage)]

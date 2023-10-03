@@ -29,6 +29,15 @@ stories:
   - intent: deny
   - action: utter_goodbye
 
+- story: Test story multiple conditions
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: request_help
+  - action: action_advise_help_based_on_stage
+  - intent: grateful
+  - action: utter_appreciation
+
 # --------------------------------------
 #               User Stages
 # --------------------------------------
