@@ -10,6 +10,14 @@ function App() {
   const [isLoading, setIsLoading] = useState(false); // State to control typing indicator
   const [socketId, setSocketId] = useState(''); // State to store the socket ID
 
+  const generateUUID = () => {
+    // Generate a random part of the UUID
+    const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+
+    // Return a formatted UUID
+    return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+  };
+
   // Function to simulate a typing delay for bot responses
   const simulateTypingDelay = (message, delay) => {
     return new Promise((resolve) => {
@@ -19,9 +27,15 @@ function App() {
     });
   };
 
+  const sendDataThroughDataSocket = (socket, message) => {
+    // Emit the data using the existing socket connection
+    const dataSocket = io('http://172.24.223.90:5006');
+    dataSocket.emit('message_from_client', { uuid: socket.id, message: message });
+  };
+
   useEffect(() => {
     // Create a new WebSocket connection to the Rasa server
-    const newSocket = io('http://192.168.0.47:5005');
+    const newSocket = io('http://172.24.223.90:5005');
 
     // Handle WebSocket connection events
     newSocket.on('connect', () => {
@@ -36,7 +50,7 @@ function App() {
     // Handle incoming messages from the bot
     newSocket.on('bot_uttered', async (data) => {
       const botMessage = {
-        _id: uuidv4(),
+        _id: generateUUID(),
         text: data.text,
         createdAt: new Date(),
         user: { _id: 'bot' },
@@ -63,7 +77,7 @@ function App() {
 
       // Remove the typing indicator (optional)
       setIsLoading(false);
-      
+
     });
 
     setSocket(newSocket);
@@ -86,7 +100,7 @@ function App() {
       if (text.trim() !== '') {
         setIsLoading(true);
 
-        const messageId = uuidv4();
+        const messageId = generateUUID();
 
         const newMessage = {
           _id: messageId,
@@ -112,6 +126,9 @@ function App() {
 
           // Continue with the rest of the code
           setIsLoading(false);
+
+          sendDataThroughDataSocket(socket, text)
+
         });
       } else {
         // Handle empty message case here
