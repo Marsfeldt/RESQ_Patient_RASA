@@ -4,6 +4,11 @@ import io from 'socket.io-client';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { v4 as uuidv4 } from 'uuid';
 
+// The different screen from the mobile application
+import SignInScreen from './src/screens/SignInScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
+
+
 function App() {
   const [messages, setMessages] = useState([]); // State to store chat messages
   const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
@@ -156,21 +161,29 @@ function App() {
 
   return (
     <View style={styles.container}>
-      <GiftedChat
-        messages={messages}
-        onSend={onSend}
-        user={{ _id: socketId }}
-        isTyping={isLoading}
-        renderAvatar={renderAvatar}
-      />
+      <SignUpScreen />
     </View>
   );
 }
 
+/*
+<GiftedChat
+  messages={messages}
+  onSend={onSend}
+  user={{ _id: socketId }}
+  isTyping={isLoading}
+  renderAvatar={renderAvatar}
+/>
+
+<SignInScreen />
+*/
+
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F9FBFC',
   },
   rasaTypingIndicator: {
     color: 'black',
