@@ -3,23 +3,26 @@ import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
+import { useNavigation } from '@react-navigation/native';
 
 const SignInScreen = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
     const { height } = useWindowDimensions();
+    const navigation = useNavigation();
 
     const onSignInPressed = () => {
         console.warn("Sign In")
+        navigation.navigate('ChatWindow')
     }
 
     const onFrogotPasswordPressed = () => {
-        console.warn("Forgot Password")
+        navigation.navigate('ForgotPassword');
     }
 
     const onSignUpPressed = () => {
-        console.warn("On SignUp")
+        navigation.navigate('SignUp');
     }
 
     return (

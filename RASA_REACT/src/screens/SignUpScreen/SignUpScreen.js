@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
+import { useNavigation } from '@react-navigation/native';
 
 const SignUpScreen = () => {
     const [username, setUsername] = useState('');
@@ -12,12 +13,15 @@ const SignUpScreen = () => {
 
     const { height } = useWindowDimensions();
 
+    const navigation = useNavigation();
+
     const onSignInPressed = () => {
-        console.warn("Sign In")
+        navigation.navigate('SignIn');
     }
 
     const onForgotPasswordPressed = () => {
         console.warn("Forgot Password")
+        navigation.navigate('ForgotPassword');
     }
 
     const onSignUpPressed = () => {
@@ -45,7 +49,7 @@ const SignUpScreen = () => {
             <CustomInput placeholder='Repeat Password' value={passwordRepeat} setValue={setPasswordRepeat} secureTextEntry={true} />
             <CustomButton text='Register' onPress={onRegisterPressed} />
             <Text style={styles.text}>Ved at oprette en konto, accepterer du vores <Text style={styles.link} onPress={onTermsOfUsePressed}>Terms of Use</Text> og vores <Text style={styles.link} onPress={onPrivacyPolicyPressed}>Privacy Policy</Text></Text>
-            <CustomButton text='Har du allerede en konto, log ind her' onPress={onSignUpPressed} type="TERTIARY" />
+            <CustomButton text='Har du allerede en konto, log ind her' onPress={onSignInPressed} type="TERTIARY" />
         </View>
     );
 };

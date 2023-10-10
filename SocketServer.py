@@ -33,4 +33,4 @@ def handle_message(data):
     db.insert_data('userData', dataToSend)
 
 if __name__ == '__main__':
-    socketio.run(app, host='172.24.223.90', port=5006, debug=True)  # You can change the port as needed
+    socketio.run(app, host='172.24.222.4', port=5006, debug=True)  # You can change the port as needed
