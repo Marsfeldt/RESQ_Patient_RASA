@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
 import { useNavigation } from '@react-navigation/native';
+import io from 'socket.io-client';
+import bcrypt from 'bcryptjs';
 
 const SignInScreen = () => {
     const [username, setUsername] = useState('');
@@ -12,9 +14,55 @@ const SignInScreen = () => {
     const { height } = useWindowDimensions();
     const navigation = useNavigation();
 
+    const [socket, setSocket] = useState(null);
+
+    useEffect(() => {
+        // Create a socket connection when the component mounts
+        const socket = io('http://172.24.222.4:5006');
+        setSocket(socket);
+
+        return () => {
+            // Close the socket when the component unmounts
+            socket.disconnect();
+        };
+    }, []);
+
+    useEffect(() => {
+        // Set up the event listener for 'user_password' here
+        if (socket) {
+            socket.on('user_password', (receivedHash) => {
+                if (receivedHash === "User not found") {
+                    console.warn("User not found.");
+                } else {
+                    bcrypt.compare(password, receivedHash, (compareErr, result) => {
+                        if (compareErr) {
+                            console.error('Error comparing passwords:', compareErr);
+                        } else if (result) {
+                            console.warn("Login Successful!");
+                            navigation.navigate('ChatWindow');
+                        } else {
+                            console.warn("Invalid Password");
+                        }
+                    });
+                }
+            });
+        }
+
+        return () => {
+            // Remove the event listener when the component unmounts
+            if (socket) {
+                socket.off('user_password');
+            }
+        };
+    }, [socket, password, navigation]);
+
     const onSignInPressed = () => {
-        console.warn("Sign In")
-        navigation.navigate('ChatWindow')
+        // Request user password from the server
+        if (socket) {
+            socket.emit('login', username);
+        } else {
+            console.error('Socket is not available.');
+        }
     }
 
     const onFrogotPasswordPressed = () => {
@@ -29,7 +77,7 @@ const SignInScreen = () => {
         <View style={styles.root}>
             <Image source={Logo} style={[styles.logo, { height: height * 0.3 }]} resizeMode="contain" />
             <CustomInput placeholder='Brugernavn' value={username} setValue={setUsername} />
-            <CustomInput placeholder='Password' value={password} setValue={setPassword} secureTextEntry={true} />
+            <CustomInput placeholder='Kodeord' value={password} setValue={setPassword} secureTextEntry={true} />
             <CustomButton text='Log Ind' onPress={onSignInPressed} />
             <CustomButton text='Glemt kodeord?' onPress={onFrogotPasswordPressed} type="TERTIARY" />
             <CustomButton text='Har du ikke en konto, Opret en' onPress={onSignUpPressed} type="TERTIARY" />

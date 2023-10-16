@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import io from 'socket.io-client';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { v4 as uuidv4 } from 'uuid';
+import TopNavigationBar from '../../../components/TopNavigationBar';
+import { useNavigation } from '@react-navigation/native';
 
 const ChatWindowScreen = () => {
   const [messages, setMessages] = useState([]); // State to store chat messages
@@ -88,6 +90,11 @@ const ChatWindowScreen = () => {
     };
   }, []);
 
+  // Function to manually append a message to the chat
+  const appendMessageToChat = (newMessage) => {
+    setMessages((previousMessages) => GiftedChat.append(previousMessages, newMessage));
+  }
+
   // Function to handle sending user messages
   const onSend = (newMessages) => {
     setMessages((previousMessages) =>
@@ -131,67 +138,87 @@ const ChatWindowScreen = () => {
 
         });
       } else {
-        // Handle empty message case here
+        // Example of how to use the appendMessageToChat function
+        const newMessage = {
+          _id: 'unique-id-for-the-message',
+          text: 'Din besked er tom',
+          createdAt: new Date(),
+          user: { _id: 'user-id' },
+        };
+
+        appendMessageToChat(newMessage);
       }
     } else {
-      // Handle not connected to the server here
+      // Example of how to use the appendMessageToChat function
+      const newMessage = {
+        _id: 'unique-id-for-the-message',
+        text: 'Du er ikke tilsluttet til serveren',
+        createdAt: new Date(),
+        user: { _id: 'user-id' },
+      };
+
+      appendMessageToChat(newMessage);
     }
   };
 
-  // Function to render the bot's avatar
-  const renderAvatar = () => {
-    // Path to the bot's avatar image in your project folder
-    const botAvatarPath =
-      Platform.OS === 'android'
-        ? require('../../../assets/bot.png') // Android
-        : require('../../../assets/bot.png'); // iOS
+  // Function to render the avatar based on the user or bot
+  const renderAvatar = (props) => {
+    const { currentMessage } = props;
 
-    return (
-      <Image
-        source={botAvatarPath}
-        style={{ width: 40, height: 40, borderRadius: 20 }}
-      />
-    );
+    if (currentMessage.user._id === 'bot') {
+      // Path to the bot's avatar image
+      const botAvatarPath =
+        Platform.OS === 'android'
+          ? require('../../../assets/bot.png') // Android
+          : require('../../../assets/bot.png'); // iOS
+
+      return (
+        <Image
+          source={botAvatarPath}
+          style={{ width: 40, height: 40, borderRadius: 20 }}
+        />
+      );
+    };
   };
+    return (
+      <View style={styles.container}>
+        <TopNavigationBar />
+        <GiftedChat
+          messages={messages}
+          onSend={onSend}
+          user={{ _id: socketId }}
+          isTyping={isLoading}
+          renderAvatar={renderAvatar}
+        />
+      </View>
+    );
+  }
 
-  return (
-    <View style={styles.container}>
-      <GiftedChat
-        messages={messages}
-        onSend={onSend}
-        user={{ _id: socketId }}
-        isTyping={isLoading}
-        renderAvatar={renderAvatar}
-      />
-    </View>
-  );
-}
-
-/*
-<GiftedChat
-  messages={messages}
-  onSend={onSend}
-  user={{ _id: socketId }}
-  isTyping={isLoading}
-  renderAvatar={renderAvatar}
-/>
-
-<SignInScreen />
-*/
+  /*
+  <GiftedChat
+    messages={messages}
+    onSend={onSend}
+    user={{ _id: socketId }}
+    isTyping={isLoading}
+    renderAvatar={renderAvatar}
+  />
+  
+  <SignInScreen />
+  */
 
 
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FBFC',
-  },
-  rasaTypingIndicator: {
-    color: 'black',
-    fontSize: 18,
-    alignSelf: 'center',
-    marginVertical: 8,
-  },
-});
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#F9FBFC',
+    },
+    rasaTypingIndicator: {
+      color: 'black',
+      fontSize: 18,
+      alignSelf: 'center',
+      marginVertical: 8,
+    },
+  });
 
-export default ChatWindowScreen;
+  export default ChatWindowScreen;
