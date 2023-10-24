@@ -4,9 +4,12 @@ import io from 'socket.io-client';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { v4 as uuidv4 } from 'uuid';
 import TopNavigationBar from '../../../components/TopNavigationBar';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute  } from '@react-navigation/native';
 
 const ChatWindowScreen = () => {
+  const route = useRoute();
+  const { username } = route.params;
+  const [userUUID, setUserUUID] = useState('');
   const [messages, setMessages] = useState([]); // State to store chat messages
   const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
   const [isLoading, setIsLoading] = useState(false); // State to control typing indicator
@@ -29,24 +32,33 @@ const ChatWindowScreen = () => {
     });
   };
 
-  const sendDataThroughDataSocket = (socket, message) => {
+  const sendDataThroughDataSocket = (message, messageId, isSystemMessage, messageType) => {
     // Emit the data using the existing socket connection
     const dataSocket = io('http://172.24.222.4:5006');
-    dataSocket.emit('message_from_client', { uuid: socket.id, message: message });
+    dataSocket.emit('message_from_client', { uuid: userUUID, username: username, message: message, messageId: messageId, isSystemMessage: isSystemMessage, messageType: messageType });
   };
 
   useEffect(() => {
     // Create a new WebSocket connection to the Rasa server
     const newSocket = io('http://172.24.222.4:5005');
-
+    const superSocket = io('http://172.24.222.4:5006');
+    
     // Handle WebSocket connection events
     newSocket.on('connect', () => {
       console.log(newSocket.id + ' Connected to server');
+      superSocket.emit('fetch_user_information', username);
       setSocketId(newSocket.id);
     });
 
     newSocket.on('disconnect', () => {
       console.log(newSocket.id + ' Disconnected from server');
+    });
+
+    superSocket.on('user_information_fetched', (data) => {
+      const { fetchedUsername, fetchedUUID } = data;
+      setUserUUID(fetchedUUID);
+      console.log('USER UUID: ' + fetchedUUID)
+      // Use fetchedUsername and fetchedUUID in your React component
     });
 
     // Handle incoming messages from the bot
@@ -125,7 +137,6 @@ const ChatWindowScreen = () => {
         const messageSentTime = new Date();
 
         // Emit the user's message to Rasa
-        // Emit the user's message to Rasa
         socket.emit('user_uttered', { session_id: socket.id, message: text }, () => {
           // Calculate the time it took for the message to be acknowledged
           const acknowledgmentTime = new Date() - messageSentTime;
@@ -134,7 +145,7 @@ const ChatWindowScreen = () => {
           // Continue with the rest of the code
           setIsLoading(false);
 
-          sendDataThroughDataSocket(socket, text)
+          sendDataThroughDataSocket(text, messageId, "False", "Question")
 
         });
       } else {
@@ -143,7 +154,7 @@ const ChatWindowScreen = () => {
           _id: 'unique-id-for-the-message',
           text: 'Din besked er tom',
           createdAt: new Date(),
-          user: { _id: 'user-id' },
+          user: { _id: 'bot' },
         };
 
         appendMessageToChat(newMessage);
@@ -154,7 +165,7 @@ const ChatWindowScreen = () => {
         _id: 'unique-id-for-the-message',
         text: 'Du er ikke tilsluttet til serveren',
         createdAt: new Date(),
-        user: { _id: 'user-id' },
+        user: { _id: 'bot' },
       };
 
       appendMessageToChat(newMessage);
@@ -182,7 +193,7 @@ const ChatWindowScreen = () => {
   };
     return (
       <View style={styles.container}>
-        <TopNavigationBar />
+        <TopNavigationBar username={username} />
         <GiftedChat
           messages={messages}
           onSend={onSend}

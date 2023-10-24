@@ -39,7 +39,7 @@ const SignInScreen = () => {
                             console.error('Error comparing passwords:', compareErr);
                         } else if (result) {
                             console.warn("Login Successful!");
-                            navigation.navigate('ChatWindow');
+                            navigation.navigate('ChatWindow', { username });
                         } else {
                             console.warn("Invalid Password");
                         }

@@ -43,6 +43,17 @@ class DatabaseHandler:
                 return result[0]  # Assuming the password is in the first column of the user_table
             else:
                 return None
+            
+    def fetch_informatiom_from_user(self, tableName, username):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(f'SELECT username, uuid FROM {tableName} where username = ?', (username,))
+            result = cursor.fetchall()
+            for row in result:
+                fetchedUsername = row[0]
+                fetchedUUID = row[1]
+            return fetchedUsername, fetchedUUID
+
 
 
 

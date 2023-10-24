@@ -10,15 +10,11 @@ import { useNavigation } from '@react-navigation/native';
 const SignUpScreen = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
-
+    const [dateOfBirth, setDateOfBirth] = useState('');
     // Password Related
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
-
-    const [dateOfBirth, setDateOfBirth] = useState('');
-
     const { height } = useWindowDimensions();
-
     const navigation = useNavigation();
     const [superServerSocket, setSuperServerSocket] = useState(null); // Initialize socket as null
 

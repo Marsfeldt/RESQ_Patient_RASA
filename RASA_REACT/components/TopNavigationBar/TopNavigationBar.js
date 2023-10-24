@@ -3,16 +3,16 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const TopNavigationBar = () => {
+const TopNavigationBar = ({ username }) => {
 
     const navigation = useNavigation();
 
     const onChatNavigate = () => {
-        navigation.navigate('ChatWindow');
+        navigation.navigate('ChatWindow', { username });
     }
 
     const onProfileNavigate = () => {
-        navigation.navigate('Profile');
+        navigation.navigate('Profile', { username });
     }
 
     return (
@@ -20,7 +20,7 @@ const TopNavigationBar = () => {
             <TouchableOpacity onPress={onChatNavigate} style={styles.button}>
                 <Text style={styles.buttonText}>Chat</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Username</Text>
+            <Text style={styles.title}>{username}</Text>
             <TouchableOpacity onPress={onProfileNavigate} style={styles.button}>
                 <Text style={styles.buttonText}>Profil</Text>
             </TouchableOpacity>
