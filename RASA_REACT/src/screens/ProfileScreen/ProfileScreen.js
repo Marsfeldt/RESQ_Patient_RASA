@@ -5,6 +5,7 @@ import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
 import { useNavigation, useRoute } from '@react-navigation/native';
 import TopNavigationBar from "../../../components/TopNavigationBar";
+import LogOutScreen from "../LogOutScreen";
 
 const ProfileScreen = () => {
 
@@ -15,6 +16,7 @@ const ProfileScreen = () => {
         <View>
             <TopNavigationBar username={username} />
             <Text style={styles.title}>Template</Text>
+            <LogOutScreen />
         </View>
     );
 };

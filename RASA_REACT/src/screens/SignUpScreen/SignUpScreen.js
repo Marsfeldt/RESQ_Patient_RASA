@@ -20,7 +20,7 @@ const SignUpScreen = () => {
 
     useEffect(() => {
         // Create a socket connection to your super server when the component mounts
-        const socket = io('http://172.24.222.4:5006');
+        const socket = io('http://172.31.156.13:5006');
         setSuperServerSocket(socket); // Store the socket in state
         return () => {
             // Close the socket when the component unmounts

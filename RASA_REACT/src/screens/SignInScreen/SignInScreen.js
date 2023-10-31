@@ -3,8 +3,8 @@ import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
+import { rasaServerSocket, pythonServerSocket } from "../../../components/SocketManager/SocketManager";
 import { useNavigation } from '@react-navigation/native';
-import io from 'socket.io-client';
 import bcrypt from 'bcryptjs';
 
 const SignInScreen = () => {
@@ -14,54 +14,65 @@ const SignInScreen = () => {
     const { height } = useWindowDimensions();
     const navigation = useNavigation();
 
-    const [socket, setSocket] = useState(null);
-
     useEffect(() => {
-        // Create a socket connection when the component mounts
-        const socket = io('http://172.24.222.4:5006');
-        setSocket(socket);
+        // Create a socket connection to Python Server when the component mounts
+        pythonServerSocket.connect();
+        pythonServerSocket.on('connect', () => {
+            console.log(pythonServerSocket.id + ' Connected to server');
+        });
 
         return () => {
             // Close the socket when the component unmounts
-            socket.disconnect();
+            pythonServerSocket.disconnect();
         };
     }, []);
 
     useEffect(() => {
         // Set up the event listener for 'user_password' here
-        if (socket) {
-            socket.on('user_password', (receivedHash) => {
-                if (receivedHash === "User not found") {
-                    console.warn("User not found.");
-                } else {
-                    bcrypt.compare(password, receivedHash, (compareErr, result) => {
-                        if (compareErr) {
-                            console.error('Error comparing passwords:', compareErr);
-                        } else if (result) {
-                            console.warn("Login Successful!");
-                            navigation.navigate('ChatWindow', { username });
-                        } else {
-                            console.warn("Invalid Password");
-                        }
-                    });
-                }
-            });
+        const handleUserPassword = (receivedHash) => {
+            if (receivedHash === "User not found") {
+                console.warn("User not found.");
+            } else {
+                bcrypt.compare(password, receivedHash, (compareErr, result) => {
+                    if (compareErr) {
+                        console.error('Error comparing passwords:', compareErr);
+                    } else if (result) {
+                        console.warn("Login Successful!");
+
+                        // Create a socket connection to RASA Server when logged in
+                        rasaServerSocket.connect();
+
+                        navigation.navigate('ChatWindow', { username });
+                    } else {
+                        console.warn("Invalid Password");
+                    }
+                });
+            }
+        };
+
+        if (pythonServerSocket) {
+            pythonServerSocket.on('user_password', handleUserPassword);
         }
 
         return () => {
             // Remove the event listener when the component unmounts
-            if (socket) {
-                socket.off('user_password');
+            if (pythonServerSocket) {
+                pythonServerSocket.off('user_password', handleUserPassword);
             }
         };
-    }, [socket, password, navigation]);
+    }, [password, navigation]);
 
     const onSignInPressed = () => {
-        // Request user password from the server
-        if (socket) {
-            socket.emit('login', username);
+        console.log("Sign In Button Pressed");
+        
+        // Ensure the socket is connected
+        if (pythonServerSocket.connected) {
+            // Request user password from the server
+            pythonServerSocket.emit('login', username);
         } else {
-            console.error('Socket is not available.');
+            // If the socket is not connected, reconnect it and emit the event
+            pythonServerSocket.connect();
+            pythonServerSocket.emit('login', username);
         }
     }
 
