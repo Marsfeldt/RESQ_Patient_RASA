@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Platform } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, StyleSheet, Image, Platform} from 'react-native';
 import io from 'socket.io-client';
-import { GiftedChat } from 'react-native-gifted-chat';
+import {GiftedChat} from 'react-native-gifted-chat';
 import TopNavigationBar from '../../../components/TopNavigationBar';
-import { rasaServerSocket, pythonServerSocket } from '../../../components/SocketManager/SocketManager';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  rasaServerSocket,
+  pythonServerSocket,
+  connectSockets,
+  disconnectSockets,
+} from '../../../components/SocketManager/SocketManager';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
 const ChatWindowScreen = () => {
   const route = useRoute();
-  const { username } = route.params;
+  const {username} = route.params;
   const [userUUID, setUserUUID] = useState('');
   const [messages, setMessages] = useState([]); // State to store chat messages
   //const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
@@ -17,7 +22,10 @@ const ChatWindowScreen = () => {
 
   const generateUUID = () => {
     // Generate a random part of the UUID
-    const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    const s4 = () =>
+      Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
 
     // Return a formatted UUID
     return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
@@ -25,45 +33,60 @@ const ChatWindowScreen = () => {
 
   // Function to simulate a typing delay for bot responses
   const simulateTypingDelay = (message, delay) => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve(message);
       }, delay);
     });
   };
 
-  const sendDataThroughDataSocket = (message, messageId, isSystemMessage, messageType) => {
+  const sendDataThroughDataSocket = (
+    message,
+    messageId,
+    isSystemMessage,
+    messageType,
+  ) => {
     // Emit the data using the existing socket connection
-    const dataSocket = io('http://172.31.156.13:5006');
-    dataSocket.emit('message_from_client', { uuid: userUUID, username: username, message: message, messageId: messageId, isSystemMessage: isSystemMessage, messageType: messageType });
+    pythonServerSocket.emit('message_from_client', {
+      uuid: userUUID,
+      username: username,
+      message: message,
+      messageId: messageId,
+      isSystemMessage: isSystemMessage,
+      messageType: messageType,
+    });
   };
 
   useEffect(() => {
-    // Create a new WebSocket connection to the Rasa server
-    //const socket = io('http://172.31.156.13:5005');
-    //const superSocket = io('http://172.31.156.13:5006');
+    console.log('ChatWindowScreen mounted');
+    connectSockets();
+
+    pythonServerSocket.emit('fetch_user_information', username);
+    setSocketId(rasaServerSocket.id);
 
     // Handle WebSocket connection events
     rasaServerSocket.on('connect', () => {
-      console.log(rasaServerSocket.id + ' Connected to server');
-      pythonServerSocket.emit('fetch_user_information', username);
-      setSocketId(rasaServerSocket.id);
+      console.log(
+        rasaServerSocket.id +
+          ' RASA Server: Connected to server (Chat Window Screen)',
+      );
     });
 
     rasaServerSocket.on('disconnect', () => {
-      console.log(rasaServerSocket.id + ' Disconnected from server');
+      console.log(
+        rasaServerSocket.id +
+          ' RASA Server: Disconnected from server (Chat Window Screen)',
+      );
     });
 
-    pythonServerSocket.on('user_information_fetched', (data) => {
-      const { fetchedUsername, fetchedUUID } = data;
+    pythonServerSocket.on('user_information_fetched', data => {
+      const {fetchedUsername, fetchedUUID} = data;
       setUserUUID(fetchedUUID);
-      console.log('USER UUID: ' + fetchedUUID)
-      // Use fetchedUsername and fetchedUUID in your React component
+      console.log('USER UUID: ' + fetchedUUID);
     });
 
     // Handle incoming messages from the bot
-    rasaServerSocket.on('bot_uttered', async (data) => {
-
+    rasaServerSocket.on('bot_uttered', async data => {
       const botText = data.text;
       const messageId = generateUUID();
 
@@ -71,7 +94,7 @@ const ChatWindowScreen = () => {
         _id: messageId,
         text: botText,
         createdAt: new Date(),
-        user: { _id: 'bot' },
+        user: {_id: 'bot'},
       };
 
       // Show a typing indicator (optional)
@@ -81,7 +104,10 @@ const ChatWindowScreen = () => {
       const typingDelay = 500;
 
       // Simulate the typing delay
-      const delayedBotMessage = await simulateTypingDelay(botMessage, typingDelay);
+      const delayedBotMessage = await simulateTypingDelay(
+        botMessage,
+        typingDelay,
+      );
 
       // Calculate the time it took for the bot's message to arrive
       const botMessageReceivedTime = new Date();
@@ -89,32 +115,34 @@ const ChatWindowScreen = () => {
       console.log('Message latency:', messageLatency, 'ms');
 
       // Append the bot's message to the chat messages
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [delayedBotMessage])
+      setMessages(previousMessages =>
+        GiftedChat.append(previousMessages, [delayedBotMessage]),
       );
 
       // Remove the typing indicator (optional)
       setIsLoading(false);
 
-      sendDataThroughDataSocket(botText, messageId, "False", "Bot Answer");
-
+      sendDataThroughDataSocket(botText, messageId, 'False', 'Bot Answer');
     });
 
     // Clean up the WebSocket connection when the component unmounts
     return () => {
-      rasaServerSocket.disconnect();
+      console.log('ChatWindowScreen unmounted');
+      disconnectSockets();
     };
   }, []);
 
   // Function to manually append a message to the chat
-  const appendMessageToChat = (newMessage) => {
-    setMessages((previousMessages) => GiftedChat.append(previousMessages, newMessage));
-  }
+  const appendMessageToChat = newMessage => {
+    setMessages(previousMessages =>
+      GiftedChat.append(previousMessages, newMessage),
+    );
+  };
 
   // Function to handle sending user messages
-  const onSend = (newMessages) => {
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, newMessages)
+  const onSend = newMessages => {
+    setMessages(previousMessages =>
+      GiftedChat.append(previousMessages, newMessages),
     );
 
     const text = newMessages[0].text;
@@ -141,24 +169,27 @@ const ChatWindowScreen = () => {
         const messageSentTime = new Date();
 
         // Emit the user's message to Rasa
-        rasaServerSocket.emit('user_uttered', { session_id: rasaServerSocket.id, message: text }, () => {
-          // Calculate the time it took for the message to be acknowledged
-          const acknowledgmentTime = new Date() - messageSentTime;
-          console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
+        rasaServerSocket.emit(
+          'user_uttered',
+          {session_id: rasaServerSocket.id, message: text},
+          () => {
+            // Calculate the time it took for the message to be acknowledged
+            const acknowledgmentTime = new Date() - messageSentTime;
+            console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
 
-          // Continue with the rest of the code
-          setIsLoading(false);
+            // Continue with the rest of the code
+            setIsLoading(false);
 
-          sendDataThroughDataSocket(text, messageId, "False", "Question")
-
-        });
+            sendDataThroughDataSocket(text, messageId, 'False', 'Question');
+          },
+        );
       } else {
         // Example of how to use the appendMessageToChat function
         const newMessage = {
           _id: generateUUID(),
           text: 'Din besked er tom',
           createdAt: new Date(),
-          user: { _id: 'bot' },
+          user: {_id: 'bot'},
         };
 
         appendMessageToChat(newMessage);
@@ -167,9 +198,9 @@ const ChatWindowScreen = () => {
       // Example of how to use the appendMessageToChat function
       const newMessage = {
         _id: generateUUID(),
-        text: 'Du er ikke tilsluttet til serveren',
+        text: 'Du er ikke tilsluttet til serveren, genopretter forbindelse...',
         createdAt: new Date(),
-        user: { _id: 'bot' },
+        user: {_id: 'bot'},
       };
 
       appendMessageToChat(newMessage);
@@ -177,8 +208,8 @@ const ChatWindowScreen = () => {
   };
 
   // Function to render the avatar based on the user or bot
-  const renderAvatar = (props) => {
-    const { currentMessage } = props;
+  const renderAvatar = props => {
+    const {currentMessage} = props;
 
     if (currentMessage.user._id === 'bot') {
       // Path to the bot's avatar image
@@ -190,38 +221,25 @@ const ChatWindowScreen = () => {
       return (
         <Image
           source={botAvatarPath}
-          style={{ width: 40, height: 40, borderRadius: 20 }}
+          style={{width: 40, height: 40, borderRadius: 20}}
         />
       );
-    };
+    }
   };
   return (
     <View style={styles.container}>
+      {console.log('ChatWindow Rendered')}
       <TopNavigationBar username={username} />
       <GiftedChat
         messages={messages}
         onSend={onSend}
-        user={{ _id: socketId }}
+        user={{_id: socketId}}
         isTyping={isLoading}
         renderAvatar={renderAvatar}
       />
     </View>
   );
-}
-
-/*
-<GiftedChat
-  messages={messages}
-  onSend={onSend}
-  user={{ _id: socketId }}
-  isTyping={isLoading}
-  renderAvatar={renderAvatar}
-/>
- 
-<SignInScreen />
-*/
-
-
+};
 
 const styles = StyleSheet.create({
   container: {

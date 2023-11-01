@@ -35,7 +35,7 @@ def handle_fetch_user_information(username):
 @socketio.on('login')
 def handle_login(username):
     """
-    Handles login beheaviour to retrieve the users password, whereafter it through the front-end decrypts it
+    Handles login behaviour to retrieve the users password, whereafter it through the front-end decrypts it
     and compares it with the users password to authorize their login credentials
     """
     userPassword = userDB.retrieve_password_from_username('users', username)
@@ -105,4 +105,4 @@ def handle_message(data):
 
 if __name__ == '__main__':
     # You can change the port as needed
-    socketio.run(app, host='172.31.156.13', port=5006, debug=True)
+    socketio.run(app, host='192.168.0.47', port=5006, debug=True)

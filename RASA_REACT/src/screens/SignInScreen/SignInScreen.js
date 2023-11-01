@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
-import { rasaServerSocket, pythonServerSocket } from "../../../components/SocketManager/SocketManager";
+import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from "../../../components/SocketManager/SocketManager";
 import { useNavigation } from '@react-navigation/native';
 import bcrypt from 'bcryptjs';
 
@@ -15,15 +15,21 @@ const SignInScreen = () => {
     const navigation = useNavigation();
 
     useEffect(() => {
-        // Create a socket connection to Python Server when the component mounts
-        pythonServerSocket.connect();
+
+        // When the component mounts we connect the sockets
+        connectSockets();
+
         pythonServerSocket.on('connect', () => {
-            console.log(pythonServerSocket.id + ' Connected to server');
+            console.log(pythonServerSocket.id + ' Python Server: Connected to server (Sign In Screen)');
+        });
+
+        pythonServerSocket.on('disconnect', () => {
+            console.log(pythonServerSocket.id + ' Python Server: Disconnected from server (Sign In Screen)');
         });
 
         return () => {
-            // Close the socket when the component unmounts
-            pythonServerSocket.disconnect();
+            // Close the sockets when the component unmounts
+            disconnectSockets();
         };
     }, []);
 
@@ -38,10 +44,6 @@ const SignInScreen = () => {
                         console.error('Error comparing passwords:', compareErr);
                     } else if (result) {
                         console.warn("Login Successful!");
-
-                        // Create a socket connection to RASA Server when logged in
-                        rasaServerSocket.connect();
-
                         navigation.navigate('ChatWindow', { username });
                     } else {
                         console.warn("Invalid Password");

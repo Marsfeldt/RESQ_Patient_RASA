@@ -6,6 +6,7 @@ import CustomButton from "../../../components/CustomButton";
 import io from 'socket.io-client';
 import { compare, hash, setRandomFallback } from 'react-native-bcrypt';
 import { useNavigation } from '@react-navigation/native';
+import { disconnectSockets, pythonServerSocket } from "../../../components/SocketManager/SocketManager";
 
 const SignUpScreen = () => {
     const [username, setUsername] = useState('');
@@ -16,15 +17,12 @@ const SignUpScreen = () => {
     const [passwordRepeat, setPasswordRepeat] = useState('');
     const { height } = useWindowDimensions();
     const navigation = useNavigation();
-    const [superServerSocket, setSuperServerSocket] = useState(null); // Initialize socket as null
+    //const [superServerSocket, setSuperServerSocket] = useState(null); // Initialize socket as null
 
     useEffect(() => {
-        // Create a socket connection to your super server when the component mounts
-        const socket = io('http://172.31.156.13:5006');
-        setSuperServerSocket(socket); // Store the socket in state
         return () => {
             // Close the socket when the component unmounts
-            socket.disconnect();
+            disconnectSockets();
         };
     }, []);
 
@@ -42,7 +40,7 @@ const SignUpScreen = () => {
     }
 
     const onRegisterPressed = () => {
-        if (superServerSocket) {
+        if (pythonServerSocket) {
             // Hash the password before sending it
             hash(password, 5, (hashErr, hashedPassword) => {
                 if (hashErr) {
@@ -50,8 +48,8 @@ const SignUpScreen = () => {
                 } else {
                     console.log("pass " + password)
                     // Send the account data through the superServerSocket
-                    superServerSocket.emit('create_account', {
-                        uuid: superServerSocket.id,
+                    pythonServerSocket.emit('create_account', {
+                        uuid: pythonServerSocket.id,
                         username: username,
                         email: email,
                         password: hashedPassword, // Send the hashed password
