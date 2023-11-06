@@ -75,22 +75,22 @@ const ChatWindowScreen = () => {
 }
 
   useEffect(() => {
-    console.log('ChatWindowScreen mounted');
+    //console.log('ChatWindowScreen mounted');
     //connectSockets();
 
     socketConnectionEvent();
 
     pythonServerSocket.emit('fetch_user_information', username);
 
-
     pythonServerSocket.on('user_information_fetched', data => {
       const {fetchedUsername, fetchedUUID} = data;
       setUserUUID(fetchedUUID);
-      //console.log('USER UUID: ' + fetchedUUID);
+      console.log('USER UUID: ' + fetchedUUID);
     });
 
     // Handle incoming messages from the bot
     rasaServerSocket.on('bot_uttered', async data => {
+      console.log('UUID:' + userUUID);
       const botText = data.text;
       const messageId = generateUUID();
 
@@ -126,12 +126,13 @@ const ChatWindowScreen = () => {
       // Remove the typing indicator (optional)
       setIsLoading(false);
 
+      console.warn('BOT UUID: ' + userUUID);
       sendDataThroughDataSocket(botText, messageId, 'False', 'Bot Answer');
     });
 
     // Clean up the WebSocket connection when the component unmounts
     return () => {
-      console.log('ChatWindowScreen unmounted');
+      //console.log('ChatWindowScreen unmounted');
       // RASA
       rasaServerSocket.off('bot_uttered');
       rasaServerSocket.off('connect');
@@ -193,6 +194,7 @@ const ChatWindowScreen = () => {
             // Continue with the rest of the code
             setIsLoading(false);
 
+            console.warn('USER UUID: ' + userUUID);
             sendDataThroughDataSocket(text, messageId, 'False', 'Question');
           },
         );
@@ -241,7 +243,6 @@ const ChatWindowScreen = () => {
   };
   return (
     <View style={styles.container}>
-      {console.log('ChatWindow Rendered')}
       <TopNavigationBar username={username} />
       <GiftedChat
         messages={messages}
