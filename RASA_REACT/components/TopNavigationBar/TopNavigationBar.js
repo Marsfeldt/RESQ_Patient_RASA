@@ -2,16 +2,19 @@ import { block } from '@onflow/fcl';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { disconnectSockets } from '../SocketManager/SocketManager';
 
 const TopNavigationBar = ({ username }) => {
 
     const navigation = useNavigation();
 
     const onChatNavigate = () => {
+        disconnectSockets();
         navigation.navigate('ChatWindow', { username });
     }
 
     const onProfileNavigate = () => {
+        disconnectSockets();
         navigation.navigate('Profile', { username });
     }
 

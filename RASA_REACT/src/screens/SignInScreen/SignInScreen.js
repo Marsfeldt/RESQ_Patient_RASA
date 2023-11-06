@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
-import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from "../../../components/SocketManager/SocketManager";
+import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets, reconnectSockets } from "../../../components/SocketManager/SocketManager";
 import { useNavigation } from '@react-navigation/native';
 import bcrypt from 'bcryptjs';
 
@@ -14,10 +14,14 @@ const SignInScreen = () => {
     const { height } = useWindowDimensions();
     const navigation = useNavigation();
 
-    useEffect(() => {
+    const socketConnectionEvent = () => {
+        rasaServerSocket.on('connect', () => {
+            console.log(pythonServerSocket.id + ' RASA Server: Connected to server (Sign In Screen)');
+        });
 
-        // When the component mounts we connect the sockets
-        connectSockets();
+        rasaServerSocket.on('disconnect', () => {
+            console.log(pythonServerSocket.id + ' RASA Server: Connected to server (Sign In Screen)');
+        });
 
         pythonServerSocket.on('connect', () => {
             console.log(pythonServerSocket.id + ' Python Server: Connected to server (Sign In Screen)');
@@ -26,6 +30,16 @@ const SignInScreen = () => {
         pythonServerSocket.on('disconnect', () => {
             console.log(pythonServerSocket.id + ' Python Server: Disconnected from server (Sign In Screen)');
         });
+    }
+
+    useEffect(() => {
+        console.log('SignIn Screen Mounted')
+        // When the component mounts we connect the sockets
+        if (!pythonServerSocket.connected && !rasaServerSocket.connected) {
+            connectSockets();
+        }
+
+        socketConnectionEvent();
 
         return () => {
             // Close the sockets when the component unmounts
@@ -66,14 +80,17 @@ const SignInScreen = () => {
 
     const onSignInPressed = () => {
         console.log("Sign In Button Pressed");
-        
+
         // Ensure the socket is connected
-        if (pythonServerSocket.connected) {
+        if (pythonServerSocket.connected && rasaServerSocket.connected) {
             // Request user password from the server
             pythonServerSocket.emit('login', username);
+            if (!rasaServerSocket.connected) {
+                reconnectSockets();
+            }
         } else {
             // If the socket is not connected, reconnect it and emit the event
-            pythonServerSocket.connect();
+            reconnectSockets();
             pythonServerSocket.emit('login', username);
         }
     }

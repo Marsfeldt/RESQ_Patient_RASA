@@ -18,7 +18,6 @@ const ChatWindowScreen = () => {
   const [messages, setMessages] = useState([]); // State to store chat messages
   //const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
   const [isLoading, setIsLoading] = useState(false); // State to control typing indicator
-  const [socketId, setSocketId] = useState(''); // State to store the socket ID
 
   const generateUUID = () => {
     // Generate a random part of the UUID
@@ -57,32 +56,37 @@ const ChatWindowScreen = () => {
     });
   };
 
-  useEffect(() => {
-    console.log('ChatWindowScreen mounted');
-    connectSockets();
-
-    pythonServerSocket.emit('fetch_user_information', username);
-    setSocketId(rasaServerSocket.id);
-
-    // Handle WebSocket connection events
+  const socketConnectionEvent = () => {
     rasaServerSocket.on('connect', () => {
-      console.log(
-        rasaServerSocket.id +
-          ' RASA Server: Connected to server (Chat Window Screen)',
-      );
+        console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
     });
 
     rasaServerSocket.on('disconnect', () => {
-      console.log(
-        rasaServerSocket.id +
-          ' RASA Server: Disconnected from server (Chat Window Screen)',
-      );
+        console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
     });
+
+    pythonServerSocket.on('connect', () => {
+        console.log(pythonServerSocket.id + ' Python Server: Connected to server (ChatWindow Screen)');
+    });
+
+    pythonServerSocket.on('disconnect', () => {
+        console.log(pythonServerSocket.id + ' Python Server: Disconnected from server (ChatWindow Screen)');
+    });
+}
+
+  useEffect(() => {
+    console.log('ChatWindowScreen mounted');
+    //connectSockets();
+
+    socketConnectionEvent();
+
+    pythonServerSocket.emit('fetch_user_information', username);
+
 
     pythonServerSocket.on('user_information_fetched', data => {
       const {fetchedUsername, fetchedUUID} = data;
       setUserUUID(fetchedUUID);
-      console.log('USER UUID: ' + fetchedUUID);
+      //console.log('USER UUID: ' + fetchedUUID);
     });
 
     // Handle incoming messages from the bot
@@ -128,6 +132,15 @@ const ChatWindowScreen = () => {
     // Clean up the WebSocket connection when the component unmounts
     return () => {
       console.log('ChatWindowScreen unmounted');
+      // RASA
+      rasaServerSocket.off('bot_uttered');
+      rasaServerSocket.off('connect');
+      rasaServerSocket.off('disconnect');
+      // PYTHON
+      pythonServerSocket.off('fetch_user_information');
+      pythonServerSocket.off('user_information_fetched');
+      pythonServerSocket.off('connect');
+      pythonServerSocket.off('disconnect');
       disconnectSockets();
     };
   }, []);
@@ -233,7 +246,7 @@ const ChatWindowScreen = () => {
       <GiftedChat
         messages={messages}
         onSend={onSend}
-        user={{_id: socketId}}
+        user={{_id: userUUID}}
         isTyping={isLoading}
         renderAvatar={renderAvatar}
       />
