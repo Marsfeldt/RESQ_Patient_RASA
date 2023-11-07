@@ -1,19 +1,20 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Image, Platform} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import io from 'socket.io-client';
-import {GiftedChat} from 'react-native-gifted-chat';
+import { GiftedChat } from 'react-native-gifted-chat';
 import TopNavigationBar from '../../../components/TopNavigationBar';
 import {
   rasaServerSocket,
   pythonServerSocket,
   connectSockets,
   disconnectSockets,
+  reconnectSockets,
 } from '../../../components/SocketManager/SocketManager';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const ChatWindowScreen = () => {
   const route = useRoute();
-  const {username} = route.params;
+  const { username } = route.params;
   const [userUUID, setUserUUID] = useState('');
   const [messages, setMessages] = useState([]); // State to store chat messages
   //const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
@@ -58,34 +59,40 @@ const ChatWindowScreen = () => {
 
   const socketConnectionEvent = () => {
     rasaServerSocket.on('connect', () => {
-        console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
+      console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
     });
 
     rasaServerSocket.on('disconnect', () => {
-        console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
+      console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
     });
 
     pythonServerSocket.on('connect', () => {
-        console.log(pythonServerSocket.id + ' Python Server: Connected to server (ChatWindow Screen)');
+      console.log(pythonServerSocket.id + ' Python Server: Connected to server (ChatWindow Screen)');
     });
 
     pythonServerSocket.on('disconnect', () => {
-        console.log(pythonServerSocket.id + ' Python Server: Disconnected from server (ChatWindow Screen)');
+      console.log(pythonServerSocket.id + ' Python Server: Disconnected from server (ChatWindow Screen)');
     });
-}
+  }
 
   useEffect(() => {
-    //console.log('ChatWindowScreen mounted');
-    //connectSockets();
+
+    /*
+     Connection logic to make sure that we establish a connection only if we are not currently connected. This makes sure that
+     we are always gonna have a connection when we first render the chatwindow screen.
+    */
+    if (!rasaServerSocket.connected || !pythonServerSocket.connected) {
+      connectSockets();
+    }
+
 
     socketConnectionEvent();
 
     pythonServerSocket.emit('fetch_user_information', username);
 
     pythonServerSocket.on('user_information_fetched', data => {
-      const {fetchedUsername, fetchedUUID} = data;
+      const { fetchedUsername, fetchedUUID } = data;
       setUserUUID(fetchedUUID);
-      console.log('USER UUID: ' + fetchedUUID);
     });
 
     // Handle incoming messages from the bot
@@ -98,7 +105,7 @@ const ChatWindowScreen = () => {
         _id: messageId,
         text: botText,
         createdAt: new Date(),
-        user: {_id: 'bot'},
+        user: { _id: 'bot' },
       };
 
       // Show a typing indicator (optional)
@@ -126,7 +133,6 @@ const ChatWindowScreen = () => {
       // Remove the typing indicator (optional)
       setIsLoading(false);
 
-      console.warn('BOT UUID: ' + userUUID);
       sendDataThroughDataSocket(botText, messageId, 'False', 'Bot Answer');
     });
 
@@ -144,7 +150,7 @@ const ChatWindowScreen = () => {
       pythonServerSocket.off('disconnect');
       disconnectSockets();
     };
-  }, []);
+  }, [userUUID]);
 
   // Function to manually append a message to the chat
   const appendMessageToChat = newMessage => {
@@ -185,7 +191,7 @@ const ChatWindowScreen = () => {
         // Emit the user's message to Rasa
         rasaServerSocket.emit(
           'user_uttered',
-          {session_id: rasaServerSocket.id, message: text},
+          { session_id: rasaServerSocket.id, message: text },
           () => {
             // Calculate the time it took for the message to be acknowledged
             const acknowledgmentTime = new Date() - messageSentTime;
@@ -194,7 +200,6 @@ const ChatWindowScreen = () => {
             // Continue with the rest of the code
             setIsLoading(false);
 
-            console.warn('USER UUID: ' + userUUID);
             sendDataThroughDataSocket(text, messageId, 'False', 'Question');
           },
         );
@@ -204,7 +209,7 @@ const ChatWindowScreen = () => {
           _id: generateUUID(),
           text: 'Din besked er tom',
           createdAt: new Date(),
-          user: {_id: 'bot'},
+          user: { _id: 'bot' },
         };
 
         appendMessageToChat(newMessage);
@@ -215,8 +220,9 @@ const ChatWindowScreen = () => {
         _id: generateUUID(),
         text: 'Du er ikke tilsluttet til serveren, genopretter forbindelse...',
         createdAt: new Date(),
-        user: {_id: 'bot'},
+        user: { _id: 'bot' },
       };
+      reconnectSockets();
 
       appendMessageToChat(newMessage);
     }
@@ -224,7 +230,7 @@ const ChatWindowScreen = () => {
 
   // Function to render the avatar based on the user or bot
   const renderAvatar = props => {
-    const {currentMessage} = props;
+    const { currentMessage } = props;
 
     if (currentMessage.user._id === 'bot') {
       // Path to the bot's avatar image
@@ -236,7 +242,7 @@ const ChatWindowScreen = () => {
       return (
         <Image
           source={botAvatarPath}
-          style={{width: 40, height: 40, borderRadius: 20}}
+          style={{ width: 40, height: 40, borderRadius: 20 }}
         />
       );
     }
@@ -247,7 +253,7 @@ const ChatWindowScreen = () => {
       <GiftedChat
         messages={messages}
         onSend={onSend}
-        user={{_id: userUUID}}
+        user={{ _id: userUUID }}
         isTyping={isLoading}
         renderAvatar={renderAvatar}
       />
