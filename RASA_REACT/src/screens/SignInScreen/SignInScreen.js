@@ -7,7 +7,9 @@ import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets
 import { useNavigation } from '@react-navigation/native';
 import bcrypt from 'bcryptjs';
 
+
 const SignInScreen = () => {
+
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 

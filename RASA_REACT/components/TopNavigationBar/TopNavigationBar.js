@@ -9,12 +9,12 @@ const TopNavigationBar = ({ username }) => {
     const navigation = useNavigation();
 
     const onChatNavigate = () => {
-        disconnectSockets();
+        //disconnectSockets();
         navigation.navigate('ChatWindow', { username });
     }
 
     const onProfileNavigate = () => {
-        disconnectSockets();
+        //disconnectSockets();
         navigation.navigate('Profile', { username });
     }
 

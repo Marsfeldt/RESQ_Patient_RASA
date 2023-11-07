@@ -81,9 +81,7 @@ const ChatWindowScreen = () => {
      Connection logic to make sure that we establish a connection only if we are not currently connected. This makes sure that
      we are always gonna have a connection when we first render the chatwindow screen.
     */
-    if (!rasaServerSocket.connected || !pythonServerSocket.connected) {
-      connectSockets();
-    }
+    reconnectSockets();
 
 
     socketConnectionEvent();
