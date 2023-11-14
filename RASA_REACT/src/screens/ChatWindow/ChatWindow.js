@@ -11,6 +11,7 @@ import {
   reconnectSockets,
 } from '../../../components/SocketManager/SocketManager';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { saveMessages, loadMessages } from '../../../components/AsyncStorageUtils';
 
 const ChatWindowScreen = () => {
   const route = useRoute();
@@ -19,6 +20,44 @@ const ChatWindowScreen = () => {
   const [messages, setMessages] = useState([]); // State to store chat messages
   //const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
   const [isLoading, setIsLoading] = useState(false); // State to control typing indicator
+
+  const loadEarlierMessages = async () => {
+    try {
+      const storedMessages = await loadMessages();
+
+      if (storedMessages) {
+        const formattedMessages = storedMessages.map((msg) => {
+          return {
+            ...msg,
+            createdAt: new Date(msg.createdAt), // Ensure createdAt is a Date object
+          };
+        });
+
+        console.log('Stored messages:', storedMessages);
+        console.log('Formatted messages:', formattedMessages);
+
+        // Identify new messages to prevent duplicates
+        const newMessages = formattedMessages.filter((msg) => {
+          return !messages.some((existingMsg) => existingMsg._id === msg._id);
+        });
+
+        console.log('New messages:', newMessages);
+
+        if (newMessages.length > 0) {
+          // Prepend new messages to the existing messages
+          setMessages((previousMessages) =>
+            GiftedChat.prepend(previousMessages, newMessages)
+          );
+        } else {
+          console.log('No new earlier messages found.');
+        }
+      } else {
+        console.log('No earlier messages found.');
+      }
+    } catch (error) {
+      console.error('Error loading earlier messages:', error);
+    }
+  };
 
   const generateUUID = () => {
     // Generate a random part of the UUID
@@ -82,8 +121,6 @@ const ChatWindowScreen = () => {
      we are always gonna have a connection when we first render the chatwindow screen.
     */
     reconnectSockets();
-
-
     socketConnectionEvent();
 
     pythonServerSocket.emit('fetch_user_information', username);
@@ -132,6 +169,7 @@ const ChatWindowScreen = () => {
       setIsLoading(false);
 
       sendDataThroughDataSocket(botText, messageId, 'False', 'Bot Answer');
+
     });
 
     // Clean up the WebSocket connection when the component unmounts
@@ -150,18 +188,21 @@ const ChatWindowScreen = () => {
     };
   }, [userUUID]);
 
-  // Function to manually append a message to the chat
-  const appendMessageToChat = newMessage => {
-    setMessages(previousMessages =>
-      GiftedChat.append(previousMessages, newMessage),
-    );
+  const appendMessageToChat = (newMessages) => {
+    setMessages((previousMessages) => GiftedChat.append(previousMessages, newMessages));
+    saveMessages(messages);
   };
 
   // Function to handle sending user messages
   const onSend = newMessages => {
-    setMessages(previousMessages =>
-      GiftedChat.append(previousMessages, newMessages),
-    );
+    setMessages((previousMessages) => {
+      const updatedMessages = GiftedChat.append(previousMessages, newMessages);
+
+      // Save messages to local storage
+      saveMessages(updatedMessages);
+
+      return updatedMessages;
+    });
 
     const text = newMessages[0].text;
 
@@ -186,12 +227,12 @@ const ChatWindowScreen = () => {
         // Record the time before sending the message
         const messageSentTime = new Date();
 
-        // Emit the user's message to Rasa
+        // Emit the user's message to Rasa  
         rasaServerSocket.emit(
           'user_uttered',
           { session_id: rasaServerSocket.id, message: text },
           () => {
-            // Calculate the time it took for the message to be acknowledged
+            // Calculate the time it took for the message to be acknowledged.
             const acknowledgmentTime = new Date() - messageSentTime;
             console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
 
@@ -201,6 +242,8 @@ const ChatWindowScreen = () => {
             sendDataThroughDataSocket(text, messageId, 'False', 'Question');
           },
         );
+        // After sending the message, save the messages to local storage
+        saveMessages([...messages, ...newMessages]);
       } else {
         // Example of how to use the appendMessageToChat function
         const newMessage = {
@@ -211,6 +254,8 @@ const ChatWindowScreen = () => {
         };
 
         appendMessageToChat(newMessage);
+        // After handling the not connected scenario, save the messages to local storage
+        saveMessages([...messages, ...newMessages]);
       }
     } else {
       // Example of how to use the appendMessageToChat function
@@ -223,7 +268,11 @@ const ChatWindowScreen = () => {
       reconnectSockets();
 
       appendMessageToChat(newMessage);
+      // After handling the not connected scenario, save the messages to local storage
+      saveMessages([...messages, ...newMessages]);
     }
+
+    saveMessages(messages);
   };
 
   // Function to render the avatar based on the user or bot
@@ -254,6 +303,9 @@ const ChatWindowScreen = () => {
         user={{ _id: userUUID }}
         isTyping={isLoading}
         renderAvatar={renderAvatar}
+        loadEarlier={true}
+        onLoadEarlier={loadEarlierMessages}
+        placeholder="Skriv en besked..."
       />
     </View>
   );

@@ -105,4 +105,4 @@ def handle_message(data):
 
 if __name__ == '__main__':
     # You can change the port as needed
-    socketio.run(app, host='172.24.212.190', port=5006, debug=True)
+    socketio.run(app, host='172.24.221.176', port=5006, debug=True)
