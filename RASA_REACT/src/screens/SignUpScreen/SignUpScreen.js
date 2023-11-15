@@ -47,7 +47,7 @@ const SignUpScreen = () => {
                     console.error('Error hashing password:', hashErr);
                 } else {
                     console.log("pass " + password)
-                    // Send the account data through the superServerSocket
+                    // Send the account data to the Python Server
                     pythonServerSocket.emit('create_account', {
                         uuid: pythonServerSocket.id,
                         username: username,

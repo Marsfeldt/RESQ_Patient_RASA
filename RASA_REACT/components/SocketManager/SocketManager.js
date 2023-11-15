@@ -8,10 +8,14 @@ const pythonServerSocket = io('http://172.24.221.176:5006');
 
 // Function to connnect server sockets
 const connectSockets = () => {
+    // RASA
     rasaServerSocket.connect();
+
+    // PYTHON
     pythonServerSocket.connect();
 }
 
+// Function to disconnect the server sockets
 const disconnectSockets = () => {
     // RASA
     rasaServerSocket.disconnect();
@@ -20,11 +24,15 @@ const disconnectSockets = () => {
     pythonServerSocket.disconnect();
 }
 
+// Function for reconnecting sockets in case of unexpected disconnects
 const reconnectSockets = () => {
+
+    // RASA
     if (!rasaServerSocket.connected) {
         rasaServerSocket.connect();
     }
     
+    // PYTHON
     if (!pythonServerSocket.connected) {
         pythonServerSocket.connect();
     }

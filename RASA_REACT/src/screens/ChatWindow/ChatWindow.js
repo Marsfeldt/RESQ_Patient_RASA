@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Platform } from 'react-native';
-import io from 'socket.io-client';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Image, Platform, StyleSheet } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 import TopNavigationBar from '../../../components/TopNavigationBar';
 import {
@@ -10,41 +9,34 @@ import {
   disconnectSockets,
   reconnectSockets,
 } from '../../../components/SocketManager/SocketManager';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { saveMessages, loadMessages } from '../../../components/AsyncStorageUtils';
 
 const ChatWindowScreen = () => {
   const route = useRoute();
   const { username } = route.params;
   const [userUUID, setUserUUID] = useState('');
-  const [messages, setMessages] = useState([]); // State to store chat messages
-  //const [socket, setSocket] = useState(null); // State to manage the WebSocket connection
-  const [isLoading, setIsLoading] = useState(false); // State to control typing indicator
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loadEarlierMessages = async () => {
+  // Function for loading earlier messages in the chat conversation by loading them from the phones local storage
+  const loadEarlierMessages = useCallback(async () => {
     try {
       const storedMessages = await loadMessages();
 
       if (storedMessages) {
-        const formattedMessages = storedMessages.map((msg) => {
-          return {
-            ...msg,
-            createdAt: new Date(msg.createdAt), // Ensure createdAt is a Date object
-          };
-        });
+        const formattedMessages = storedMessages.map((msg) => ({
+          ...msg,
+          createdAt: new Date(msg.createdAt),
+        }));
 
-        console.log('Stored messages:', storedMessages);
-        console.log('Formatted messages:', formattedMessages);
+        // This is used to ensure that we do not load duplicate messages by checking whether the message has already been loaded
+        const newMessages = formattedMessages.filter(
+          (msg) => !messages.some((existingMsg) => existingMsg._id === msg._id)
+        );
 
-        // Identify new messages to prevent duplicates
-        const newMessages = formattedMessages.filter((msg) => {
-          return !messages.some((existingMsg) => existingMsg._id === msg._id);
-        });
-
-        console.log('New messages:', newMessages);
-
+        // Check if we have loaded all available messages
         if (newMessages.length > 0) {
-          // Prepend new messages to the existing messages
           setMessages((previousMessages) =>
             GiftedChat.prepend(previousMessages, newMessages)
           );
@@ -57,85 +49,75 @@ const ChatWindowScreen = () => {
     } catch (error) {
       console.error('Error loading earlier messages:', error);
     }
-  };
+  }, [messages]);
 
-  const generateUUID = () => {
-    // Generate a random part of the UUID
-    const s4 = () =>
-      Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
+  // function to generate a random UUID (Example, it looks like this: b16a2906-5f82-6c9e-d79d-cc3a65960f43)
+  const generateUUID = () =>
+    `${Math.random().toString(36).substring(2, 15)}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
 
-    // Return a formatted UUID
-    return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-  };
+  // Function to simulate a typing delay for the bot, because the speed is too fast :P
+  const simulateTypingDelay = (message, delay) =>
+    new Promise((resolve) => setTimeout(() => resolve(message), delay));
 
-  // Function to simulate a typing delay for bot responses
-  const simulateTypingDelay = (message, delay) => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve(message);
-      }, delay);
-    });
-  };
-
+  // Function which handles information being sent from the front-end to the back-end python server
   const sendDataThroughDataSocket = (
     message,
     messageId,
     isSystemMessage,
-    messageType,
+    messageType
   ) => {
-    // Emit the data using the existing socket connection
     pythonServerSocket.emit('message_from_client', {
       uuid: userUUID,
-      username: username,
-      message: message,
-      messageId: messageId,
-      isSystemMessage: isSystemMessage,
-      messageType: messageType,
+      username,
+      message,
+      messageId,
+      isSystemMessage,
+      messageType,
     });
   };
 
+  // Function to log connection events from the RASA and PYTHON server, used for debugging
   const socketConnectionEvent = () => {
-    rasaServerSocket.on('connect', () => {
-      console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
-    });
+    const logConnection = (serverSocket, serverName) => {
+      serverSocket.on('connect', () => {
+        console.log(
+          `${pythonServerSocket.id} ${serverName} Server: Connected to server (ChatWindow Screen)`
+        );
+      });
 
-    rasaServerSocket.on('disconnect', () => {
-      console.log(pythonServerSocket.id + ' RASA Server: Connected to server (ChatWindow Screen)');
-    });
+      serverSocket.on('disconnect', () => {
+        console.log(
+          `${pythonServerSocket.id} ${serverName} Server: Disconnected from server (ChatWindow Screen)`
+        );
+      });
+    };
 
-    pythonServerSocket.on('connect', () => {
-      console.log(pythonServerSocket.id + ' Python Server: Connected to server (ChatWindow Screen)');
-    });
-
-    pythonServerSocket.on('disconnect', () => {
-      console.log(pythonServerSocket.id + ' Python Server: Disconnected from server (ChatWindow Screen)');
-    });
-  }
+    logConnection(rasaServerSocket, 'RASA');
+    logConnection(pythonServerSocket, 'Python');
+  };
 
   useEffect(() => {
-
-    /*
-     Connection logic to make sure that we establish a connection only if we are not currently connected. This makes sure that
-     we are always gonna have a connection when we first render the chatwindow screen.
-    */
+    // Calling reconnectsockets to ensure that if we are not already connected we connect, so that the chatbot is functional
     reconnectSockets();
     socketConnectionEvent();
 
+    // We send information to the python server to fetch information from the currently logged in user
     pythonServerSocket.emit('fetch_user_information', username);
 
-    pythonServerSocket.on('user_information_fetched', data => {
+    // Once the information is successfully retrieved we set the current UUID to that of the logged in user
+    pythonServerSocket.on('user_information_fetched', (data) => {
       const { fetchedUsername, fetchedUUID } = data;
       setUserUUID(fetchedUUID);
     });
 
-    // Handle incoming messages from the bot
-    rasaServerSocket.on('bot_uttered', async data => {
-      console.log('UUID:' + userUUID);
+    // This handles the event from whenever the bot gets a question
+    rasaServerSocket.on('bot_uttered', async (data) => {
       const botText = data.text;
       const messageId = generateUUID();
 
+      // Message which follows the layout of the library 'GiftedChat'
       const botMessage = {
         _id: messageId,
         text: botText,
@@ -143,43 +125,42 @@ const ChatWindowScreen = () => {
         user: { _id: 'bot' },
       };
 
-      // Show a typing indicator (optional)
       setIsLoading(true);
 
-      // Simulate a typing delay (e.g., 500 milliseconds) before displaying the bot's message
       const typingDelay = 500;
 
-      // Simulate the typing delay
       const delayedBotMessage = await simulateTypingDelay(
         botMessage,
-        typingDelay,
+        typingDelay
       );
 
-      // Calculate the time it took for the bot's message to arrive
+      // Two variables that calculates the recieved time and the latency of when the message was retrieved
       const botMessageReceivedTime = new Date();
       const messageLatency = botMessageReceivedTime - botMessage.createdAt;
+
       console.log('Message latency:', messageLatency, 'ms');
 
-      // Append the bot's message to the chat messages
-      setMessages(previousMessages =>
-        GiftedChat.append(previousMessages, [delayedBotMessage]),
+      // Add the message to the chat window by appending it through the GiftedChat library
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [delayedBotMessage])
       );
 
-      // Remove the typing indicator (optional)
       setIsLoading(false);
 
-      sendDataThroughDataSocket(botText, messageId, 'False', 'Bot Answer');
-
+      // Sending the message from the bot to the backend for database storing
+      sendDataThroughDataSocket(
+        botText,
+        messageId,
+        'False',
+        'Bot Answer'
+      );
     });
 
-    // Clean up the WebSocket connection when the component unmounts
     return () => {
-      //console.log('ChatWindowScreen unmounted');
-      // RASA
+      // Makes sure to remove all the listeners whenever the ChatWindow component unmounts as to ensure no server errors
       rasaServerSocket.off('bot_uttered');
       rasaServerSocket.off('connect');
       rasaServerSocket.off('disconnect');
-      // PYTHON
       pythonServerSocket.off('fetch_user_information');
       pythonServerSocket.off('user_information_fetched');
       pythonServerSocket.off('connect');
@@ -188,17 +169,20 @@ const ChatWindowScreen = () => {
     };
   }, [userUUID]);
 
-  const appendMessageToChat = (newMessages) => {
-    setMessages((previousMessages) => GiftedChat.append(previousMessages, newMessages));
-    saveMessages(messages);
+  const appendAndSaveMessages = (newMessages) => {
+    const updatedMessages = GiftedChat.append(messages, newMessages);
+    setMessages(updatedMessages);
+    saveMessages(updatedMessages);
   };
 
-  // Function to handle sending user messages
-  const onSend = newMessages => {
+  // Function which is called whenever the user is pressing the 'Send' button in the chat window
+  const onSend = (newMessages) => {
     setMessages((previousMessages) => {
-      const updatedMessages = GiftedChat.append(previousMessages, newMessages);
+      const updatedMessages = GiftedChat.append(
+        previousMessages,
+        newMessages
+      );
 
-      // Save messages to local storage
       saveMessages(updatedMessages);
 
       return updatedMessages;
@@ -206,6 +190,7 @@ const ChatWindowScreen = () => {
 
     const text = newMessages[0].text;
 
+    // Makes sure that we are connected before we attempt to send the message to the bot
     if (rasaServerSocket && rasaServerSocket.connected) {
       if (text.trim() !== '') {
         setIsLoading(true);
@@ -214,38 +199,38 @@ const ChatWindowScreen = () => {
 
         const newMessage = {
           _id: messageId,
-          text: text,
+          text,
           createdAt: new Date(),
           user: {
             _id: rasaServerSocket.id,
           },
         };
 
-        // Log the message being sent to Rasa
         console.log('Sending message to Rasa:', newMessage);
 
-        // Record the time before sending the message
         const messageSentTime = new Date();
 
-        // Emit the user's message to Rasa  
+        // This emits the users message from where the RASA server is listening for the users question on the event 'user_uttered'
         rasaServerSocket.emit(
           'user_uttered',
           { session_id: rasaServerSocket.id, message: text },
           () => {
-            // Calculate the time it took for the message to be acknowledged.
-            const acknowledgmentTime = new Date() - messageSentTime;
+            const acknowledgmentTime =
+              new Date() - messageSentTime;
             console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
 
-            // Continue with the rest of the code
             setIsLoading(false);
 
-            sendDataThroughDataSocket(text, messageId, 'False', 'Question');
-          },
+            sendDataThroughDataSocket(
+              text,
+              messageId,
+              'False',
+              'Question'
+            );
+          }
         );
-        // After sending the message, save the messages to local storage
         saveMessages([...messages, ...newMessages]);
       } else {
-        // Example of how to use the appendMessageToChat function
         const newMessage = {
           _id: generateUUID(),
           text: 'Din besked er tom',
@@ -253,12 +238,9 @@ const ChatWindowScreen = () => {
           user: { _id: 'bot' },
         };
 
-        appendMessageToChat(newMessage);
-        // After handling the not connected scenario, save the messages to local storage
-        saveMessages([...messages, ...newMessages]);
+        appendAndSaveMessages(newMessage);
       }
     } else {
-      // Example of how to use the appendMessageToChat function
       const newMessage = {
         _id: generateUUID(),
         text: 'Du er ikke tilsluttet til serveren, genopretter forbindelse...',
@@ -267,24 +249,17 @@ const ChatWindowScreen = () => {
       };
       reconnectSockets();
 
-      appendMessageToChat(newMessage);
-      // After handling the not connected scenario, save the messages to local storage
-      saveMessages([...messages, ...newMessages]);
+      appendAndSaveMessages(newMessage);
     }
-
-    saveMessages(messages);
   };
 
-  // Function to render the avatar based on the user or bot
-  const renderAvatar = props => {
-    const { currentMessage } = props;
-
+  // Function responsible for rendering the bots avatar on its messages
+  const renderAvatar = ({ currentMessage }) => {
     if (currentMessage.user._id === 'bot') {
-      // Path to the bot's avatar image
-      const botAvatarPath =
-        Platform.OS === 'android'
-          ? require('../../../assets/bot.png') // Android
-          : require('../../../assets/bot.png'); // iOS
+      const botAvatarPath = Platform.select({
+        android: require('../../../assets/bot.png'), // Android dependency
+        ios: require('../../../assets/bot.png'), // IOS dependency
+      });
 
       return (
         <Image
@@ -294,6 +269,8 @@ const ChatWindowScreen = () => {
       );
     }
   };
+
+  // The ChatWindow rendering layout
   return (
     <View style={styles.container}>
       <TopNavigationBar username={username} />
