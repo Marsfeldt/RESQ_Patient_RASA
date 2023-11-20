@@ -2,18 +2,18 @@
 
 **INTRO**
 -----
-In this section I will go through every process step by step to help you set everything up.
+In this README you will be introduced to the whole system: How to install and run it, how to utilize some of the generic functions, as well as how to further implement new functionality into the system.
 
 **STEP 1:** IDE / Code Editor
 -----
-I would recommend using either PyCharm or Visual Studio Code as this is what the guide is based on. Furthermore this guide also only works on the Windows Operating System as well as with an Android Mobile Device
+In terms of what IDE to use, I would recommend using either PyCharm (Free with GitHub Student Program) or Visual Studio Code as this is what the guide is based on. Furthermore, to ensure full compatibility with the guide you should be using the Windows Operating System and an Android Device, as more steps might be needed to set everything up to work with iOS.
 
 **STEP 2:** Installation of RASA
 -----
-You will need to have python installed in order to run RASA, you can get that here if you don't have it already
-https://www.python.org/downloads/ - RASA States to use either version 3.7 or 3.8.
+You will need to have Python installed in order to run RASA, you can get that here if you do not have it already
+https://www.python.org/downloads/ - RASA States to use either version 3.7 or 3.8 (I would recommend 3.8).
 
-Once python is installed ensure that you are able to use the PIP package manager by opening a command prompt and typing "pip".
+Once Python is installed ensure that you are able to use the PIP package manager by opening a command prompt and typing "pip".
 If that works you are ready to install RASA, do that by typing:
 ```
 pip3 install rasa[full]
