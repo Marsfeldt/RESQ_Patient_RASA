@@ -6,6 +6,8 @@ session_config:
 
 entities:
   - userStage
+  - getQuestionnaireNumber
+  - user_answer
 
 slots:
   userStage:
@@ -14,11 +16,26 @@ slots:
     influence_conversation: false
     mappings:
     - type: custom
+  getQuestionnaireNumber:
+    type: float
+    initial_value: 1
+    influence_conversation: false
+    mappings:
+    - type: custom
+  user_answer:
+    type: float  # Adjust the type according to your entity type
+    mappings:
+    - type: custom
 
 actions:
+  - action_start_questionnaire
+  - action_process_answer
+  - action_ask_next_question
   - action_inform_stage_user
   - action_transition_user_stage
   - action_advise_help_based_on_stage
+  - answer_question
+  
 
 intents:
   - greet
@@ -32,6 +49,8 @@ intents:
   - grateful
   - intent_inform_user_stage
   - intent_transition_user_stage
+  - start_questionnaire
+  - answer_question
 
 responses:
   utter_greet:

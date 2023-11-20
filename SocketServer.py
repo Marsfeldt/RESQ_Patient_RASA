@@ -98,6 +98,7 @@ def handle_message(data):
         'MessageType': messageType,
         'Timestamp': timestamp
     }
+    
     dataToSend = {'UID': uuid, 'UserName': "YoWhaddup",
                   'PromScore': 20, 'AnotherPromScore': 40, 'Timestamp': timestamp}
     db.insert_data('userData', dataToSend)

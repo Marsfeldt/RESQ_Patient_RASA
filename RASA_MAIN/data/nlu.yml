@@ -133,3 +133,24 @@ nlu:
     - I would like to change stage
     - Can you change my user stage
     - Modify my user stage
+
+#######################################################
+# Questionnaire Related Intents
+#######################################################
+# QI = Questionnaire Intent
+
+- intent: start_questionnaire
+  examples: |
+    - I want to start the questionnaire
+    - Start the questionnaire
+    - Can we begin the questionnaire?
+    - Let's start the survey
+    - Begin questionnaire
+
+- intent: answer_question
+  examples: |
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
