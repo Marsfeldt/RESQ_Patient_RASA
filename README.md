@@ -114,3 +114,8 @@ Once you see this: <br />
 You can then click 'a'
 ```
 Then once it is done installing the application and launching the emulator you should see the virtual device with the app launched.
+
+Remakrs & Bugs
+-----
+- The app will automatically save the messages to the phones local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
+
