@@ -11,6 +11,7 @@ import {
 } from '../../../components/SocketManager/SocketManager';
 import { useRoute } from '@react-navigation/native';
 import { saveMessages, loadMessages } from '../../../components/AsyncStorageUtils';
+import QuestionnaireButtonLayout from '../../../components/QuestionnaireButtonLayout';
 
 const ChatWindowScreen = () => {
   const route = useRoute();
@@ -18,6 +19,71 @@ const ChatWindowScreen = () => {
   const [userUUID, setUserUUID] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [questionnaireLayout, setQuestionnaireLayout] = useState(false);
+
+  const handleQuestionnaireButtonClick = (buttonName) => {
+    const handleButtonClickLogic = (messageText) => {
+      setIsLoading(true);
+      const messageId = generateUUID();
+      const messageSentTime = new Date();
+
+      // Create a new message object
+      const newMessage = {
+        _id: messageId,
+        text: messageText,
+        createdAt: new Date(),
+        user: {
+          _id: userUUID,
+        },
+      };
+
+      // Update the state to include the new message
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [newMessage])
+      );
+
+      // Emit the user_uttered event
+      rasaServerSocket.emit(
+        'user_uttered',
+        { session_id: rasaServerSocket.id, message: messageText },
+        () => {
+          const acknowledgmentTime = new Date() - messageSentTime;
+          console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
+
+          setIsLoading(false);
+
+          // Send data to the backend for database storing
+          sendDataThroughDataSocket(
+            messageText,
+            messageId,
+            'False',
+            'Question'
+          );
+        }
+      );
+    };
+
+    switch (buttonName) {
+      case 'Button1':
+        handleButtonClickLogic('1');
+        break;
+      case 'Button2':
+        handleButtonClickLogic('2');
+        break;
+      case 'Button3':
+        handleButtonClickLogic('3');
+        break;
+      case 'Button4':
+        handleButtonClickLogic('4');
+        break;
+      case 'Button5':
+        handleButtonClickLogic('5');
+        break;
+      default:
+        console.log(`Button ${buttonName} not handled`);
+    }
+  };
+
 
   // Function for loading earlier messages in the chat conversation by loading them from the phones local storage
   const loadEarlierMessages = useCallback(async () => {
@@ -144,6 +210,17 @@ const ChatWindowScreen = () => {
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, [delayedBotMessage])
       );
+
+      if (botText && /afsluttet/.test(botText)) {
+        setQuestionnaireLayout(false);
+        console.log('Disabling questionnaire layout.');
+        console.warn('User Message: ' + botText + ' Boolean State: ' + questionnaireLayout);
+      }
+
+      if (botText && typeof botText == 'string' && /questionnaire/.test(botText)) {
+        setQuestionnaireLayout(true);
+        console.log('Enabling questionnaire layout.');
+      }
 
       setIsLoading(false);
 
@@ -274,6 +351,10 @@ const ChatWindowScreen = () => {
   return (
     <View style={styles.container}>
       <TopNavigationBar username={username} />
+      <QuestionnaireButtonLayout
+        showButtons={questionnaireLayout}
+        onButtonClick={handleQuestionnaireButtonClick}
+      />
       <GiftedChat
         messages={messages}
         onSend={onSend}

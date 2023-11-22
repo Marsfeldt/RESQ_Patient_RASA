@@ -33,15 +33,16 @@ from rasa_sdk.types import DomainDict
 
 questionnaireCompleted = False
 
-questionnaire_questions = ["Hvad vil du give Pizza på en skala fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give Burritos på en skala fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give Tacos på en skal fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give Nachos på en skala fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give Burger King på en skala fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give McDonalds på en skala fra 1 (Dårlig) - 5 (God)",
-                          "Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
-                        ]
+questionnaire_questions = [
+    "Hvad vil du give Pizza på en skala fra 1 (Dårlig) - 5 (God)",
+    "Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)",
+    "Hvad vil du give Burritos på en skala fra 1 (Dårlig) - 5 (God)"
+    #"Hvad vil du give Tacos på en skal fra 1 (Dårlig) - 5 (God)",
+    #"Hvad vil du give Nachos på en skala fra 1 (Dårlig) - 5 (God)",
+    #"Hvad vil du give Burger King på en skala fra 1 (Dårlig) - 5 (God)",
+    #"Hvad vil du give McDonalds på en skala fra 1 (Dårlig) - 5 (God)",
+    #"Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
+]
 
 
 class ActionStartQuestionnaire(Action):
@@ -49,7 +50,8 @@ class ActionStartQuestionnaire(Action):
         return "action_start_questionnaire"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        dispatcher.utter_message(text="Welcome to the questionnaire! Let's get started.")
+        dispatcher.utter_message(
+            text="Welcome to the questionnaire! Let's get started.")
 
         # Set the current question index in the tracker
         tracker.slots['current_question_index'] = 0
@@ -59,6 +61,7 @@ class ActionStartQuestionnaire(Action):
         dispatcher.utter_message(text=next_question)
 
         return []
+
 
 class ActionAskNextQuestion(Action):
     def name(self) -> Text:
@@ -81,7 +84,8 @@ class ActionAskNextQuestion(Action):
             return [SlotSet('current_question_index', next_question_index)]
         else:
             # All questions have been answered, thank the user
-            dispatcher.utter_message(text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
+            dispatcher.utter_message(
+                text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
             return [SlotSet('current_question_index', None)]
 
 
@@ -103,11 +107,11 @@ class ActionProcessAnswer(Action):
             if 1 <= user_rating <= 5:
                 # Valid rating, you can store or further process the answer
                 dispatcher.utter_message(
-                    text=f"Din vurdering er registreret: {user_rating}"
-                )
+                    text=f"Din vurdering er registreret: {user_rating}")
 
                 # Get the current question index from the tracker
-                current_question_index = tracker.get_slot("current_question_index")
+                current_question_index = tracker.get_slot(
+                    "current_question_index")
 
                 # Check if there are more questions
                 if (
@@ -117,28 +121,24 @@ class ActionProcessAnswer(Action):
                     # Increment the question index
                     next_question_index = current_question_index + 1
 
-                    # Ask the next question
-                    next_question = questionnaire_questions[next_question_index]
-                    dispatcher.utter_message(text=next_question)
-
                     # Update the current question index in the tracker
                     return [
-                        SlotSet("current_question_index", next_question_index)
+                        SlotSet("current_question_index", next_question_index),
+                        {"event": "user", "timestamp": None, "metadata": None,
+                            "text": questionnaire_questions[next_question_index]}
                     ]
                 else:
                     # All questions have been answered, thank the user
                     dispatcher.utter_message(
-                        text="Tak for dine svar! Du har afsluttet spørgeskemaet."
-                    )
+                        text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
                     return [
                         SlotSet("current_question_index", None),
-                        SlotSet("questionnaire_completed", True),
+                        {"event": "user", "timestamp": None, "metadata": None, "text": "Tak for dine svar! Du har afsluttet spørgeskemaet."}
                     ]
             else:
                 # Invalid rating, ask the user to provide a valid rating
                 dispatcher.utter_message(
-                    text="Venligst vælg en vurdering mellem 1 og 5."
-                )
+                    text="Venligst vælg en vurdering mellem 1 og 5.")
         except ValueError:
             # If conversion to int fails, handle the error
             dispatcher.utter_message(
@@ -146,6 +146,7 @@ class ActionProcessAnswer(Action):
             )
 
         return []
+
 
 class ActionInformStageUser(Action):
     def name(self):
@@ -156,11 +157,12 @@ class ActionInformStageUser(Action):
         response_message = f"Hello, you are in stage {userStage}"
         dispatcher.utter_message(response_message)
         return [SlotSet("userStage", userStage)]
-    
+
+
 class TrainsitionUserToStage(Action):
     def name(self) -> Text:
         return "action_transition_user_stage"
-    
+
     def run(self, dispatcher, tracker, domain):
         userStage = 4
 
@@ -168,7 +170,8 @@ class TrainsitionUserToStage(Action):
         cursor = connection.cursor()
 
         user_id = "the_coolest_of_ids"
-        cursor.execute("SELECT PromScore FROM userData WHERE UID = ?", (user_id,))
+        cursor.execute(
+            "SELECT PromScore FROM userData WHERE UID = ?", (user_id,))
         result = cursor.fetchone()
 
         if (result[0] > 20):
@@ -181,18 +184,17 @@ class TrainsitionUserToStage(Action):
             userStage = 3
             response_message = f"Hello, you are in stage {userStage}, because something failed"
 
-        
-
         dispatcher.utter_message(response_message)
         return [SlotSet("userStage", userStage)]
-    
+
+
 class AdviseHelpBasedOnStage(Action):
     def name(self) -> Text:
         return "action_advise_help_based_on_stage"
-    
+
     def run(self, dispatcher, tracker, domain):
         userStage = tracker.get_slot("userStage")
-        
+
         if userStage == 1:
             response_message = f"Stage 1: Eksempel for hjælp til folk i stadie 1"
         elif userStage == 2:

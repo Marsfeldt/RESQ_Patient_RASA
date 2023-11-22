@@ -141,11 +141,13 @@ nlu:
 
 - intent: start_questionnaire
   examples: |
-    - I want to start the questionnaire
-    - Start the questionnaire
-    - Can we begin the questionnaire?
-    - Let's start the survey
-    - Begin questionnaire
+    - Kan jeg starte spørgeskemaet
+    - Start spørgeskemaet
+    - Kan vi begynde med spørgskemaet
+    - LSkal vi starte spørgeskemaet
+    - Begynd spørgeskemaet
+    - Jeg har tid til spørgeskemaet
+    - Jeg vil gerne svar på spørgeskemaet
 
 - intent: answer_question
   examples: |
