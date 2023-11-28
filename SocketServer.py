@@ -10,8 +10,8 @@ socketio = SocketIO(app)
 # Database Initialization
 db = DatabaseHandler("./PYTHON/DATABASE/TestDatabase.db")
 userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
-conversationsDatabase = DatabaseHandler(
-    "./PYTHON/DATABASE/ChatConversations.db")
+conversationsDatabase = DatabaseHandler("./PYTHON/DATABASE/ChatConversations.db")
+questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
 
 # Connection event
 @socketio.on('connect')
@@ -103,6 +103,29 @@ def handle_message(data):
                   'PromScore': 20, 'AnotherPromScore': 40, 'Timestamp': timestamp}
     db.insert_data('userData', dataToSend)
     conversationsDatabase.insert_data('chat_conversations', conversationToLog)
+
+@socketio.on('questionnaire_question_answered')
+def handle_questionnaire_answered(data):
+    uuid = data.get('UUID')
+    username = data.get('Username')
+    userResponse = data.get('UserResponse')
+    questionID = data.get('QuestionID')
+    questionText = data.get('QuestionText')
+    questionType = data.get('QuestionType')
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    questionnaireAnswertoLog = {
+        'UUID': uuid,
+        'Username': username,
+        'UserResponse': userResponse,
+        'QuestionID': questionID,
+        'QuestionText': questionText,
+        'QuestionType': questionType,
+        'Timestamp': timestamp
+    }
+
+    questionnaireDatabase1.insert_data('QuestionnaireName1', questionnaireAnswertoLog)
+
 
 if __name__ == '__main__':
     # You can change the port as needed

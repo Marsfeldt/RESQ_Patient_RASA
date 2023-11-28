@@ -21,6 +21,9 @@ const ChatWindowScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [questionnaireLayout, setQuestionnaireLayout] = useState(false);
 
+  // Questionnaire Related States
+  const [lastBotAnswer, setLastBotAnswer] = useState('');
+
   const handleQuestionnaireButtonClick = (buttonName) => {
     const handleButtonClickLogic = (messageText) => {
       setIsLoading(true);
@@ -42,7 +45,7 @@ const ChatWindowScreen = () => {
         GiftedChat.append(previousMessages, [newMessage])
       );
 
-      // Emit the user_uttered event
+      // Emit the user_uttered
       rasaServerSocket.emit(
         'user_uttered',
         { session_id: rasaServerSocket.id, message: messageText },
@@ -61,6 +64,15 @@ const ChatWindowScreen = () => {
           );
         }
       );
+
+      pythonServerSocket.emit('questionnaire_question_answered', {
+        UUID: userUUID,
+        Username: username,
+        UserResponse: messageText,
+        QuestionID: generateUUID(),
+        QuestionText: lastBotAnswer,
+        QuestionType: 'Likert (1-5)',
+      });
     };
 
     switch (buttonName) {
@@ -149,13 +161,13 @@ const ChatWindowScreen = () => {
     const logConnection = (serverSocket, serverName) => {
       serverSocket.on('connect', () => {
         console.log(
-          `${pythonServerSocket.id} ${serverName} Server: Connected to server (ChatWindow Screen)`
+          `${serverSocket.id} ${serverName} Server: Connected to server (ChatWindow Screen)`
         );
       });
 
       serverSocket.on('disconnect', () => {
         console.log(
-          `${pythonServerSocket.id} ${serverName} Server: Disconnected from server (ChatWindow Screen)`
+          `${serverSocket.id} ${serverName} Server: Disconnected from server (ChatWindow Screen)`
         );
       });
     };
@@ -182,7 +194,7 @@ const ChatWindowScreen = () => {
     rasaServerSocket.on('bot_uttered', async (data) => {
       const botText = data.text;
       const messageId = generateUUID();
-
+      setLastBotAnswer(botText);
       // Message which follows the layout of the library 'GiftedChat'
       const botMessage = {
         _id: messageId,

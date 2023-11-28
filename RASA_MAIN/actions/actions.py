@@ -44,6 +44,12 @@ questionnaire_questions = [
     #"Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
 ]
 
+questionnaire_questions_dict = {
+    "Hvad vil du give Pizza på en skala fra 1 (Dårlig) - 5 (God)": "LikertScale 1-5",
+    "Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)": "LikertScale 1-5",
+    "Hvad vil du give Burritos på en skala fra 1 (Dårlig) - 5 (God)": "LikertScale 1-5",
+}
+
 
 class ActionStartQuestionnaire(Action):
     def name(self) -> Text:
@@ -86,6 +92,8 @@ class ActionAskNextQuestion(Action):
             # All questions have been answered, thank the user
             dispatcher.utter_message(
                 text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
+            tracker.slots['current_question_index'] = 0
+            current_question_index = 0
             return [SlotSet('current_question_index', None)]
 
 

@@ -54,8 +54,5 @@ class DatabaseHandler:
                 fetchedUUID = row[1]
             return fetchedUsername, fetchedUUID
 
-
-
-
     def close_database(self):
         self.connection.close()
