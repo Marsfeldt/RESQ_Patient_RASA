@@ -10,10 +10,10 @@ In terms of what IDE to use, I would recommend using either PyCharm (Free with G
 
 **STEP 2:** Installation of RASA
 -----
-You will need to have Python installed in order to run RASA, you can get that here if you do not have it already
+You will need to have Python installed to run RASA, you can get that here if you do not have it already
 https://www.python.org/downloads/ - RASA States to use either version 3.7 or 3.8 (I would recommend 3.8).
 
-Once Python is installed ensure that you are able to use the PIP package manager by opening a command prompt and typing "pip".
+Once Python is installed ensure that you can use the PIP package manager by opening a command prompt and typing "pip".
 If that works you are ready to install RASA, do that by typing:
 ```
 pip3 install rasa[full]
@@ -26,12 +26,11 @@ To run the application I would recommend getting yourself a virtual device to ed
 
 Link to Android Studio - https://developer.android.com/studio
 Link to Node.js - https://nodejs.org/en/download/current
-Link to Chocolatey Package Manager (Windwos) - https://chocolatey.org/
+Link to Chocolatey Package Manager (Windows) - https://chocolatey.org/
 Once all of the above is installed you can open a cmd terminal and install the Java SE Development Kit (JDK)
 ```
 choco install -y nodejs-lts microsoft-openjdk11
 ```
-
 For React Native you need a specific Android SDK 'Android 13 (Tiramisu)'
 The SDK Manager can be found within the Android Studio "Preferences" dialog, under Appearance & Behavior → System Settings → Android SDK.
 Select the "SDK Platforms" tab from within the SDK Manager, then check the box next to "Show Package Details" in the bottom right corner. Look for and expand the Android 13 (Tiramisu) entry, then make sure the following items are checked:
@@ -53,8 +52,8 @@ The default path of the Android SDK is located here
 %LOCALAPPDATA%\Android\Sdk
 ```
 To verify that ANDROID_HOME is configured correctly do the following:
-1. Open powershell
-2. Copy and paste Get-ChildItem -Path Env:\ into powershell
+1. Open PowerShell
+2. Copy and paste Get-ChildItem -Path Env:\ into PowerShell
 3. Verify ANDROID_HOME has been added
 
 Now you need to add the Platform-Tools environment variable
@@ -71,12 +70,12 @@ The default location location for this folder is:
 %LOCALAPPDATA%\Android\Sdk\platform-tools
 ```
 
-Now you need to setup a virtual device to develop the mobile application, which you can do by following these instructions:
+Now you need to set up a virtual device to develop the mobile application, which you can do by following these instructions:
 If you are running an intel processor you need "HAXM"
 ```
 https://github.com/intel/haxm/wiki/Installation-Instructions-on-Windows
 ```
-If you are running an AMD processor you need to enable SVM - Virtualization in your bios settings and enable these windows features
+If you are running an AMD processor you need to enable SVM - Virtualization in your bios settings and enable these Windows features
 ```
 Hyper-V
 Virtual Machine Platform
@@ -139,7 +138,7 @@ def handle_account_creation(data):
     userDB.create_user_account('users', accountToCreate)
     print(f'User Account: \n {uuid} , {username} , {email} , {password} , {dateOfBirth} , {accountCreatedTime} \n Created Successfully!')
 ```
-This event is called 'create_account' and this is one is emitted from the mobile application, on the signup screen whenever a user presses the button to register an account. The code from from the front-end can be seen below.
+This event is called 'create_account' and this one is emitted from the mobile application, on the signup screen whenever a user presses the button to register an account. The code from the front end can be seen below.
 
 ```
 const onRegisterPressed = () => {
@@ -180,8 +179,7 @@ pythonServerSocket.on('event_name', (data) => {
 });
 ```
 
-
-Remakrs & Bugs
+Remarks & Bugs
 -----
-- The app will automatically save the messages to the phones local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
+- The app will automatically save the messages to the phone's local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
 
