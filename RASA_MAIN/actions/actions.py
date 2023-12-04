@@ -33,6 +33,12 @@ from rasa_sdk.types import DomainDict
 
 questionnaireCompleted = False
 
+questionnaire_question_types = [
+    'LikertScale 1-5',
+    'LikertScale 1-5',
+    'LikertScale 1-5'
+]
+
 questionnaire_questions = [
     "Hvad vil du give Pizza på en skala fra 1 (Dårlig) - 5 (God)",
     "Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)",
@@ -44,26 +50,21 @@ questionnaire_questions = [
     #"Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
 ]
 
-questionnaire_questions_dict = {
-    "Hvad vil du give Pizza på en skala fra 1 (Dårlig) - 5 (God)": "LikertScale 1-5",
-    "Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)": "LikertScale 1-5",
-    "Hvad vil du give Burritos på en skala fra 1 (Dårlig) - 5 (God)": "LikertScale 1-5",
-}
-
-
 class ActionStartQuestionnaire(Action):
     def name(self) -> Text:
         return "action_start_questionnaire"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         dispatcher.utter_message(
-            text="Welcome to the questionnaire! Let's get started.")
+            text="Velkommen til spørgeskemaet, lad os komme igang!")
 
         # Set the current question index in the tracker
-        tracker.slots['current_question_index'] = 0
+        SlotSet("current_question_index", 0)
 
         # Ask the first question
         next_question = questionnaire_questions[0]
+        next_question_type = questionnaire_question_types[0]
+        print("QuestionType:", next_question_type)
         dispatcher.utter_message(text=next_question)
 
         return []
@@ -84,6 +85,8 @@ class ActionAskNextQuestion(Action):
 
             # Ask the next question
             next_question = questionnaire_questions[next_question_index]
+            next_question_type = questionnaire_question_types[next_question_index]
+            print('QuestionType:', next_question_type)
             dispatcher.utter_message(text=next_question)
 
             # Update the current question index in the tracker
@@ -92,9 +95,7 @@ class ActionAskNextQuestion(Action):
             # All questions have been answered, thank the user
             dispatcher.utter_message(
                 text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
-            tracker.slots['current_question_index'] = 0
-            current_question_index = 0
-            return [SlotSet('current_question_index', None)]
+            return [SlotSet('current_question_index', None)]  # Do not reset to 0 here
 
 
 class ActionProcessAnswer(Action):

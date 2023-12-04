@@ -229,7 +229,7 @@ const ChatWindowScreen = () => {
         console.warn('User Message: ' + botText + ' Boolean State: ' + questionnaireLayout);
       }
 
-      if (botText && typeof botText == 'string' && /questionnaire/.test(botText)) {
+      if (botText && typeof botText == 'string' && /spørgeskema/.test(botText)) {
         setQuestionnaireLayout(true);
         console.log('Enabling questionnaire layout.');
       }

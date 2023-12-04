@@ -10,4 +10,6 @@ questionnaire_questions_dict = {
 #    print(f"{value}")
 #    print(f'{key}')
 
-print(questionnaire_questions_dict.items())
+#print(questionnaire_questions_dict.items())
+
+print(questionnaire_questions_dict['Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)'])

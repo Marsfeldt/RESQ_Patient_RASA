@@ -22,6 +22,12 @@ slots:
     influence_conversation: false
     mappings:
     - type: custom
+  current_question_type:
+    type: text
+    initial_value: 'None'
+    influence_conversation: false
+    mappings:
+    - type: custom
   getQuestionnaireNumber:
     type: float
     initial_value: 1
