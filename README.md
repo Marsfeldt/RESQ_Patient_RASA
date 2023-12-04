@@ -115,6 +115,72 @@ You can then click 'a'
 ```
 Then once it is done installing the application and launching the emulator you should see the virtual device with the app launched.
 
+**Current functionality and how it works** Showcase of how to do the most common things in RASA & React Native
+-----
+**Servers** - RASA and the Backend Server
+We have 3 servers that run the project. The RASA and RASA Actions are basically the same server, although run independently in 2 terminals. Then there is a Python flask backend server which is responsible for anything that needs to interact with the database through the front end: Login, account creation, saving information to the database, and so forth. The Python server utilizes socket.io and this allows us to create events that can communicate between the front-end and the back-end. One such example
+
+```
+@socketio.on("create_account")
+def handle_account_creation(data):
+    """
+    Handles account creation from the react front-end signup screen
+    """
+    # Data values for account creation
+    # Universally Unique Identifier to separate different users
+    uuid = data.get('uuid')
+    username = data.get('username')  # Account Username
+    email = data.get('email')  # Account Email
+    # Account Password - Hashed through the front-end
+    password = data.get('password')
+    dateOfBirth = data.get('dateOfBirth')  # Account date of birth
+    accountCreatedTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Account creation time
+    accountToCreate = {'UUID': uuid, 'Username': username, 'Email': email, 'Password': password, 'DateOfBirth': dateOfBirth, 'AccountCreatedTime': accountCreatedTime}
+    userDB.create_user_account('users', accountToCreate)
+    print(f'User Account: \n {uuid} , {username} , {email} , {password} , {dateOfBirth} , {accountCreatedTime} \n Created Successfully!')
+```
+This event is called 'create_account' and this is one is emitted from the mobile application, on the signup screen whenever a user presses the button to register an account. The code from from the front-end can be seen below.
+
+```
+const onRegisterPressed = () => {
+        if (pythonServerSocket) {
+            // Hash the password before sending it
+            hash(password, 5, (hashErr, hashedPassword) => {
+                if (hashErr) {
+                    console.error('Error hashing password:', hashErr);
+                } else {
+                    console.log("pass " + password)
+                    // Send the account data to the Python Server
+                    pythonServerSocket.emit('create_account', {
+                        uuid: pythonServerSocket.id,
+                        username: username,
+                        email: email,
+                        password: hashedPassword, // Send the hashed password
+                        dateOfBirth: dateOfBirth
+                    });
+                }
+            });
+        } else {
+            console.error('Socket is not available.');
+        }
+    }
+```
+Anything new that you might implement that requires some communication with the database or the backend should always be through sockets to and from the backend as having methods to write and read directly from the front-end can have security risks. To create an event and functionality you can do the following:
+```
+@socketio.on("event_name")
+def generic_function(data): <- Note having an argument here is only required if your emit is gonna send some data from the front-end
+  # Add your own functionality here
+
+If you need to send something to the front-end you can also use emits here using this line of code
+socketio.emit('event_name', data) <- Note you need an event listener on the front end if you need to send information from the back end
+
+# React Native on event
+pythonServerSocket.on('event_name', (data) => {
+  console.log(data + 'Some data send from the backend');
+});
+```
+
+
 Remakrs & Bugs
 -----
 - The app will automatically save the messages to the phones local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
