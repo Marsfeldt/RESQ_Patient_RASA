@@ -114,9 +114,10 @@ You can then click 'a'
 ```
 Then once it is done installing the application and launching the emulator you should see the virtual device with the app launched.
 
-**Current functionality and how it works** Showcase of how to do the most common things in RASA & React Native
+**Current functionality and how it works** Socket.io, server and events
 -----
 **Servers** - RASA and the Backend Server
+<br />
 We have 3 servers that run the project. The RASA and RASA Actions are basically the same server, although run independently in 2 terminals. Then there is a Python flask backend server which is responsible for anything that needs to interact with the database through the front end: Login, account creation, saving information to the database, and so forth. The Python server utilizes socket.io and this allows us to create events that can communicate between the front-end and the back-end. One such example
 
 ```
@@ -164,22 +165,47 @@ const onRegisterPressed = () => {
         }
     }
 ```
-Anything new that you might implement that requires some communication with the database or the backend should always be through sockets to and from the backend as having methods to write and read directly from the front-end can have security risks. To create an event and functionality you can do the following:
+Anything new that you might implement that requires some communication with the database or the backend should always be through sockets to and from the backend as having methods to write and read directly in the front-end can have security risks. To create an event and functionality you can do the following:
 ```
 @socketio.on("event_name")
-def generic_function(data): <- Note having an argument here is only required if your emit is gonna send some data from the front-end
+def generic_function(data): <- Note having an argument here is only required if your emit is going to send some data from/to the front-end
   # Add your own functionality here
 
 If you need to send something to the front-end you can also use emits here using this line of code
-socketio.emit('event_name', data) <- Note you need an event listener on the front end if you need to send information from the back end
+socketio.emit('event_name', data) <- Note you need an event listener on the front end if you need to send information from the back end (Furhter examples of this are also present in the SocketServer.py script which hosts the backend server)
 
 # React Native on event
 pythonServerSocket.on('event_name', (data) => {
-  console.log(data + 'Some data send from the backend');
+  console.log(data + 'Some data send from the front-end');
 });
+```
+
+**Current functionality and how it works** Databasehandler generic functions
+-----
+**Database** - Sqlite3
+<br />
+To manage the database, a python script 'Databasehandler.py' has been made to control all the reads/writes to the database into a single class that can be easily expanded upon. Currently we have the following functions 
+1. insert_data(self, tableName, data) <- Function to insert data into a specific database
+2. retrieve_password_from_username(self, tableName, username) <- Retrieves a password from a specific user *requires their username*
+3. fetch_information_from_user(self, tableName, username) <- fetches their username and their uuid to distinguish users when they log in
+```
+Example of usage
+
+dataToSend = {
+    'UID': uuid, 
+    'UserName': "YoWhaddup",
+    'PromScore': 20, 
+    'AnotherPromScore': 40, 
+    'Timestamp': timestamp
+}
+
+db.insert_data('userData', dataToSend)
+
+Inserts dataToSend into the table 'userData' in the database located under 'PYTHON/DATABASE/TestDatabase.db'
 ```
 
 Remarks & Bugs
 -----
 - The app will automatically save the messages to the phone's local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
+- create_user_account functio in database handler can be replacted with just the insert_data one which already exists
 
