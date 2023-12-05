@@ -189,7 +189,9 @@ To manage the database, a python script 'Databasehandler.py' has been made to co
 2. retrieve_password_from_username(self, tableName, username) <- Retrieves a password from a specific user *requires their username*
 3. fetch_information_from_user(self, tableName, username) <- fetches their username and their uuid to distinguish users when they log in
 ```
-Example of usage
+Example usage of the insert_data function
+
+db = DatabaseHandler("./PYTHON/DATABASE/TestDatabase.db")
 
 dataToSend = {
     'UID': uuid, 
