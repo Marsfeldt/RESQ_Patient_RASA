@@ -229,8 +229,51 @@ class ActionInformStageUser(Action):
 
 This custom action gets a slot defined in the domain.yml file called userStage and then informs the user of the current stage. In custom actions, if you want the bot to send an answer you use dispatcher.utter_message('message')
 ```
+To do simple responses from RASA that do not require custom functionality you should use the three files mentioned above (nlu, rules, and stories) This is the main functionality that RASA is comprised of.
+```
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+    - moin
+    - hey there
+    - let's go
+    - hey dude
+    - goodmorning
+    - goodevening
+    - good afternoon
+```
+The intents which are located in the nlu.yml file are the messages that the bot will be able to respond to. In this instance, we have a greeting. Under 'examples:' we can see the different examples of what the user could write to the bot. The bot is then trained on these examples to respond to a specific intent.
+```
+- story: happy path
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: mood_great
+  - action: utter_happy
+```
+In the stories.yml you can define a story that combines multiple intents if you want the bot to continue down a specific story path. In the above example, you can see that the user would start a greet, which the bot would respond to. Afterwards the user expresses their current mood which the bot then also responds to. This is a simple example of how to utilize stories.
+
+```
+- rule: Say goodbye anytime the user says goodbye
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Transition the user stage
+  steps:
+  - intent: intent_transition_user_stage
+  - action: action_transition_user_stage
+```
+
+In rules.yml you can define certain rules if you want certain behaviour to always happen. In this example we want the bot to always say goodbye to the user if the user says goodbye. This rule functionality can be used for more complex examples as well. In the second rule, we have included custom actions into the rule so that we always transition the user stage if they ask to be transitioned. However, this is only to show how rules can be used, as we would want the transition between user stages to happen without notifying the user.
+
 Remarks & Bugs
 -----
 - The app will automatically save the messages to the phone's local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
-- create_user_account function in the database handler can be replaced with just the insert_data one which already exists
+- The create_user_account function in the database handler can be replaced with just the insert_data one which already exists
 
