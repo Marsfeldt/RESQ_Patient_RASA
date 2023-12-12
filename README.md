@@ -16,9 +16,8 @@ https://www.python.org/downloads/ - RASA States to use either version 3.7 or 3.8
 Once Python is installed ensure that you can use the PIP package manager by opening a command prompt and typing "pip".
 If that works you are ready to install RASA, do that by typing:
 ```
-pip3 install rasa[full]
+pip3 install rasa
 ```
-This installs RASA together with all the machine learning-related dependencies needed to run RASA.
 
 **STEP 3:** Installation of Android Studio, Emulator, React, NPM and Expo
 -----
@@ -92,18 +91,24 @@ https://developer.android.com/studio/run/managing-avds
 1. Open the folder for the RASA Main project
 2. Open a new terminal and paste the following command to run the RASA Server
 ```
+python -m rasa train
+```
+!. Should you encounter any errors during the training it could be due to version mismatches or dependency problems. The console should notify you if this is the case. Then you should try to reinstall some of the libraries with the suggested versions
+3. After the model has been trained you should see a console message that it was successful as well as the model appearing in the models folder.
+4. Now you can start the rasa server with the following command
+```
 python -m rasa run --model models --enable-api --cors "*"
 ```
-3. After the server has started it should say "Rasa server running..."
-4. Open a new terminal and start the RASA Action Server by pasting this command
+5. After the server has started it should say "Rasa server running..."
+6. Open a new terminal and start the RASA Action Server by pasting this command
 ```
 python -m rasa run actions
 ```
-5. Next head over to the "Data Collection.py" script which is where the Proxy server is located and run this script
+7. Next head over to the "SocketServer.py" script which is where the backend server is located and run this script
 
 Now you should have 3 Terminals with 3 servers running.
 
-6. Open the folder for the React Native Mobile Application, then open a terminal and type this command:
+7. Open the folder for the React Native Mobile Application, then open a terminal and type this command:
 ```
 npm start
 ```
@@ -172,7 +177,7 @@ def generic_function(data): <- Note having an argument here is only required if 
   # Add your own functionality here
 
 If you need to send something to the front-end you can also use emits here using this line of code
-socketio.emit('event_name', data) <- Note you need an event listener on the front end if you need to send information from the back end (Furhter examples of this are also present in the SocketServer.py script which hosts the backend server)
+socketio.emit('event_name', data) <- Note you need an event listener on the front end if you need to send information from the back end (further examples of this are also present in the SocketServer.py script which hosts the backend server)
 
 # React Native on event
 pythonServerSocket.on('event_name', (data) => {
@@ -184,7 +189,7 @@ pythonServerSocket.on('event_name', (data) => {
 -----
 **Database** - Sqlite3
 <br />
-To manage the database, a python script 'Databasehandler.py' has been made to control all the reads/writes to the database into a single class that can be easily expanded upon. Currently we have the following functions 
+To manage the database, a Python script 'Databasehandler.py' has been made to control all the reads/writes to the database into a single class that can be easily expanded upon. Currently, we have the following functions 
 1. insert_data(self, tableName, data) <- Function to insert data into a specific database
 2. retrieve_password_from_username(self, tableName, username) <- Retrieves a password from a specific user *requires their username*
 3. fetch_information_from_user(self, tableName, username) <- fetches their username and their uuid to distinguish users when they log in
@@ -209,5 +214,5 @@ Inserts dataToSend into the table 'userData' in the database located under 'PYTH
 Remarks & Bugs
 -----
 - The app will automatically save the messages to the phone's local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
-- create_user_account functio in database handler can be replacted with just the insert_data one which already exists
+- create_user_account function in the database handler can be replaced with just the insert_data one which already exists
 
