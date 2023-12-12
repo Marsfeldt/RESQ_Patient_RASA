@@ -210,7 +210,25 @@ db.insert_data('userData', dataToSend)
 
 Inserts dataToSend into the table 'userData' in the database located under 'PYTHON/DATABASE/TestDatabase.db'
 ```
+**How to develop for the RASA Chatbot** nlu, intents, domain and actions
+-----
+**RASA** - Chatbot
+Under the folder named 'RASA_MAIN' and in the subfolder 'data' you can find the files you will need to develop for RASA, those files are: nlu.yml, rules.yml and stories.yml. Every intent or action that you end up making needs to be defined in the domain.yml which is in the RASA_MAIN directory. If you ever need to implement custom behaviour for the bot, you need to do that in the actions.py script under 'RASA_MAIN' -> 'actions'. In this script you can implement custom actions.
+<br />
+A simple example of how you can utilize custom actions:
+```
+class ActionInformStageUser(Action):
+    def name(self):
+        return "action_inform_stage_user"
 
+    def run(self, dispatcher, tracker, domain):
+        userStage = tracker.get_slot("userStage")
+        response_message = f"Hello, you are in stage {userStage}"
+        dispatcher.utter_message(response_message)
+        return [SlotSet("userStage", userStage)]
+
+This custom action gets a slot defined in the domain.yml file called userStage and then informs the user of the current stage. In custom actions, if you want the bot to send an answer you use dispatcher.utter_message('message')
+```
 Remarks & Bugs
 -----
 - The app will automatically save the messages to the phone's local storage depending on which user is logged in. Therefore signing in on multiple accounts interferes with the loading of previous chat history which results in the messages appearing incorrectly in the chat window. Although we are assuming that people will not utilize multiple accounts on the same phone.
