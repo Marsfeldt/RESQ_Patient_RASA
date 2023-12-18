@@ -2,19 +2,29 @@
 
 **INTRO**
 -----
-In this README you will be introduced to the whole system: How to install and run it, how to utilize some of the generic functions, as well as how to further implement new functionality into the system.
+^Write a quick summary of the program, i.e. what is the purpose, what functionality does it have, etc..^ 
+
+In this README consists of 1) a step-by-step guide on how to install and run the program, 2) an overview of the generic functions and how to utilize them, and 3) suggestions on how to implement further improvements and new functionality into the system.
+
+**STEP 0:** Operating system 
+-----
+This guide is made using a Windows Operating System ^include version^ and an Android Device ^include OS version^, if you decide to implement using another operating system such as Linux or Apple iOS it may require additional steps not covered in this guide.
 
 **STEP 1:** IDE / Code Editor
 -----
-In terms of what IDE to use, I would recommend using either PyCharm (Free with GitHub Student Program) or Visual Studio Code as this is what the guide is based on. Furthermore, to ensure full compatibility with the guide you should be using the Windows Operating System and an Android Device, as more steps might be needed to set everything up to work with iOS.
+This guide utilizes Visual Studio Code ^include version and link to download^, but the program should work on other IDEs such as PyCharm ^include version^ (Free with GitHub Student Program ^link to download^), but these may have their quarks not included in this guide.
 
-**STEP 2:** Installation of RASA
+**STEP 2:** Install Python
 -----
-You will need to have Python installed to run RASA, you can get that here if you do not have it already
-https://www.python.org/downloads/ - RASA States to use either version 3.7 or 3.8 (I would recommend 3.8).
+If you do not already have Python installed you can get it here https://www.python.org/downloads/ - you need either version 3.7 or 3.8 to run RASA, but we would recommend 3.8.
 
-Once Python is installed ensure that you can use the PIP package manager by opening a command prompt and typing "pip".
-If that works you are ready to install RASA, do that by typing:
+Once Python is installed ensure that you can use the PIP package manager by opening a command prompt and typing "pip". 
+
+^What should one do if the pip does not work?^
+
+**STEP 2:** Install RASA
+-----
+Once Python and the pip work, you have to install RASA ^link to website^ by typing:
 ```
 pip3 install rasa
 ```
