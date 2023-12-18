@@ -8,11 +8,11 @@ In this README consists of 1) a step-by-step guide on how to install and run the
 
 **STEP 0:** Operating system 
 -----
-This guide is made using a Windows Operating System ^include version^ and an Android Device ^include OS version^, if you decide to implement using another operating system such as Linux or Apple iOS it may require additional steps not covered in this guide.
+This guide is made using a Windows 11 Operating System (Different Windows versions should not be a problem) and an Android Device (One Plus Nord 2), if you decide to implement using another operating system such as Linux or Apple iOS it may require additional steps not covered in this guide.
 
 **STEP 1:** IDE / Code Editor
 -----
-This guide utilizes Visual Studio Code ^include version and link to download^, but the program should work on other IDEs such as PyCharm ^include version^ (Free with GitHub Student Program ^link to download^), but these may have their quarks not included in this guide.
+This guide utilizes Visual Studio Code (https://code.visualstudio.com/) you can get the newest version, but the program should work on other IDEs such as PyCharm (https://www.jetbrains.com/pycharm/) (Free with GitHub Student Program https://education.github.com/pack).
 
 **STEP 2:** Install Python
 -----
@@ -20,11 +20,11 @@ If you do not already have Python installed you can get it here https://www.pyth
 
 Once Python is installed ensure that you can use the PIP package manager by opening a command prompt and typing "pip". 
 
-^What should one do if the pip does not work?^
+! If you are not able to utilize the pip package manager try and do a clean wipe of python and then reinstall it !
 
 **STEP 2:** Install RASA
 -----
-Once Python and the pip work, you have to install RASA ^link to website^ by typing:
+Once Python and the pip work, you have to install RASA (https://rasa.com/) by typing:
 ```
 pip3 install rasa
 ```
