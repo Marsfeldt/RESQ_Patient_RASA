@@ -54,5 +54,26 @@ class DatabaseHandler:
                 fetchedUUID = row[1]
             return fetchedUsername, fetchedUUID
 
+    def fetch_questionnaire_results_from_user(self, tableName, username):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(f'SELECT UserResponse, QuestionText uuid FROM {tableName} where username = ?', (username,))
+
+            rows = cursor.fetchall()
+
+            questionnaireTotal = 0
+            for row in rows:
+                print(f"Datapoint: {row[0]}")
+                questionnaireTotal += int(row[0])
+                print(f"Questionnaire Total:", questionnaireTotal)
+
+
+    def fetch_userStage_from_user(self, tableName, username):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(f'SELECT stage FROM {tableName} where username = ?', (username,))
+            stage = cursor.fetchone()
+            return stage
+
     def close_database(self):
         self.connection.close()

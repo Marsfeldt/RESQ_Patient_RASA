@@ -48,7 +48,7 @@ const ChatWindowScreen = () => {
       // Emit the user_uttered
       rasaServerSocket.emit(
         'user_uttered',
-        { session_id: rasaServerSocket.id, message: messageText },
+        { session_id: userUUID, message: messageText },
         () => {
           const acknowledgmentTime = new Date() - messageSentTime;
           console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
@@ -160,6 +160,7 @@ const ChatWindowScreen = () => {
   const socketConnectionEvent = () => {
     const logConnection = (serverSocket, serverName) => {
       serverSocket.on('connect', () => {
+        serverSocket.emit('session_request', { session_id: userUUID });
         console.log(
           `${serverSocket.id} ${serverName} Server: Connected to server (ChatWindow Screen)`
         );
@@ -291,7 +292,7 @@ const ChatWindowScreen = () => {
           text,
           createdAt: new Date(),
           user: {
-            _id: rasaServerSocket.id,
+            _id: userUUID,
           },
         };
 
@@ -302,7 +303,7 @@ const ChatWindowScreen = () => {
         // This emits the users message from where the RASA server is listening for the users question on the event 'user_uttered'
         rasaServerSocket.emit(
           'user_uttered',
-          { session_id: rasaServerSocket.id, message: text },
+          { session_id: userUUID, message: text },
           () => {
             const acknowledgmentTime =
               new Date() - messageSentTime;

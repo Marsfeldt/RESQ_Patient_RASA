@@ -38,6 +38,7 @@ def handle_login(username):
     Handles login behaviour to retrieve the users password, whereafter it through the front-end decrypts it
     and compares it with the users password to authorize their login credentials
     """
+    userStage = userDB.fetch_userStage_from_user('users', username)
     userPassword = userDB.retrieve_password_from_username('users', username)
     if userPassword:
         socketio.emit('user_password', userPassword)
@@ -61,15 +62,16 @@ def handle_account_creation(data):
     email = data.get('email')  # Account Email
     # Account Password - Hashed through the front-end
     password = data.get('password')
+    stage = 1
     dateOfBirth = data.get('dateOfBirth')  # Account date of birth
     accountCreatedTime = datetime.datetime.now().strftime(
         '%Y-%m-%d %H:%M:%S')  # Account creation time
 
-    accountToCreate = {'UUID': uuid, 'Username': username, 'Email': email, 'Password': password,
+    accountToCreate = {'UUID': uuid, 'Username': username, 'Email': email, 'Password': password, 'Stage': stage,
                        'DateOfBirth': dateOfBirth, 'AccountCreatedTime': accountCreatedTime}
     userDB.create_user_account('users', accountToCreate)
     print(
-        f'User Account: \n {uuid} , {username} , {email} , {password} , {dateOfBirth} , {accountCreatedTime} \n Created Successfully!')
+        f'User Account: \n {uuid} , {username} , {email} , {password} , {stage} , {dateOfBirth} , {accountCreatedTime} \n Created Successfully!')
 
 # Client Message event
 @socketio.on('message_from_client')
@@ -129,4 +131,6 @@ def handle_questionnaire_answered(data):
 
 if __name__ == '__main__':
     # You can change the port as needed
-    socketio.run(app, host='172.24.221.176', port=5006, debug=True)
+    socketio.run(app, host='172.31.157.12', port=5006, debug=True)
+    # 130.225.198.128
+    # 172.31.157.55

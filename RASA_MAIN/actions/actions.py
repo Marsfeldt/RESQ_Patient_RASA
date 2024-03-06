@@ -7,7 +7,7 @@
 
 # This is a simple example for a custom action which utters "Hello World!"
 
-from typing import Any, Coroutine, Text, Dict, List
+from typing import Any, Coroutine, Text, Dict, List, Optional
 import sys
 #
 from rasa_sdk import Action, Tracker
@@ -16,6 +16,7 @@ from rasa_sdk.events import SlotSet
 import sqlite3
 
 from rasa_sdk.types import DomainDict
+from rasa.core.channels.socketio import SocketIOInput
 #
 #
 # class ActionHelloWorld(Action):
@@ -48,6 +49,14 @@ questionnaire_questions = [
     #"Hvad vil du give Burger King på en skala fra 1 (Dårlig) - 5 (God)",
     #"Hvad vil du give McDonalds på en skala fra 1 (Dårlig) - 5 (God)",
     #"Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
+]
+
+stages = [
+    "pre-contemplation",
+    "contemplation",
+    "preparation",
+    "action",
+    "maintenance"
 ]
 
 class ActionStartQuestionnaire(Action):
@@ -157,13 +166,24 @@ class ActionProcessAnswer(Action):
         return []
 
 
+class ActionCalculateStageTransitionScore(Action):
+    def name(self):
+        return "action_calculate_stage_transition_score"
+    
+    def run(self, dispatcher, tracker, domain):
+        userStage = tracker.get_slot("userStage")
+
+        print("Calculating score...")
+
+
+
 class ActionInformStageUser(Action):
     def name(self):
         return "action_inform_stage_user"
 
     def run(self, dispatcher, tracker, domain):
         userStage = tracker.get_slot("userStage")
-        response_message = f"Hello, you are in stage {userStage}"
+        response_message = f"Hello, you are in stage {userStage} , {tracker.sender_id}"
         dispatcher.utter_message(response_message)
         return [SlotSet("userStage", userStage)]
 
