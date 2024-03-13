@@ -9,6 +9,7 @@
 
 from typing import Any, Coroutine, Text, Dict, List, Optional
 import sys
+sys.path.append('../')
 #
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
@@ -17,6 +18,8 @@ import sqlite3
 
 from rasa_sdk.types import DomainDict
 from rasa.core.channels.socketio import SocketIOInput
+from DatabaseHandler import *
+
 #
 #
 # class ActionHelloWorld(Action):
@@ -59,6 +62,26 @@ stages = [
     "maintenance"
 ]
 
+userDB = DatabaseHandler("../PYTHON/DATABASE/Users.db")
+
+class ActionInitializeUserStage(Action):
+    def name(self):
+        return "action_initialize_user_stage"
+
+    def run(self, dispatcher, tracker, domain):
+        # Get the user id
+        user_id = tracker.sender_id
+
+        # Check if the user exists in the database
+        stage = userDB.fetch_userStage_from_uuid('Users', user_id)
+
+        # Set the user's stage as a slot
+        return [SlotSet("userStage", stage)]
+
+    def shutdown(self):
+        # Close the database connection when the action server is stopped
+        self.conn.close()
+
 class ActionStartQuestionnaire(Action):
     def name(self) -> Text:
         return "action_start_questionnaire"
@@ -68,15 +91,14 @@ class ActionStartQuestionnaire(Action):
             text="Velkommen til spørgeskemaet, lad os komme igang!")
 
         # Set the current question index in the tracker
-        SlotSet("current_question_index", 0)
-
-        # Ask the first question
-        next_question = questionnaire_questions[0]
-        next_question_type = questionnaire_question_types[0]
-        print("QuestionType:", next_question_type)
+        current_question_index = 0
+        next_question = questionnaire_questions[current_question_index]
+        next_question_type = questionnaire_question_types[current_question_index]
+        print('QuestionType:', next_question_type)
         dispatcher.utter_message(text=next_question)
 
-        return []
+        return [SlotSet("current_question_index", current_question_index)]
+
 
 
 class ActionAskNextQuestion(Action):
@@ -84,27 +106,18 @@ class ActionAskNextQuestion(Action):
         return "action_ask_next_question"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        # Get the current question index from the tracker
         current_question_index = tracker.get_slot('current_question_index')
 
-        # Check if there are more questions
         if current_question_index is not None and current_question_index < len(questionnaire_questions) - 1:
-            # Increment the question index
             next_question_index = current_question_index + 1
-
-            # Ask the next question
             next_question = questionnaire_questions[next_question_index]
             next_question_type = questionnaire_question_types[next_question_index]
             print('QuestionType:', next_question_type)
             dispatcher.utter_message(text=next_question)
 
-            # Update the current question index in the tracker
             return [SlotSet('current_question_index', next_question_index)]
         else:
-            # All questions have been answered, thank the user
-            dispatcher.utter_message(
-                text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
-            return [SlotSet('current_question_index', None)]  # Do not reset to 0 here
+            return [SlotSet('current_question_index', None)]
 
 
 class ActionProcessAnswer(Action):
@@ -114,56 +127,42 @@ class ActionProcessAnswer(Action):
     def run(
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict
     ) -> List[Dict[Text, Any]]:
-        # Retrieve the user's answer text
         user_answer = tracker.latest_message["text"]
 
         try:
-            # Attempt to convert the user's answer to an integer
             user_rating = int(user_answer)
 
-            # Check if the rating is within a valid range (1 to 5)
             if 1 <= user_rating <= 5:
-                # Valid rating, you can store or further process the answer
                 dispatcher.utter_message(
                     text=f"Din vurdering er registreret: {user_rating}")
 
-                # Get the current question index from the tracker
                 current_question_index = tracker.get_slot(
                     "current_question_index")
 
-                # Check if there are more questions
                 if (
                     current_question_index is not None
                     and current_question_index < len(questionnaire_questions) - 1
                 ):
-                    # Increment the question index
                     next_question_index = current_question_index + 1
 
-                    # Update the current question index in the tracker
                     return [
                         SlotSet("current_question_index", next_question_index),
                         {"event": "user", "timestamp": None, "metadata": None,
-                            "text": questionnaire_questions[next_question_index]}
+                         "text": questionnaire_questions[next_question_index]}
                     ]
                 else:
-                    # All questions have been answered, thank the user
                     dispatcher.utter_message(
-                        text="Tak for dine svar! Du har afsluttet spørgeskemaet.")
-                    return [
-                        SlotSet("current_question_index", None),
-                        {"event": "user", "timestamp": None, "metadata": None, "text": "Tak for dine svar! Du har afsluttet spørgeskemaet."}
-                    ]
+                        text="Tak for dine svar! Undersøgelsen er nu afsluttet.")
+                    return [SlotSet("current_question_index", None)]
             else:
-                # Invalid rating, ask the user to provide a valid rating
                 dispatcher.utter_message(
                     text="Venligst vælg en vurdering mellem 1 og 5.")
         except ValueError:
-            # If conversion to int fails, handle the error
             dispatcher.utter_message(
                 text="Venligst indtast et gyldigt tal mellem 1 og 5 for din vurdering."
             )
 
-        return []
+        return [SlotSet('current_question_index', None)]
 
 
 class ActionCalculateStageTransitionScore(Action):
@@ -182,10 +181,14 @@ class ActionInformStageUser(Action):
         return "action_inform_stage_user"
 
     def run(self, dispatcher, tracker, domain):
-        userStage = tracker.get_slot("userStage")
-        response_message = f"Hello, you are in stage {userStage} , {tracker.sender_id}"
+        # Get the user id
+        user_id = tracker.sender_id
+
+        # Check if the user exists in the database
+        stage = userDB.fetch_userStage_from_uuid('Users', user_id)
+        response_message = f"Hello, you are in stage {stage} , {tracker.sender_id}"
         dispatcher.utter_message(response_message)
-        return [SlotSet("userStage", userStage)]
+        return [SlotSet("userStage", stage)]
 
 
 class TrainsitionUserToStage(Action):

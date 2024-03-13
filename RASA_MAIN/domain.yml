@@ -8,6 +8,7 @@ entities:
   - userStage
   - getQuestionnaireNumber
   - user_answer
+  - current_question_index
 
 slots:
   userStage:
@@ -47,6 +48,7 @@ actions:
   - action_transition_user_stage
   - action_advise_help_based_on_stage
   - answer_question
+  - action_initialize_user_stage
   
 
 intents:

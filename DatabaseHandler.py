@@ -68,10 +68,10 @@ class DatabaseHandler:
                 print(f"Questionnaire Total:", questionnaireTotal)
 
 
-    def fetch_userStage_from_user(self, tableName, username):
+    def fetch_userStage_from_uuid(self, tableName, uuid):
         with self.connection as connection:
             cursor = connection.cursor()
-            cursor.execute(f'SELECT stage FROM {tableName} where username = ?', (username,))
+            cursor.execute(f'SELECT stage FROM {tableName} where UUID = ?', (uuid,))
             stage = cursor.fetchone()
             return stage
 

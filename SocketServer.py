@@ -38,7 +38,6 @@ def handle_login(username):
     Handles login behaviour to retrieve the users password, whereafter it through the front-end decrypts it
     and compares it with the users password to authorize their login credentials
     """
-    userStage = userDB.fetch_userStage_from_user('users', username)
     userPassword = userDB.retrieve_password_from_username('users', username)
     if userPassword:
         socketio.emit('user_password', userPassword)
@@ -134,3 +133,4 @@ if __name__ == '__main__':
     socketio.run(app, host='172.31.157.12', port=5006, debug=True)
     # 130.225.198.128
     # 172.31.157.55
+    # 172.31.157.12
