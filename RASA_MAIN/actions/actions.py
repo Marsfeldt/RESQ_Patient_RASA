@@ -99,8 +99,6 @@ class ActionStartQuestionnaire(Action):
 
         return [SlotSet("current_question_index", current_question_index)]
 
-
-
 class ActionAskNextQuestion(Action):
     def name(self) -> Text:
         return "action_ask_next_question"
@@ -109,6 +107,7 @@ class ActionAskNextQuestion(Action):
         current_question_index = tracker.get_slot('current_question_index')
 
         if current_question_index is not None and current_question_index < len(questionnaire_questions) - 1:
+            # Ask the next question
             next_question_index = current_question_index + 1
             next_question = questionnaire_questions[next_question_index]
             next_question_type = questionnaire_question_types[next_question_index]
@@ -117,6 +116,8 @@ class ActionAskNextQuestion(Action):
 
             return [SlotSet('current_question_index', next_question_index)]
         else:
+            # No more questions, end the conversation or take appropriate action
+            dispatcher.utter_message(text="Tak for dine svar! Undersøgelsen er nu afsluttet.")
             return [SlotSet('current_question_index', None)]
 
 
@@ -131,11 +132,10 @@ class ActionProcessAnswer(Action):
 
         try:
             user_rating = int(user_answer)
+            print(f"123123123 userrating {user_rating}")
 
             if 1 <= user_rating <= 5:
-                dispatcher.utter_message(
-                    text=f"Din vurdering er registreret: {user_rating}")
-
+                print("Rating check successful")
                 current_question_index = tracker.get_slot(
                     "current_question_index")
 

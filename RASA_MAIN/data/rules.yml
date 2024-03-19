@@ -21,3 +21,8 @@ rules:
   steps:
   - intent: intent_transition_user_stage
   - action: action_transition_user_stage
+
+- rule: Always start questionnaire if asked
+  steps:
+  - intent: start_questionnaire
+  - action: action_start_questionnaire

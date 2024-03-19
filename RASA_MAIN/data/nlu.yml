@@ -148,11 +148,12 @@ nlu:
     - Begynd spørgeskemaet
     - Jeg har tid til spørgeskemaet
     - Jeg vil gerne svar på spørgeskemaet
-
+  
 - intent: answer_question
   examples: |
-    - 1
-    - 2
-    - 3
-    - 4
     - 5
+    - 3
+    - I would rate it a 4
+    - My answer is 2
+    - 1 star
+    - I think it's a 5

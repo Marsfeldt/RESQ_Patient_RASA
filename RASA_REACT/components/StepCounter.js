@@ -1,40 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, NativeEventEmitter, NativeModules } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { SensorManager } from 'react-native-sensors';
 
 const StepCounter = () => {
-  const [steps, setSteps] = useState(0);
+  const [stepCount, setStepCount] = useState(0);
 
   useEffect(() => {
-    let lastY = 0;
-    let isWalking = false;
+    let isSubscribed = true;
 
-    const accelerometerListener = accelerometerData => {
-      const { x, y, z } = accelerometerData;
-
-      const acceleration = Math.sqrt(x * x + y * y + z * z);
-      if (acceleration > 1.5) {
-        isWalking = true;
+    const subscription = SensorManager.startStepCounter(1000, data => {
+      if (isSubscribed) {
+        setStepCount(data.steps);
       }
-
-      if (isWalking && acceleration < 1) {
-        isWalking = false;
-        setSteps(prevSteps => prevSteps + 1);
-      }
-    };
-
-    const { DeviceMotion } = NativeModules;
-    const accelerometer = new NativeEventEmitter(DeviceMotion);
-
-    const subscription = accelerometer.addListener('Accelerometer', accelerometerListener);
+    });
 
     return () => {
-      subscription.remove();
+      isSubscribed = false;
+      SensorManager.stopStepCounter();
+      subscription.stop();
     };
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.stepsText}>Steps: {steps}</Text>
+      <Text style={styles.step}>Step Count: {stepCount}</Text>
     </View>
   );
 };
@@ -44,9 +33,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
-  stepsText: {
+  step: {
     fontSize: 24,
+    fontWeight: 'bold',
   },
 });
 

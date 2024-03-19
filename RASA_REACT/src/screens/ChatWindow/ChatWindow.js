@@ -1,382 +1,146 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Image, Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
+import { useUserContext } from '../../../components/UserContext';
+import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from '../../../components/SocketManager/SocketManager';
+import { useRoute, useIsFocused } from '@react-navigation/native';
+import emitToServerEvent from '../../../components/SocketUtils';
 import TopNavigationBar from '../../../components/TopNavigationBar';
-import {
-  rasaServerSocket,
-  pythonServerSocket,
-  connectSockets,
-  disconnectSockets,
-  reconnectSockets,
-} from '../../../components/SocketManager/SocketManager';
-import { useRoute } from '@react-navigation/native';
-import { saveMessages, loadMessages } from '../../../components/AsyncStorageUtils';
-import QuestionnaireButtonLayout from '../../../components/QuestionnaireButtonLayout';
 
 const ChatWindowScreen = () => {
+  const [messages, setMessages] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const [sessionID, setSessionID] = useState('');
+  const { userUUID } = useUserContext(); // Get userUUID from the context
+
   const route = useRoute();
   const { username } = route.params;
-  const [userUUID, setUserUUID] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [questionnaireLayout, setQuestionnaireLayout] = useState(false);
 
-  // Questionnaire Related States
-  const [lastBotAnswer, setLastBotAnswer] = useState('');
+  const isFocused = useIsFocused(); // Hook to check if the screen is focused
 
-  const handleQuestionnaireButtonClick = (buttonName) => {
-    const handleButtonClickLogic = (messageText) => {
-      setIsLoading(true);
-      const messageId = generateUUID();
-      const messageSentTime = new Date();
+  const createUserMessage = (text) => ({
+    _id: generateMessageID(),
+    text,
+    createdAt: new Date(),
+    user: { _id: userUUID },
+  });
 
-      // Create a new message object
-      const newMessage = {
-        _id: messageId,
-        text: messageText,
-        createdAt: new Date(),
-        user: {
-          _id: userUUID,
-        },
-      };
-
-      // Update the state to include the new message
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [newMessage])
-      );
-
-      // Emit the user_uttered
-      rasaServerSocket.emit(
-        'user_uttered',
-        { session_id: userUUID, message: messageText },
-        () => {
-          const acknowledgmentTime = new Date() - messageSentTime;
-          console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
-
-          setIsLoading(false);
-
-          // Send data to the backend for database storing
-          sendDataThroughDataSocket(
-            messageText,
-            messageId,
-            'False',
-            'Question'
-          );
-        }
-      );
-
-      pythonServerSocket.emit('questionnaire_question_answered', {
-        UUID: userUUID,
-        Username: username,
-        UserResponse: messageText,
-        QuestionID: generateUUID(),
-        QuestionText: lastBotAnswer,
-        QuestionType: 'Likert (1-5)',
-      });
-    };
-
-    switch (buttonName) {
-      case 'Button1':
-        handleButtonClickLogic('1');
-        break;
-      case 'Button2':
-        handleButtonClickLogic('2');
-        break;
-      case 'Button3':
-        handleButtonClickLogic('3');
-        break;
-      case 'Button4':
-        handleButtonClickLogic('4');
-        break;
-      case 'Button5':
-        handleButtonClickLogic('5');
-        break;
-      default:
-        console.log(`Button ${buttonName} not handled`);
-    }
-  };
-
-
-  // Function for loading earlier messages in the chat conversation by loading them from the phones local storage
-  const loadEarlierMessages = useCallback(async () => {
-    try {
-      const storedMessages = await loadMessages();
-
-      if (storedMessages) {
-        const formattedMessages = storedMessages.map((msg) => ({
-          ...msg,
-          createdAt: new Date(msg.createdAt),
-        }));
-
-        // This is used to ensure that we do not load duplicate messages by checking whether the message has already been loaded
-        const newMessages = formattedMessages.filter(
-          (msg) => !messages.some((existingMsg) => existingMsg._id === msg._id)
-        );
-
-        // Check if we have loaded all available messages
-        if (newMessages.length > 0) {
-          setMessages((previousMessages) =>
-            GiftedChat.prepend(previousMessages, newMessages)
-          );
-        } else {
-          console.log('No new earlier messages found.');
-        }
-      } else {
-        console.log('No earlier messages found.');
-      }
-    } catch (error) {
-      console.error('Error loading earlier messages:', error);
-    }
-  }, [messages]);
-
-  // function to generate a random UUID (Example, it looks like this: b16a2906-5f82-6c9e-d79d-cc3a65960f43)
-  const generateUUID = () =>
-    `${Math.random().toString(36).substring(2, 15)}-${Math.random()
-      .toString(36)
-      .substring(2, 15)}`;
-
-  // Function to simulate a typing delay for the bot, because the speed is too fast :P
-  const simulateTypingDelay = (message, delay) =>
-    new Promise((resolve) => setTimeout(() => resolve(message), delay));
-
-  // Function which handles information being sent from the front-end to the back-end python server
-  const sendDataThroughDataSocket = (
-    message,
-    messageId,
-    isSystemMessage,
-    messageType
-  ) => {
-    pythonServerSocket.emit('message_from_client', {
-      uuid: userUUID,
-      username,
-      message,
-      messageId,
-      isSystemMessage,
-      messageType,
-    });
-  };
-
-  // Function to log connection events from the RASA and PYTHON server, used for debugging
-  const socketConnectionEvent = () => {
-    const logConnection = (serverSocket, serverName) => {
-      serverSocket.on('connect', () => {
-        serverSocket.emit('session_request', { session_id: userUUID });
-        console.log(
-          `${serverSocket.id} ${serverName} Server: Connected to server (ChatWindow Screen)`
-        );
-      });
-
-      serverSocket.on('disconnect', () => {
-        console.log(
-          `${serverSocket.id} ${serverName} Server: Disconnected from server (ChatWindow Screen)`
-        );
-      });
-    };
-
-    logConnection(rasaServerSocket, 'RASA');
-    logConnection(pythonServerSocket, 'Python');
-  };
-
+  // Connect the socket when the component mounts
   useEffect(() => {
-    // Calling reconnectsockets to ensure that if we are not already connected we connect, so that the chatbot is functional
-    reconnectSockets();
-    socketConnectionEvent();
-
-    // We send information to the python server to fetch information from the currently logged in user
-    pythonServerSocket.emit('fetch_user_information', username);
-
-    // Once the information is successfully retrieved we set the current UUID to that of the logged in user
-    pythonServerSocket.on('user_information_fetched', (data) => {
-      const { fetchedUsername, fetchedUUID } = data;
-      setUserUUID(fetchedUUID);
-    });
-
-    // This handles the event from whenever the bot gets a question
-    rasaServerSocket.on('bot_uttered', async (data) => {
-      const botText = data.text;
-      const messageId = generateUUID();
-      setLastBotAnswer(botText);
-      // Message which follows the layout of the library 'GiftedChat'
-      const botMessage = {
-        _id: messageId,
-        text: botText,
-        createdAt: new Date(),
-        user: { _id: 'bot' },
-      };
-
-      setIsLoading(true);
-
-      const typingDelay = 500;
-
-      const delayedBotMessage = await simulateTypingDelay(
-        botMessage,
-        typingDelay
-      );
-
-      // Two variables that calculates the recieved time and the latency of when the message was retrieved
-      const botMessageReceivedTime = new Date();
-      const messageLatency = botMessageReceivedTime - botMessage.createdAt;
-
-      console.log('Message latency:', messageLatency, 'ms');
-
-      // Add the message to the chat window by appending it through the GiftedChat library
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [delayedBotMessage])
-      );
-
-      if (botText && /afsluttet/.test(botText)) {
-        setQuestionnaireLayout(false);
-        console.log('Disabling questionnaire layout.');
-        console.warn('User Message: ' + botText + ' Boolean State: ' + questionnaireLayout);
-      }
-
-      if (botText && typeof botText == 'string' && /spørgeskema/.test(botText)) {
-        setQuestionnaireLayout(true);
-        console.log('Enabling questionnaire layout.');
-      }
-
-      setIsLoading(false);
-
-      // Sending the message from the bot to the backend for database storing
-      sendDataThroughDataSocket(
-        botText,
-        messageId,
-        'False',
-        'Bot Answer'
-      );
-    });
+    connectSockets();
 
     return () => {
-      // Makes sure to remove all the listeners whenever the ChatWindow component unmounts as to ensure no server errors
-      rasaServerSocket.off('bot_uttered');
-      rasaServerSocket.off('connect');
-      rasaServerSocket.off('disconnect');
-      pythonServerSocket.off('fetch_user_information');
-      pythonServerSocket.off('user_information_fetched');
-      pythonServerSocket.off('connect');
-      pythonServerSocket.off('disconnect');
       disconnectSockets();
     };
-  }, [userUUID]);
+  }, []);
 
-  const appendAndSaveMessages = (newMessages) => {
-    const updatedMessages = GiftedChat.append(messages, newMessages);
-    setMessages(updatedMessages);
-    saveMessages(updatedMessages);
-  };
+  useEffect(() => {
+    if (isFocused) {
+      // This will run every time the screen is focused
+      emitToServerEvent('interaction_log', {
+        UUID: userUUID,
+        Username: username,
+        InteractionType: 'Navigation',
+        InteractionOutput: '-> Chat Screen',
+      });
+    }
+  }, [isFocused, userUUID, username]);
 
-  // Function which is called whenever the user is pressing the 'Send' button in the chat window
-  const onSend = (newMessages) => {
-    setMessages((previousMessages) => {
-      const updatedMessages = GiftedChat.append(
-        previousMessages,
-        newMessages
-      );
+  useEffect(() => {
+    // Establish a unique session when the component mounts
+    if (socket && !sessionID && userUUID) {
+      setSessionID(userUUID); // Set userUUID as sessionID
+      socket.emit('session_request', { session_id: userUUID }); // This opens a unique session with RASA with a specified ID
+      pythonServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
+      console.log('attempting to establish session request ' + userUUID)
+    }
+  }, [socket, sessionID, userUUID, username]);
 
-      saveMessages(updatedMessages);
+  useEffect(() => {
+    // Add event listener for bot messages
+    const handleBotMessage = (data) => {
+      const botMessageId = generateMessageID();
 
-      return updatedMessages;
-    });
-
-    const text = newMessages[0].text;
-
-    // Makes sure that we are connected before we attempt to send the message to the bot
-    if (rasaServerSocket && rasaServerSocket.connected) {
-      if (text.trim() !== '') {
-        setIsLoading(true);
-
-        const messageId = generateUUID();
-
-        const newMessage = {
-          _id: messageId,
-          text,
-          createdAt: new Date(),
-          user: {
-            _id: userUUID,
-          },
-        };
-
-        console.log('Sending message to Rasa:', newMessage);
-
-        const messageSentTime = new Date();
-
-        // This emits the users message from where the RASA server is listening for the users question on the event 'user_uttered'
-        rasaServerSocket.emit(
-          'user_uttered',
-          { session_id: userUUID, message: text },
-          () => {
-            const acknowledgmentTime =
-              new Date() - messageSentTime;
-            console.log('Acknowledgment time:', acknowledgmentTime, 'ms');
-
-            setIsLoading(false);
-
-            sendDataThroughDataSocket(
-              text,
-              messageId,
-              'False',
-              'Question'
-            );
-          }
-        );
-        saveMessages([...messages, ...newMessages]);
-      } else {
-        const newMessage = {
-          _id: generateUUID(),
-          text: 'Din besked er tom',
-          createdAt: new Date(),
-          user: { _id: 'bot' },
-        };
-
-        appendAndSaveMessages(newMessage);
-      }
-    } else {
-      const newMessage = {
-        _id: generateUUID(),
-        text: 'Du er ikke tilsluttet til serveren, genopretter forbindelse...',
+      const botMessage = {
+        _id: botMessageId,
+        text: data.text,
         createdAt: new Date(),
         user: { _id: 'bot' },
       };
-      reconnectSockets();
 
-      appendAndSaveMessages(newMessage);
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [botMessage])
+      );
+
+      emitToServerEvent('message_from_client', {
+        UUID: userUUID,
+        Username: 'RASA BOT',
+        Message: data.text,
+        MessageID: botMessageId,
+        IsSystemMessage: 'False',
+        MessageType: 'Bot Answer'
+      });
+    };
+
+    if (socket) {
+      socket.on('bot_uttered', handleBotMessage);
+
+      return () => {
+        socket.off('bot_uttered', handleBotMessage);
+      };
+    } else {
+      // Socket is not available, reconnect
+      setSocket(rasaServerSocket);
+      rasaServerSocket.connect();
     }
-  };
+  }, [socket, userUUID]);
 
-  // Function responsible for rendering the bots avatar on its messages
-  const renderAvatar = ({ currentMessage }) => {
-    if (currentMessage.user._id === 'bot') {
-      const botAvatarPath = Platform.select({
-        android: require('../../../assets/bot.png'), // Android dependency
-        ios: require('../../../assets/bot.png'), // IOS dependency
+  const onSend = (newMessages) => {
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, newMessages)
+    );
+
+    if (socket) {
+      const userMessage = createUserMessage(newMessages[0].text);
+      socket.emit(
+        'user_uttered',
+        {
+          message: newMessages[0].text,
+          session_id: sessionID,
+        },
+        () => {
+          // Handle acknowledgment if needed
+        }
+      );
+      console.log(`${username} sending message ${userMessage.text} to RASA`);
+      emitToServerEvent('message_from_client', {
+        UUID: userUUID,
+        Username: username,
+        Message: userMessage.text,
+        MessageID: userMessage._id,
+        IsSystemMessage: 'False',
+        MessageType: 'Question'
       });
 
-      return (
-        <Image
-          source={botAvatarPath}
-          style={{ width: 40, height: 40, borderRadius: 20 }}
-        />
-      );
+      emitToServerEvent('interaction_log', {
+        UUID: userUUID,
+        Username: username,
+        InteractionType: 'Send Message (Chat Window)',
+        InteractionOutput: userMessage.text,
+      });
     }
   };
 
-  // The ChatWindow rendering layout
+  const generateMessageID = () =>
+    Math.round(Math.random() * 1000000).toString(); // Generate a simple random ID
+
   return (
     <View style={styles.container}>
       <TopNavigationBar username={username} />
-      <QuestionnaireButtonLayout
-        showButtons={questionnaireLayout}
-        onButtonClick={handleQuestionnaireButtonClick}
-      />
       <GiftedChat
         messages={messages}
-        onSend={onSend}
-        user={{ _id: userUUID }}
-        isTyping={isLoading}
-        renderAvatar={renderAvatar}
-        loadEarlier={true}
-        onLoadEarlier={loadEarlierMessages}
-        placeholder="Skriv en besked..."
+        onSend={(newMessages) => onSend(newMessages)}
+        user={{ _id: sessionID }}
       />
     </View>
   );
@@ -385,13 +149,6 @@ const ChatWindowScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FBFC',
-  },
-  rasaTypingIndicator: {
-    color: 'black',
-    fontSize: 18,
-    alignSelf: 'center',
-    marginVertical: 8,
   },
 });
 

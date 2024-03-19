@@ -47,7 +47,6 @@ actions:
   - action_inform_stage_user
   - action_transition_user_stage
   - action_advise_help_based_on_stage
-  - answer_question
   - action_initialize_user_stage
   
 

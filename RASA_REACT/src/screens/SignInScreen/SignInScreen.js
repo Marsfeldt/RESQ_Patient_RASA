@@ -1,28 +1,51 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import Logo from '../../../assets/images/logo.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
 import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets, reconnectSockets } from "../../../components/SocketManager/SocketManager";
 import { useNavigation } from '@react-navigation/native';
 import bcrypt from 'bcryptjs';
-
+import { useUserContext } from "../../../components/UserContext";
+import emitToServerEvent from "../../../components/SocketUtils";
 
 const SignInScreen = () => {
-
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-
-    const { height } = useWindowDimensions();
+    const { setUserUUID } = useUserContext();
+    const { height } = useWindowDimensions(); // Get height from useWindowDimensions
     const navigation = useNavigation();
 
+    useEffect(() => {
+        console.log('SignIn Screen Mounted')
+        // When the component mounts we connect the sockets
+        if (!pythonServerSocket.connected && !rasaServerSocket.connected) {
+            connectSockets();
+        }
+
+        socketConnectionEvent();
+
+        emitToServerEvent('interaction_log', {
+            UUID: "Anonymous User",
+            Username: "Anonymous User",
+            InteractionType: 'Navigation',
+            InteractionOutput: '-> Sign In Screen'
+        });
+
+        return () => {
+            // Close the sockets when the component unmounts
+            disconnectSockets();
+        };
+    }, []);
+
     const socketConnectionEvent = () => {
+
         rasaServerSocket.on('connect', () => {
-            console.log(pythonServerSocket.id + ' RASA Server: Connected to server (Sign In Screen)');
+            console.log(rasaServerSocket.id + ' RASA Server: Connected to server (Sign In Screen)');
         });
 
         rasaServerSocket.on('disconnect', () => {
-            console.log(pythonServerSocket.id + ' RASA Server: Connected to server (Sign In Screen)');
+            console.log(rasaServerSocket.id + ' RASA Server: Connected to server (Sign In Screen)');
         });
 
         pythonServerSocket.on('connect', () => {
@@ -35,61 +58,62 @@ const SignInScreen = () => {
     }
 
     useEffect(() => {
-        console.log('SignIn Screen Mounted')
-        // When the component mounts we connect the sockets
-        if (!pythonServerSocket.connected && !rasaServerSocket.connected) {
-            connectSockets();
-        }
-
-        socketConnectionEvent();
-
-        return () => {
-            // Close the sockets when the component unmounts
-            disconnectSockets();
-        };
-    }, []);
-
-    useEffect(() => {
-        // Set up the event listener for 'user_password' here
-        const handleUserPassword = (receivedHash) => {
-            if (receivedHash === "User not found") {
+        const handleUserCredentials = (data) => {
+            if (data.error) {
                 console.warn("User not found.");
             } else {
+                const receivedHash = data.password;
                 bcrypt.compare(password, receivedHash, (compareErr, result) => {
                     if (compareErr) {
                         console.error('Error comparing passwords:', compareErr);
                     } else if (result) {
                         console.warn("Login Successful!");
+                        // Update userUUID in the context
+                        setUserUUID(data.uuid);
+                        emitToServerEvent('interaction_log', {
+                            UUID: rasaServerSocket.id,
+                            Username: username,
+                            InteractionType: 'Successful Login',
+                            InteractionOutput: data.uuid + 'logged in',
+                        });
                         navigation.navigate('ChatWindow', { username });
                     } else {
                         console.warn("Invalid Password");
+                        emitToServerEvent('interaction_log', {
+                            UUID: rasaServerSocket.id,
+                            Username: username,
+                            InteractionType: 'Unsuccessful Login',
+                            InteractionOutput: username + ' Invalid Password',
+                        });
                     }
                 });
             }
         };
 
         if (pythonServerSocket) {
-            pythonServerSocket.on('user_password', handleUserPassword);
+            pythonServerSocket.on('user_credentials', handleUserCredentials);
         }
 
         return () => {
-            // Remove the event listener when the component unmounts
-            if (pythonServerSocket) {
-                pythonServerSocket.off('user_password', handleUserPassword);
-            }
+            pythonServerSocket.off('user_credentials', handleUserCredentials);
         };
-    }, [password, navigation]);
+    }, [password, navigation, setUserUUID]);
 
     const onSignInPressed = () => {
         console.log("Sign In Button Pressed");
+
+        emitToServerEvent('interaction_log', {
+            UUID: rasaServerSocket.id,
+            Username: "Anonymous User",
+            InteractionType: 'Button Press',
+            InteractionOutput: 'Sign In',
+        });
 
         // Ensure the socket is connected
         if (pythonServerSocket.connected && rasaServerSocket.connected) {
             // Request user password from the server
             pythonServerSocket.emit('login', username);
-            if (!rasaServerSocket.connected) {
-                reconnectSockets();
-            }
+            console.log("Requesting Login from: " + username)
         } else {
             // If the socket is not connected, reconnect it and emit the event
             reconnectSockets();
@@ -97,7 +121,7 @@ const SignInScreen = () => {
         }
     }
 
-    const onFrogotPasswordPressed = () => {
+    const onForgotPasswordPressed = () => {
         navigation.navigate('ForgotPassword');
     }
 
@@ -108,11 +132,11 @@ const SignInScreen = () => {
     return (
         <View style={styles.root}>
             <Image source={Logo} style={[styles.logo, { height: height * 0.3 }]} resizeMode="contain" />
-            <CustomInput placeholder='Brugernavn' value={username} setValue={setUsername} />
-            <CustomInput placeholder='Kodeord' value={password} setValue={setPassword} secureTextEntry={true} />
-            <CustomButton text='Log Ind' onPress={onSignInPressed} />
-            <CustomButton text='Glemt kodeord?' onPress={onFrogotPasswordPressed} type="TERTIARY" />
-            <CustomButton text='Har du ikke en konto, Opret en' onPress={onSignUpPressed} type="TERTIARY" />
+            <CustomInput placeholder='Username' value={username} setValue={setUsername} />
+            <CustomInput placeholder='Password' value={password} setValue={setPassword} secureTextEntry={true} />
+            <CustomButton text='Sign In' onPress={onSignInPressed} />
+            <CustomButton text='Forgot Password?' onPress={onForgotPasswordPressed} type="TERTIARY" />
+            <CustomButton text="Don't have an account? Sign Up" onPress={onSignUpPressed} type="TERTIARY" />
         </View>
     );
 };

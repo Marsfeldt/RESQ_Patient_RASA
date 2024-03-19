@@ -38,11 +38,6 @@ stories:
   - intent: grateful
   - action: utter_appreciation
 
-- story: start questionnaire
-  steps:
-  - intent: start_questionnaire
-  - action: action_start_questionnaire
-
 - story: handle user answers in a loop
   steps:
   - intent: answer_question

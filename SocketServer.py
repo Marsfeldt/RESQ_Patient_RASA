@@ -1,7 +1,8 @@
-from flask import Flask, render_template
+from flask import Flask, request
 from flask_socketio import SocketIO
 import sqlite3
 import datetime
+import uuid  # Import uuid module for generating UUIDs
 from DatabaseHandler import *
 
 app = Flask(__name__)
@@ -12,38 +13,80 @@ db = DatabaseHandler("./PYTHON/DATABASE/TestDatabase.db")
 userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
 conversationsDatabase = DatabaseHandler("./PYTHON/DATABASE/ChatConversations.db")
 questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
+connectionLogDB = DatabaseHandler("./PYTHON/DATABASE/ConnectionLog.db")
+interactionLogsDB = DatabaseHandler("./PYTHON/DATABASE/InteractionsDatabase.db")
+
+# Dictionary to store connected users
+connected_users = {}
 
 # Connection event
 @socketio.on('connect')
 def handle_connect():
     print(f'Client connected')
+    # Get the username from the client
+    username = request.args.get('username')
+    # Retrieve UUID from the database based on the username
+    fetchedUsername, fetchedUUID = userDB.fetch_informatiom_from_user('users', username)
+    
+    if fetchedUUID:
+        # Store the user in the connected_users dictionary
+        connected_users[request.sid] = {'username': username, 'user_uuid': fetchedUUID}
+        # Broadcast the new user information to all clients
+        socketio.emit('new_user_connected', {'userUUID': fetchedUUID, 'username': username}, broadcast=True)
+    else:
+        print(f'User not found: {username}')
+        # If user not found, send an event to the client
+        socketio.emit('user_not_found', {'username': username}, room=request.sid)
 
 # Disconnection event
 @socketio.on('disconnect')
 def handle_disconnect():
-    print('Client disconnected')
+    if request.sid in connected_users:
+        username = connected_users[request.sid]['username']
+        user_uuid = connected_users[request.sid]['user_uuid']
+        # Remove the user from the connected_users dictionary
+        del connected_users[request.sid]
+        # Broadcast the disconnection to all clients
+        socketio.emit('user_disconnected', {'userUUID': user_uuid, 'username': username}, broadcast=True)
+        print(f'Client disconnected: {username}')
+    else:
+        print(f'Unknown client disconnected: {request.sid}')
+
+
+# Modify your fetchUserUUID function to emit the user UUID to the client
+@socketio.on('fetch_user_uuid')
+def fetch_user_uuid(username):
+    fetchedUsername, fetchedUUID = userDB.fetch_informatiom_from_user('users', username)
+    
+    if fetchedUUID:
+        # Emit the fetched UUID to the client
+        socketio.emit('user_uuid_fetched', {'userUUID': fetchedUUID})
+    else:
+        print(f'User not found: {username}')
+        # If user not found, emit an event to the client
+        socketio.emit('user_uuid_not_found', {'username': username})
 
 @socketio.on('fetch_user_information')
 def handle_fetch_user_information(username):
-    fetchedUsername, fetchedUUID = userDB.fetch_informatiom_from_user(
-        'users', username)
+    fetchedUsername, fetchedUUID = userDB.fetch_informatiom_from_user('users', username)
     print(f'Fetched Username: {fetchedUsername} UUID: {fetchedUUID}')
-    socketio.emit('user_information_fetched', {
-                  'fetchedUsername': fetchedUsername, 'fetchedUUID': fetchedUUID})
+    socketio.emit('user_information_fetched', {'fetchedUsername': fetchedUsername, 'fetchedUUID': fetchedUUID, 'session_id': fetchedUUID})  # Emit session_id as well
 
 # Login event
 @socketio.on('login')
 def handle_login(username):
     """
-    Handles login behaviour to retrieve the users password, whereafter it through the front-end decrypts it
-    and compares it with the users password to authorize their login credentials
+    Handles login behaviour to retrieve the users password and UUID,
+    then emits both to the client.
     """
-    userPassword = userDB.retrieve_password_from_username('users', username)
-    if userPassword:
-        socketio.emit('user_password', userPassword)
-        # print(f'The Hashed Password: {userPassword}')
+    user_data = userDB.retrieve_user_data('users', username)  # Fetch user data including password and UUID
+    print('Recieving Login Request from', username)
+    if user_data:
+        user_password = user_data['password']
+        user_uuid = user_data['uuid']
+        socketio.emit('user_credentials', {'password': user_password, 'uuid': user_uuid}, room=request.sid)
     else:
-        socketio.emit('user_password', "User not found")
+        socketio.emit('user_credentials', {'error': 'User not found'}, room=request.sid)
 
 @socketio.on('logout')
 def handle_logout():
@@ -79,12 +122,12 @@ def handle_message(data):
     Works as a conversation logger as we retrieve the message sent by the user and then inserts
     that data into the conversation logging database
     """
-    uuid = data.get('uuid')
-    username = data.get('username')
-    message = data.get('message')
-    messageId = data.get('messageId')
-    isSystemMessage = data.get('isSystemMessage')
-    messageType = data.get('messageType')
+    uuid = data.get('UUID')
+    username = data.get('Username')
+    message = data.get('Message')
+    messageId = data.get('MessageID')
+    isSystemMessage = data.get('IsSystemMessage')
+    messageType = data.get('MessageType')
     print(f'Message from client({uuid}): {message}')
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -127,10 +170,45 @@ def handle_questionnaire_answered(data):
 
     questionnaireDatabase1.insert_data('QuestionnaireName1', questionnaireAnswertoLog)
 
+@socketio.on('connection_log')
+def handle_connection_log(data):
+    uuid = data.get('UUID')
+    username = data.get('Username')
+    connection = data.get('Connection')
+    connectionType = data.get('ConnectionType')
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    connectionLogData = {
+        'UUID': uuid,
+        'Username': username,
+        'Connection': connection,
+        'ConnectionType': connectionType,
+        'Timestamp': timestamp
+    }
+
+    connectionLogDB.insert_data('connectionLog', connectionLogData)
+
+@socketio.on('interaction_log')
+def handle_interaction_log(data):
+    uuid = data.get('UUID')
+    username = data.get('Username')
+    interactionType = data.get('InteractionType')
+    interactionOutput = data.get('InteractionOutput')
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    interactionLogData = {
+        'UUID': uuid,
+        'Username': username,
+        'InteractionType': interactionType,
+        'InteractionOutput': interactionOutput,
+        'Timestamp': timestamp
+    }
+
+    interactionLogsDB.insert_data('interactionLogs', interactionLogData)
 
 if __name__ == '__main__':
     # You can change the port as needed
-    socketio.run(app, host='172.31.157.12', port=5006, debug=True)
+    socketio.run(app, host='192.168.0.157', port=5006, debug=True)
     # 130.225.198.128
     # 172.31.157.55
     # 172.31.157.12

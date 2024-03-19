@@ -6,15 +6,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 // The different screen from the mobile application
 import Navigation from './src/screens/Navigation';
+import { UserProvider } from './components/UserContext';
 
-function App() {
-
+const App = () => {
   return (
-    <View style={styles.container}>
+    <UserProvider>
       <Navigation />
-    </View>
+    </UserProvider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
