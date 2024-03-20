@@ -93,6 +93,49 @@ class DatabaseHandler:
                 f'SELECT stage FROM {tableName} where UUID = ?', (uuid,))
             stage = cursor.fetchone()
             return stage
+        
+    def calculate_stage_score(self, tableName, uuid):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(f'SELECT UserResponse FROM {tableName} WHERE UUID = ?', (uuid,))
+            rows = cursor.fetchall()
+
+            clean_numbers = [int(row[0]) for row in rows]
+
+            number_mapping = {
+                1: -2,
+                2: -1,
+                3: 0,
+                4: 1,
+                5: 2
+            }
+
+            # Use list comprehension to apply the mapping
+            mapped_numbers = [number_mapping[num] for num in clean_numbers]
+
+            PC_SCORE = mapped_numbers[0] + mapped_numbers[2] + mapped_numbers[5] + mapped_numbers[9]
+            C_SCORE = mapped_numbers[1] + mapped_numbers[3] + mapped_numbers[6] + mapped_numbers[10]
+            A_SCORE = mapped_numbers[4] + mapped_numbers[7] + mapped_numbers[8] + mapped_numbers[11]
+
+            listOfStages = [
+                ["Precontemplation", PC_SCORE],
+                ["Contemplation", C_SCORE],
+                ["Action", A_SCORE]
+            ]
+
+            # Find the maximum score
+            max_score = max(stage[1] for stage in listOfStages)
+
+            # Find the stage(s) with the maximum score
+            max_stage_names = [stage[0] for stage in listOfStages if stage[1] == max_score]
+
+            print('======== RESULTS ========')
+            print(f'PC_SCORE: {PC_SCORE}')
+            print(f'C_SCORE: {C_SCORE}')
+            print(f'A_SCORE: {A_SCORE}')
+            print(f'Participant should be in stage {max_stage_names} with a score of {max_score}')
+            print('======== RESULTS ========')
+
 
     def close_database(self):
         self.connection.close()

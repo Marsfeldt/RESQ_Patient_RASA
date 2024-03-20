@@ -208,7 +208,7 @@ def handle_interaction_log(data):
 
 if __name__ == '__main__':
     # You can change the port as needed
-    socketio.run(app, host='192.168.0.157', port=5006, debug=True)
+    socketio.run(app, host='172.31.159.34', port=5006, debug=True)
     # 130.225.198.128
     # 172.31.157.55
     # 172.31.157.12

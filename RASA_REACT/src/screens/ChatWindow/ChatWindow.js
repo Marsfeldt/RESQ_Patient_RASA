@@ -6,17 +6,22 @@ import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets
 import { useRoute, useIsFocused } from '@react-navigation/native';
 import emitToServerEvent from '../../../components/SocketUtils';
 import TopNavigationBar from '../../../components/TopNavigationBar';
+import QuestionnaireButtonLayout from '../../../components/QuestionnaireButtonLayout';
 
 const ChatWindowScreen = () => {
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
   const [sessionID, setSessionID] = useState('');
   const { userUUID } = useUserContext(); // Get userUUID from the context
+  const [questionnaireLayout, setQuestionnaireLayout] = useState(false);
+  const [lastBotAnswer, setLastBotAnswer] = useState('');
 
   const route = useRoute();
   const { username } = route.params;
 
   const isFocused = useIsFocused(); // Hook to check if the screen is focused
+
+  const generateUUID = () => `${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
 
   const createUserMessage = (text) => ({
     _id: generateMessageID(),
@@ -24,6 +29,55 @@ const ChatWindowScreen = () => {
     createdAt: new Date(),
     user: { _id: userUUID },
   });
+
+  const handleQuestionnaireButtonClick = (buttonName) => {
+    const handleButtonClickLogic = (messageText) => {
+      const messageId = generateUUID();
+      const messageSentTime = new Date();
+
+      const newMessage = {
+        _id: messageId,
+        text: messageText,
+        createdAt: new Date(),
+        user: { _id: userUUID },
+      };
+
+      setMessages(previousMessages => GiftedChat.append(previousMessages, [newMessage]));
+
+      rasaServerSocket.emit('user_uttered', { session_id: userUUID, message: messageText }, () => {
+        
+        emitToServerEvent('message_from_client', {
+          UUID: userUUID,
+          Username: username,
+          Message: messageText,
+          MessageID: messageId,
+          IsSystemMessage: 'False',
+          MessageType: 'Answer'
+        });
+      });
+
+      emitToServerEvent('questionnaire_question_answered', {
+        UUID: userUUID,
+        Username: username,
+        UserResponse: messageText,
+        QuestionID: generateUUID(),
+        QuestionText: lastBotAnswer,
+        QuestionType: 'Likert (1-5)',
+      });
+    };
+
+    switch (buttonName) {
+      case 'Button1':
+      case 'Button2':
+      case 'Button3':
+      case 'Button4':
+      case 'Button5':
+        handleButtonClickLogic(buttonName.slice(-1));
+        break;
+      default:
+        console.log(`Button ${buttonName} not handled`);
+    }
+  };
 
   // Connect the socket when the component mounts
   useEffect(() => {
@@ -67,6 +121,18 @@ const ChatWindowScreen = () => {
         createdAt: new Date(),
         user: { _id: 'bot' },
       };
+
+      setLastBotAnswer(data.text);
+
+      if (/afsluttet/.test(data.text)) {
+        setQuestionnaireLayout(false);
+        console.log('Disabling questionnaire layout.');
+      }
+
+      if (typeof data.text === 'string' && /spørgeskema/.test(data.text)) {
+        setQuestionnaireLayout(true);
+        console.log('Enabling questionnaire layout.');
+      }
 
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, [botMessage])
@@ -137,6 +203,10 @@ const ChatWindowScreen = () => {
   return (
     <View style={styles.container}>
       <TopNavigationBar username={username} />
+      <QuestionnaireButtonLayout
+        showButtons={questionnaireLayout}
+        onButtonClick={handleQuestionnaireButtonClick}
+      />
       <GiftedChat
         messages={messages}
         onSend={(newMessages) => onSend(newMessages)}

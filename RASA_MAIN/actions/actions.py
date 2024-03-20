@@ -54,6 +54,21 @@ questionnaire_questions = [
     #"Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
 ]
 
+readiness_to_change_questionnaire = [
+    "1. I don't think I drink too much",
+    "2. I am tryingto drink less than I used to",
+    "3. I enjoy my drinking, but sometimes I drink too much",
+    "4. Sometimes I think I should cut down on my drinking",
+    "5. It's a waste of time thinking about my drinking",
+    "6. I have just recently changed my drinking habits",
+    "7. Anyone can talk about wanting to do something about drinking, but I am actually doing something about it",
+    "8. I am at the stage where I should think about drinking less alcohol",
+    "9. My drinking is a problem sometimes",
+    "10. There is no need for me to think about changing my drinking",
+    "11. I am actually changing my drinking habits right now",
+    "12. Drinking less alcohol would be pointless for me"
+]
+
 stages = [
     "pre-contemplation",
     "contemplation",
@@ -92,8 +107,8 @@ class ActionStartQuestionnaire(Action):
 
         # Set the current question index in the tracker
         current_question_index = 0
-        next_question = questionnaire_questions[current_question_index]
-        next_question_type = questionnaire_question_types[current_question_index]
+        next_question = readiness_to_change_questionnaire[current_question_index]
+        next_question_type = readiness_to_change_questionnaire[current_question_index]
         print('QuestionType:', next_question_type)
         dispatcher.utter_message(text=next_question)
 
@@ -106,11 +121,11 @@ class ActionAskNextQuestion(Action):
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         current_question_index = tracker.get_slot('current_question_index')
 
-        if current_question_index is not None and current_question_index < len(questionnaire_questions) - 1:
+        if current_question_index is not None and current_question_index < len(readiness_to_change_questionnaire) - 1:
             # Ask the next question
             next_question_index = current_question_index + 1
-            next_question = questionnaire_questions[next_question_index]
-            next_question_type = questionnaire_question_types[next_question_index]
+            next_question = readiness_to_change_questionnaire[next_question_index]
+            next_question_type = readiness_to_change_questionnaire[next_question_index]
             print('QuestionType:', next_question_type)
             dispatcher.utter_message(text=next_question)
 
@@ -141,14 +156,14 @@ class ActionProcessAnswer(Action):
 
                 if (
                     current_question_index is not None
-                    and current_question_index < len(questionnaire_questions) - 1
+                    and current_question_index < len(readiness_to_change_questionnaire) - 1
                 ):
                     next_question_index = current_question_index + 1
 
                     return [
                         SlotSet("current_question_index", next_question_index),
                         {"event": "user", "timestamp": None, "metadata": None,
-                         "text": questionnaire_questions[next_question_index]}
+                         "text": readiness_to_change_questionnaire[next_question_index]}
                     ]
                 else:
                     dispatcher.utter_message(
