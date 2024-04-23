@@ -94,6 +94,11 @@ class DatabaseHandler:
             stage = cursor.fetchone()
             return stage
         
+    def transition_user_stage(self, talbeName, uuid, newStage):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(f'UPDATE {talbeName} SET Stage = {newStage} WHERE UUID = ?', (uuid,))
+        
     def calculate_stage_score(self, tableName, uuid):
         with self.connection as connection:
             cursor = connection.cursor()
@@ -129,13 +134,34 @@ class DatabaseHandler:
             # Find the stage(s) with the maximum score
             max_stage_names = [stage[0] for stage in listOfStages if stage[1] == max_score]
 
+            stage_mapping = {
+                "Precontemplation": 1,
+                "Contemplation": 2,
+                "Preparation": 3,
+                "Action": 4,
+                "Maintenance": 5
+            }
+
+            # Convert max stage name(s) to corresponding number(s)
+            max_stage_number = [stage_mapping[stage_name] for stage_name in max_stage_names]
+
+            clean_int_max_stage = max_stage_number[0] if max_stage_number else None
+
             print('======== RESULTS ========')
             print(f'PC_SCORE: {PC_SCORE}')
             print(f'C_SCORE: {C_SCORE}')
             print(f'A_SCORE: {A_SCORE}')
             print(f'Participant should be in stage {max_stage_names} with a score of {max_score}')
+            print(f'Stage Number {clean_int_max_stage}')
             print('======== RESULTS ========')
+
+            userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
+            userDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
 
     def close_database(self):
         self.connection.close()
+        
+
+#questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
+#questionnaireDatabase1.calculate_stage_score("QuestionnaireName1", "HB0iFCHQJd3PRv0KAAAL")

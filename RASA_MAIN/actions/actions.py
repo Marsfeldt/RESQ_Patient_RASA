@@ -56,7 +56,7 @@ questionnaire_questions = [
 
 readiness_to_change_questionnaire = [
     "1. I don't think I drink too much",
-    "2. I am tryingto drink less than I used to",
+    "2. I am trying to drink less than I used to",
     "3. I enjoy my drinking, but sometimes I drink too much",
     "4. Sometimes I think I should cut down on my drinking",
     "5. It's a waste of time thinking about my drinking",
@@ -67,6 +67,35 @@ readiness_to_change_questionnaire = [
     "10. There is no need for me to think about changing my drinking",
     "11. I am actually changing my drinking habits right now",
     "12. Drinking less alcohol would be pointless for me"
+]
+
+positive_below_natural_responses = [
+    "Achknowledging that is the first step, remember good change takes time",
+    "Changing habits can be difficult, try and take small steps towards change",
+    "That happens sometimes, but you can always come back stronger next time",
+    "Seems like you have it all under control, great job!",
+    "Remember changing habits for the better is a lengthy process, you can do it!",
+    "No one expects you to improve over night, one step at a time!",
+    "Getting help from friends and family, can help you during your process, don't forget to reach out!",
+    "Nothing wrong with having fun now and then!",
+    "That sounds great, keep it up!",
+    "Achknowledging the problem is half the battle, that's really couragous!",
+    "There is no need for making major changes, start with small changes",
+    "You aren't the only one that struggles, remember to reach out to others!"
+]
+
+positive_above_natural_responses = [
+    "That's fantastic progress, keep it up!",
+    "Looks like you're well on your way to positive changes, great work!",
+    "You're already doing so well, keep pushing forward!",
+    "It's great to see you're motivated to make positive changes!",
+    "Your determination is inspiring, keep going!",
+    "You're ahead of the game, keep up the good work!",
+    "You're on the right track, keep moving forward!",
+    "Amazing! Keep making those positive changes!",
+    "That's a strong commitment to improvement, keep it going!",
+    "You're showing real dedication, keep it up!",
+    "Your progress is commendable, keep striving for better!"
 ]
 
 stages = [
@@ -132,7 +161,6 @@ class ActionAskNextQuestion(Action):
             return [SlotSet('current_question_index', next_question_index)]
         else:
             # No more questions, end the conversation or take appropriate action
-            dispatcher.utter_message(text="Tak for dine svar! Undersøgelsen er nu afsluttet.")
             return [SlotSet('current_question_index', None)]
 
 
@@ -140,7 +168,7 @@ class ActionProcessAnswer(Action):
     def name(self) -> Text:
         return "action_process_answer"
 
-    def run(
+    def run( 
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict
     ) -> List[Dict[Text, Any]]:
         user_answer = tracker.latest_message["text"]
@@ -149,10 +177,19 @@ class ActionProcessAnswer(Action):
             user_rating = int(user_answer)
             print(f"123123123 userrating {user_rating}")
 
+            print("Rating check successful")
+            current_question_index = tracker.get_slot("current_question_index")
+
             if 1 <= user_rating <= 5:
-                print("Rating check successful")
-                current_question_index = tracker.get_slot(
-                    "current_question_index")
+
+                if user_rating <= 3:
+                    #dispatcher.utter_message(text=positive_below_natural_responses[current_question_index])
+                    dispatcher.utter_message(text="below or equal 3")
+                    print(positive_below_natural_responses[current_question_index])
+                    print("User rating was below or equal to 3")
+                else:
+                    #dispatcher.utter_message(text=positive_above_natural_responses[current_question_index])
+                    dispatcher.utter_message(text="above 3")
 
                 if (
                     current_question_index is not None

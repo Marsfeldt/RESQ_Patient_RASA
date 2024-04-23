@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { useUserContext } from '../../../components/UserContext';
 import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from '../../../components/SocketManager/SocketManager';
@@ -15,6 +15,8 @@ const ChatWindowScreen = () => {
   const { userUUID } = useUserContext(); // Get userUUID from the context
   const [questionnaireLayout, setQuestionnaireLayout] = useState(false);
   const [lastBotAnswer, setLastBotAnswer] = useState('');
+  const [buttonsDisabled, setButtonsDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const route = useRoute();
   const { username } = route.params;
@@ -32,38 +34,45 @@ const ChatWindowScreen = () => {
 
   const handleQuestionnaireButtonClick = (buttonName) => {
     const handleButtonClickLogic = (messageText) => {
-      const messageId = generateUUID();
-      const messageSentTime = new Date();
+      setIsLoading(true);
+      if (!buttonsDisabled) {
+        setButtonsDisabled(true)
+        const messageId = generateUUID();
+        const messageSentTime = new Date();
 
-      const newMessage = {
-        _id: messageId,
-        text: messageText,
-        createdAt: new Date(),
-        user: { _id: userUUID },
-      };
+        const newMessage = {
+          _id: messageId,
+          text: messageText,
+          createdAt: new Date(),
+          user: { _id: userUUID },
+        };
 
-      setMessages(previousMessages => GiftedChat.append(previousMessages, [newMessage]));
+        setMessages(previousMessages => GiftedChat.append(previousMessages, [newMessage]));
 
-      rasaServerSocket.emit('user_uttered', { session_id: userUUID, message: messageText }, () => {
-        
-        emitToServerEvent('message_from_client', {
+        rasaServerSocket.emit('user_uttered', { session_id: userUUID, message: messageText }, () => {
+          emitToServerEvent('message_from_client', {
+            UUID: userUUID,
+            Username: username,
+            Message: messageText,
+            MessageID: messageId,
+            IsSystemMessage: 'False',
+            MessageType: 'Answer'
+          });
+        });
+
+        setIsLoading(false);
+
+        emitToServerEvent('questionnaire_question_answered', {
           UUID: userUUID,
           Username: username,
-          Message: messageText,
-          MessageID: messageId,
-          IsSystemMessage: 'False',
-          MessageType: 'Answer'
+          UserResponse: messageText,
+          QuestionID: generateUUID(),
+          QuestionText: lastBotAnswer,
+          QuestionType: 'Likert (1-5)',
         });
-      });
-
-      emitToServerEvent('questionnaire_question_answered', {
-        UUID: userUUID,
-        Username: username,
-        UserResponse: messageText,
-        QuestionID: generateUUID(),
-        QuestionText: lastBotAnswer,
-        QuestionType: 'Likert (1-5)',
-      });
+      } else {
+        console.log("Buttons Disabled")
+      }
     };
 
     switch (buttonName) {
@@ -107,6 +116,19 @@ const ChatWindowScreen = () => {
       socket.emit('session_request', { session_id: userUUID }); // This opens a unique session with RASA with a specified ID
       pythonServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
       console.log('attempting to establish session request ' + userUUID)
+
+      const botStartMessage = {
+        _id: generateUUID(),
+        text: "Hello, hope you're doing good today :D. To start the questionnaire type 'spørgeskema' \n SD = Strongly Disagree \n D = Disagree \n U = Unsure \n A = Agree \n SA = Strongly Agree",
+        createdAt: new Date(),
+        user: { _id: 'bot' },
+      };
+
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [botStartMessage])
+      );
+
+
     }
   }, [socket, sessionID, userUUID, username]);
 
@@ -127,6 +149,9 @@ const ChatWindowScreen = () => {
       if (/afsluttet/.test(data.text)) {
         setQuestionnaireLayout(false);
         console.log('Disabling questionnaire layout.');
+        emitToServerEvent('finished_questionnaire', {
+          UUID: userUUID,
+        });
       }
 
       if (typeof data.text === 'string' && /spørgeskema/.test(data.text)) {
@@ -138,6 +163,8 @@ const ChatWindowScreen = () => {
         GiftedChat.append(previousMessages, [botMessage])
       );
 
+      setButtonsDisabled(false);
+
       emitToServerEvent('message_from_client', {
         UUID: userUUID,
         Username: 'RASA BOT',
@@ -146,7 +173,10 @@ const ChatWindowScreen = () => {
         IsSystemMessage: 'False',
         MessageType: 'Bot Answer'
       });
+
+      setIsLoading(false);
     };
+
 
     if (socket) {
       socket.on('bot_uttered', handleBotMessage);
@@ -165,6 +195,7 @@ const ChatWindowScreen = () => {
     setMessages((previousMessages) =>
       GiftedChat.append(previousMessages, newMessages)
     );
+    setIsLoading(true);
 
     if (socket) {
       const userMessage = createUserMessage(newMessages[0].text);
@@ -197,6 +228,22 @@ const ChatWindowScreen = () => {
     }
   };
 
+  const renderAvatar = (props) => {
+    const { currentMessage } = props;
+  
+    if (currentMessage.user._id === 'bot') {
+      // Render a bot avatar (you can replace the image source with your bot's avatar)
+      return (
+        <View style={styles.botAvatarContainer}>
+          <Image
+            source={require('../../../assets/images/woman_stonks_64.png')} // Replace with your bot's avatar image
+            style={styles.botAvatar}
+          />
+        </View>
+      );
+    }
+  };
+
   const generateMessageID = () =>
     Math.round(Math.random() * 1000000).toString(); // Generate a simple random ID
 
@@ -206,11 +253,14 @@ const ChatWindowScreen = () => {
       <QuestionnaireButtonLayout
         showButtons={questionnaireLayout}
         onButtonClick={handleQuestionnaireButtonClick}
+        buttonsDisabled={buttonsDisabled}
       />
       <GiftedChat
         messages={messages}
         onSend={(newMessages) => onSend(newMessages)}
         user={{ _id: sessionID }}
+        isTyping={isLoading}
+        renderAvatar={renderAvatar}
       />
     </View>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Button, Text, StyleSheet } from 'react-native';
 
-const QuestionnaireButtonLayout = ({ showButtons, onButtonClick }) => {
+const QuestionnaireButtonLayout = ({ showButtons, onButtonClick, buttonsDisabled }) => {
 
     return (
         <View>
@@ -10,6 +10,7 @@ const QuestionnaireButtonLayout = ({ showButtons, onButtonClick }) => {
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => onButtonClick('Button1')}
+                        disabled={buttonsDisabled}
                     >
                         <Text style={styles.buttonText}>1</Text>
                         <Text style={styles.buttonAbbreviation}>SD</Text>
@@ -17,6 +18,7 @@ const QuestionnaireButtonLayout = ({ showButtons, onButtonClick }) => {
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => onButtonClick('Button2')}
+                        disabled={buttonsDisabled}
                     >
                         <Text style={styles.buttonText}>2</Text>
                         <Text style={styles.buttonAbbreviation}>D</Text>
@@ -24,6 +26,7 @@ const QuestionnaireButtonLayout = ({ showButtons, onButtonClick }) => {
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => onButtonClick('Button3')}
+                        disabled={buttonsDisabled}
                     >
                         <Text style={styles.buttonText}>3</Text>
                         <Text style={styles.buttonAbbreviation}>U</Text>
@@ -31,6 +34,7 @@ const QuestionnaireButtonLayout = ({ showButtons, onButtonClick }) => {
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => onButtonClick('Button4')}
+                        disabled={buttonsDisabled}
                     >
                         <Text style={styles.buttonText}>4</Text>
                         <Text style={styles.buttonAbbreviation}>A</Text>
@@ -38,6 +42,7 @@ const QuestionnaireButtonLayout = ({ showButtons, onButtonClick }) => {
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => onButtonClick('Button5')}
+                        disabled={buttonsDisabled}
                     >
                         <Text style={styles.buttonText}>5</Text>
                         <Text style={styles.buttonAbbreviation}>SA</Text>

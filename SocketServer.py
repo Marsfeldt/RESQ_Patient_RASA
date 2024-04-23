@@ -170,6 +170,11 @@ def handle_questionnaire_answered(data):
 
     questionnaireDatabase1.insert_data('QuestionnaireName1', questionnaireAnswertoLog)
 
+@socketio.on('finished_questionnaire')
+def handle_questionnaire_finished(data):
+    uuid = data.get('UUID')
+    questionnaireDatabase1.calculate_stage_score("QuestionnaireName1", uuid)
+
 @socketio.on('connection_log')
 def handle_connection_log(data):
     uuid = data.get('UUID')
