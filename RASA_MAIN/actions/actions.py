@@ -140,7 +140,7 @@ class ActionStartQuestionnaire(Action):
         next_question_type = readiness_to_change_questionnaire[current_question_index]
         print('QuestionType:', next_question_type)
         dispatcher.utter_message(text=next_question)
-
+        
         return [SlotSet("current_question_index", current_question_index)]
 
 class ActionAskNextQuestion(Action):
@@ -149,6 +149,8 @@ class ActionAskNextQuestion(Action):
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         current_question_index = tracker.get_slot('current_question_index')
+        user_rating = int(tracker.latest_message["text"])
+
 
         if current_question_index is not None and current_question_index < len(readiness_to_change_questionnaire) - 1:
             # Ask the next question
@@ -156,6 +158,18 @@ class ActionAskNextQuestion(Action):
             next_question = readiness_to_change_questionnaire[next_question_index]
             next_question_type = readiness_to_change_questionnaire[next_question_index]
             print('QuestionType:', next_question_type)
+
+            if user_rating <= 3:
+                below_or_eq_3_message = "Rating was Below or Equal to 3"
+                #dispatcher.utter_message(text=positive_below_natural_responses[current_question_index])
+                dispatcher.utter_message(text=below_or_eq_3_message)
+                print(positive_below_natural_responses[current_question_index])
+                print("User rating was below or equal to 3")
+            else:
+                #dispatcher.utter_message(text=positive_above_natural_responses[current_question_index])
+                above_3_message = "Rating was Above 3"
+                dispatcher.utter_message(text=above_3_message)
+
             dispatcher.utter_message(text=next_question)
 
             return [SlotSet('current_question_index', next_question_index)]
@@ -183,13 +197,15 @@ class ActionProcessAnswer(Action):
             if 1 <= user_rating <= 5:
 
                 if user_rating <= 3:
+                    below_or_eq_3_message = "Rating was Below or Equal to 3"
                     #dispatcher.utter_message(text=positive_below_natural_responses[current_question_index])
-                    dispatcher.utter_message(text="below or equal 3")
+                    dispatcher.utter_message(text=below_or_eq_3_message)
                     print(positive_below_natural_responses[current_question_index])
                     print("User rating was below or equal to 3")
                 else:
                     #dispatcher.utter_message(text=positive_above_natural_responses[current_question_index])
-                    dispatcher.utter_message(text="above 3")
+                    above_3_message = "Rating was Above 3"
+                    dispatcher.utter_message(text=above_3_message)
 
                 if (
                     current_question_index is not None
