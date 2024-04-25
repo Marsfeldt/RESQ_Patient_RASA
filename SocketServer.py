@@ -4,7 +4,6 @@ import sqlite3
 import datetime
 import uuid  # Import uuid module for generating UUIDs
 from DatabaseHandler import *
-from pyngrok import ngrok
 
 app = Flask(__name__)
 socketio = SocketIO(app)
