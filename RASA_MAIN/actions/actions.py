@@ -43,17 +43,6 @@ questionnaire_question_types = [
     'LikertScale 1-5'
 ]
 
-questionnaire_questions = [
-    "Hvad vil du give Pizza på en skala fra 1 (Dårlig) - 5 (God)",
-    "Hvad vil du give Burger på en skala fra 1 (Dårlig) - 5 (God)",
-    "Hvad vil du give Burritos på en skala fra 1 (Dårlig) - 5 (God)"
-    #"Hvad vil du give Tacos på en skal fra 1 (Dårlig) - 5 (God)",
-    #"Hvad vil du give Nachos på en skala fra 1 (Dårlig) - 5 (God)",
-    #"Hvad vil du give Burger King på en skala fra 1 (Dårlig) - 5 (God)",
-    #"Hvad vil du give McDonalds på en skala fra 1 (Dårlig) - 5 (God)",
-    #"Hvad vil du give Flæskesteg på en skala fra 1 (Dårlig) - 5 (God)"
-]
-
 readiness_to_change_questionnaire = [
     "1. I don't think I drink too much",
     "2. I am trying to drink less than I used to",

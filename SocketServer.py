@@ -115,6 +115,14 @@ def handle_account_creation(data):
     print(
         f'User Account: \n {uuid} , {username} , {email} , {password} , {stage} , {dateOfBirth} , {accountCreatedTime} \n Created Successfully!')
 
+@socketio.on('check_tutorial_completion')
+def handle_tutorial_completion(UUID):
+    """
+    Check whether the user has completed the tutorial
+    """
+    completedTutorial = userDB.check_tutorial_completion('users', UUID)
+    socketio.emit('return_tutorial_completion', {'CompletedTutorial': completedTutorial}, room=request.sid)
+
 # Client Message event
 @socketio.on('message_from_client')
 def handle_message(data):

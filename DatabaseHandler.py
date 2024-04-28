@@ -48,6 +48,19 @@ class DatabaseHandler:
             else:
                 return None
 
+    def check_tutorial_completion(self, tableName, uuid):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                f"SELECT CompletedTutorial FROM {tableName} WHERE UUID = ?", (uuid,))
+            result = cursor.fetchone()
+            if result:
+                # Extract the integer value from the tuple
+                completedTutorial = result[0]
+                return completedTutorial
+            else:
+                return None
+
     def retrieve_password_from_username(self, tableName, username):
         with self.connection as connection:
             cursor = connection.cursor()
@@ -93,16 +106,18 @@ class DatabaseHandler:
                 f'SELECT stage FROM {tableName} where UUID = ?', (uuid,))
             stage = cursor.fetchone()
             return stage
-        
+
     def transition_user_stage(self, talbeName, uuid, newStage):
         with self.connection as connection:
             cursor = connection.cursor()
-            cursor.execute(f'UPDATE {talbeName} SET Stage = {newStage} WHERE UUID = ?', (uuid,))
-        
+            cursor.execute(
+                f'UPDATE {talbeName} SET Stage = {newStage} WHERE UUID = ?', (uuid,))
+
     def calculate_stage_score(self, tableName, uuid):
         with self.connection as connection:
             cursor = connection.cursor()
-            cursor.execute(f'SELECT UserResponse FROM {tableName} WHERE UUID = ?', (uuid,))
+            cursor.execute(
+                f'SELECT UserResponse FROM {tableName} WHERE UUID = ?', (uuid,))
             rows = cursor.fetchall()
 
             clean_numbers = [int(row[0]) for row in rows]
@@ -118,9 +133,12 @@ class DatabaseHandler:
             # Use list comprehension to apply the mapping
             mapped_numbers = [number_mapping[num] for num in clean_numbers]
 
-            PC_SCORE = mapped_numbers[0] + mapped_numbers[2] + mapped_numbers[5] + mapped_numbers[9]
-            C_SCORE = mapped_numbers[1] + mapped_numbers[3] + mapped_numbers[6] + mapped_numbers[10]
-            A_SCORE = mapped_numbers[4] + mapped_numbers[7] + mapped_numbers[8] + mapped_numbers[11]
+            PC_SCORE = mapped_numbers[0] + mapped_numbers[2] + \
+                mapped_numbers[5] + mapped_numbers[9]
+            C_SCORE = mapped_numbers[1] + mapped_numbers[3] + \
+                mapped_numbers[6] + mapped_numbers[10]
+            A_SCORE = mapped_numbers[4] + mapped_numbers[7] + \
+                mapped_numbers[8] + mapped_numbers[11]
 
             listOfStages = [
                 ["Precontemplation", PC_SCORE],
@@ -132,7 +150,8 @@ class DatabaseHandler:
             max_score = max(stage[1] for stage in listOfStages)
 
             # Find the stage(s) with the maximum score
-            max_stage_names = [stage[0] for stage in listOfStages if stage[1] == max_score]
+            max_stage_names = [stage[0]
+                               for stage in listOfStages if stage[1] == max_score]
 
             stage_mapping = {
                 "Precontemplation": 1,
@@ -143,7 +162,8 @@ class DatabaseHandler:
             }
 
             # Convert max stage name(s) to corresponding number(s)
-            max_stage_number = [stage_mapping[stage_name] for stage_name in max_stage_names]
+            max_stage_number = [stage_mapping[stage_name]
+                                for stage_name in max_stage_names]
 
             clean_int_max_stage = max_stage_number[0] if max_stage_number else None
 
@@ -151,17 +171,17 @@ class DatabaseHandler:
             print(f'PC_SCORE: {PC_SCORE}')
             print(f'C_SCORE: {C_SCORE}')
             print(f'A_SCORE: {A_SCORE}')
-            print(f'Participant should be in stage {max_stage_names} with a score of {max_score}')
+            print(
+                f'Participant should be in stage {max_stage_names} with a score of {max_score}')
             print(f'Stage Number {clean_int_max_stage}')
             print('======== RESULTS ========')
 
             userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
             userDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
-
     def close_database(self):
         self.connection.close()
-        
 
-#questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
-#questionnaireDatabase1.calculate_stage_score("QuestionnaireName1", "HB0iFCHQJd3PRv0KAAAL")
+
+# questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
+# questionnaireDatabase1.calculate_stage_score("QuestionnaireName1", "HB0iFCHQJd3PRv0KAAAL")

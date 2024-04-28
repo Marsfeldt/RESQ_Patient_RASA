@@ -1,0 +1,17 @@
+To add a new screen to the application duplicate this template and rename the following:
+
+in index.js
+export { default } from './Template' <- That needs to be changed to whatever you name the new page
+
+in Template.js
+
+const Template = () => {  <- Need to change the name of the const to whatever you name the page
+
+    return (
+        <View style={styles.root}>
+            <Text style={styles.title}>Template</Text>
+        </View>
+    );
+};
+
+export default Template; <- You need to do the same here

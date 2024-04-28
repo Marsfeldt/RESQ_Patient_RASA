@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
-import Logo from '../../../assets/images/logo.png';
+import Logo from '../../../assets/images/woman_stonks.png';
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
 import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets, reconnectSockets } from "../../../components/SocketManager/SocketManager";
@@ -67,7 +67,6 @@ const SignInScreen = () => {
                     if (compareErr) {
                         console.error('Error comparing passwords:', compareErr);
                     } else if (result) {
-                        console.warn("Login Successful!");
                         // Update userUUID in the context
                         setUserUUID(data.uuid);
                         emitToServerEvent('interaction_log', {
@@ -76,7 +75,15 @@ const SignInScreen = () => {
                             InteractionType: 'Successful Login',
                             InteractionOutput: data.uuid + 'logged in',
                         });
-                        navigation.navigate('ChatWindow', { username });
+                        checkVariableInDatabase(data.uuid, (variableValue) => {
+                            if (variableValue === 1) {
+                                navigation.navigate('WelcomeBack', { username });
+                            } else {
+                                navigation.navigate('ChatWindow', { username });
+                                console.warn("Login Successful!");
+                            }
+                        });
+                        //navigation.navigate('ChatWindow', { username });
                     } else {
                         console.warn("Invalid Password");
                         emitToServerEvent('interaction_log', {
@@ -98,6 +105,24 @@ const SignInScreen = () => {
             pythonServerSocket.off('user_credentials', handleUserCredentials);
         };
     }, [password, navigation, setUserUUID]);
+
+    const checkVariableInDatabase = (userUUID, callback) => {
+        // Emit event to server to check tutorial completion
+        pythonServerSocket.emit('check_tutorial_completion', userUUID);
+    
+        // Listen for the response
+        const returnTutorialCompletionListener = (data) => {
+            // Data contains the completedTutorial value
+            const completedTutorial = data.CompletedTutorial;
+            callback(completedTutorial);
+            console.log("Variable: " + completedTutorial);
+    
+            // Remove the event listener to avoid memory leaks
+            pythonServerSocket.off('return_tutorial_completion', returnTutorialCompletionListener);
+        };
+    
+        pythonServerSocket.on('return_tutorial_completion', returnTutorialCompletionListener);
+    };
 
     const onSignInPressed = () => {
         console.log("Sign In Button Pressed");
