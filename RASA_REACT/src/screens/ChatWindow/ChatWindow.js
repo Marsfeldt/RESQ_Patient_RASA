@@ -68,7 +68,7 @@ const ChatWindowScreen = () => {
           UserResponse: messageText,
           QuestionID: generateUUID(),
           QuestionText: lastBotAnswer,
-          QuestionType: 'Likert (1-5)',
+          QuestionType: 'Binary (Yes-No)',
         });
       } else {
         console.log("Buttons Disabled")
@@ -76,12 +76,9 @@ const ChatWindowScreen = () => {
     };
 
     switch (buttonName) {
-      case 'Button1':
-      case 'Button2':
-      case 'Button3':
-      case 'Button4':
-      case 'Button5':
-        handleButtonClickLogic(buttonName.slice(-1));
+      case 'Yes':
+      case 'No':
+        handleButtonClickLogic(buttonName);
         break;
       default:
         console.log(`Button ${buttonName} not handled`);
@@ -119,7 +116,7 @@ const ChatWindowScreen = () => {
 
       const botStartMessage = {
         _id: generateUUID(),
-        text: "Hej, jeg håber du har en god dag! For at starte spørgeskemaet kan du skrive 'spørgeskema' \n\n SD = Strongly Disagree \n D = Disagree \n U = Unsure \n A = Agree \n SA = Strongly Agree",
+        text: `Hello ${username}! I’m Freja and I will be your personal companion to support you on your journey towards a healthier lifestyle. My goal is to help you increase your physical activity and achieve your fitness goals in a way that’s tailored to your needs.\n\nTo get started, I’ll guide you through a brief questionnaire. This will help me understand where you currently are in your fitness journey, and help me provide you with more personalised recommendations to guide you through the process.\n\nDon’t worry, your privacy is important to me, and all of your responses will be kept confidential. Whenever you are ready for the questions, you can write back “questionnaire” to get started.`,
         createdAt: new Date(),
         user: { _id: 'bot' },
       };

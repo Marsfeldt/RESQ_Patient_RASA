@@ -43,20 +43,15 @@ questionnaire_question_types = [
     'LikertScale 1-5'
 ]
 
-readiness_to_change_questionnaire = [
-    "1. I don't think I drink too much",
-    "2. I am trying to drink less than I used to",
-    "3. I enjoy my drinking, but sometimes I drink too much",
-    "4. Sometimes I think I should cut down on my drinking",
-    "5. It's a waste of time thinking about my drinking",
-    "6. I have just recently changed my drinking habits",
-    "7. Anyone can talk about wanting to do something about drinking, but I am actually doing something about it",
-    "8. I am at the stage where I should think about drinking less alcohol",
-    "9. My drinking is a problem sometimes",
-    "10. There is no need for me to think about changing my drinking",
-    "11. I am actually changing my drinking habits right now",
-    "12. Drinking less alcohol would be pointless for me"
-]
+def readiness_to_change_questionnaire(username, stage, stage_def):
+    questionnaire = [
+        "Do you currently engage in regular physical activity?",
+        "Do you intend to engage in regular physical activity in the next 6 months?",
+        "Do you intend to engage in regular physical activity in the next 30 days?",
+        "Have you been regularly physically active for the past six months?",
+        f'Thank you {username}, very much for your answers. From my assessment you belong in {stage}, with the following definition: “{stage_def}”. Do you agree with this assessment, please choose “YES” or “NO”'
+    ]
+    return questionnaire
 
 positive_below_natural_responses = [
     "Achknowledging that is the first step, remember good change takes time",
@@ -125,8 +120,8 @@ class ActionStartQuestionnaire(Action):
 
         # Set the current question index in the tracker
         current_question_index = 0
-        next_question = readiness_to_change_questionnaire[current_question_index]
-        next_question_type = readiness_to_change_questionnaire[current_question_index]
+        next_question = readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")[current_question_index]
+        next_question_type = readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")[current_question_index]
         print('QuestionType:', next_question_type)
         dispatcher.utter_message(text=next_question)
         
@@ -138,26 +133,28 @@ class ActionAskNextQuestion(Action):
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         current_question_index = tracker.get_slot('current_question_index')
-        user_rating = int(tracker.latest_message["text"])
+        user_rating = tracker.latest_message["text"].lower()
 
 
-        if current_question_index is not None and current_question_index < len(readiness_to_change_questionnaire) - 1:
+        if current_question_index is not None and current_question_index < len(readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")) - 1:
             # Ask the next question
             next_question_index = current_question_index + 1
-            next_question = readiness_to_change_questionnaire[next_question_index]
-            next_question_type = readiness_to_change_questionnaire[next_question_index]
+            next_question = readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")[next_question_index]
+            next_question_type = readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")[next_question_index]
             print('QuestionType:', next_question_type)
 
-            if user_rating <= 3:
-                below_or_eq_3_message = "Rating was Below or Equal to 3"
+            if user_rating == "yes":
+                below_or_eq_3_message = "User Answered Yes"
                 #dispatcher.utter_message(text=positive_below_natural_responses[current_question_index])
                 dispatcher.utter_message(text=below_or_eq_3_message)
                 print(positive_below_natural_responses[current_question_index])
-                print("User rating was below or equal to 3")
-            else:
+                print("User Answered Yes")
+            elif user_rating == "no":
                 #dispatcher.utter_message(text=positive_above_natural_responses[current_question_index])
-                above_3_message = "Rating was Above 3"
+                above_3_message = "User Answered No"
                 dispatcher.utter_message(text=above_3_message)
+            else:
+                print("Yes-No Check Failed")
 
             dispatcher.utter_message(text=next_question)
 
@@ -174,38 +171,39 @@ class ActionProcessAnswer(Action):
     def run( 
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict
     ) -> List[Dict[Text, Any]]:
-        user_answer = tracker.latest_message["text"]
+        user_answer = tracker.latest_message["text"].lower()
 
         try:
-            user_rating = int(user_answer)
-            print(f"123123123 userrating {user_rating}")
+            print(f"123123123 userrating {user_answer}")
 
             print("Rating check successful")
             current_question_index = tracker.get_slot("current_question_index")
 
-            if 1 <= user_rating <= 5:
+            if user_answer == "yes" or user_answer == "no":
 
-                if user_rating <= 3:
-                    below_or_eq_3_message = "Rating was Below or Equal to 3"
+                if user_answer == "yes":
+                    below_or_eq_3_message = "User answered Yes"
                     #dispatcher.utter_message(text=positive_below_natural_responses[current_question_index])
                     dispatcher.utter_message(text=below_or_eq_3_message)
                     print(positive_below_natural_responses[current_question_index])
                     print("User rating was below or equal to 3")
-                else:
+                elif user_answer == "no":
                     #dispatcher.utter_message(text=positive_above_natural_responses[current_question_index])
-                    above_3_message = "Rating was Above 3"
+                    above_3_message = "RUser answered No"
                     dispatcher.utter_message(text=above_3_message)
+                else:
+                    print("Error Occured on Yes-No Check")
 
                 if (
                     current_question_index is not None
-                    and current_question_index < len(readiness_to_change_questionnaire) - 1
+                    and current_question_index < len(readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")) - 1
                 ):
                     next_question_index = current_question_index + 1
 
                     return [
                         SlotSet("current_question_index", next_question_index),
                         {"event": "user", "timestamp": None, "metadata": None,
-                         "text": readiness_to_change_questionnaire[next_question_index]}
+                         "text": readiness_to_change_questionnaire(username="LMAO1", stage="LMAO2", stage_def="LMAO3")[next_question_index]}
                     ]
                 else:
                     dispatcher.utter_message(
@@ -213,10 +211,10 @@ class ActionProcessAnswer(Action):
                     return [SlotSet("current_question_index", None)]
             else:
                 dispatcher.utter_message(
-                    text="Venligst vælg en vurdering mellem 1 og 5.")
+                    text="Vælg venligst enten 'YES' eller 'NO'")
         except ValueError:
             dispatcher.utter_message(
-                text="Venligst indtast et gyldigt tal mellem 1 og 5 for din vurdering."
+                text="Vælg venligst enten 'YES' eller 'NO'"
             )
 
         return [SlotSet('current_question_index', None)]

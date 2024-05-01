@@ -9,43 +9,17 @@ const QuestionnaireButtonLayout = ({ showButtons, onButtonClick, buttonsDisabled
                 <View style={styles.container}>
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={() => onButtonClick('Button1')}
+                        onPress={() => onButtonClick('Yes')}
                         disabled={buttonsDisabled}
                     >
-                        <Text style={styles.buttonText}>1</Text>
-                        <Text style={styles.buttonAbbreviation}>SD</Text>
+                        <Text style={styles.buttonText}>Yes</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={() => onButtonClick('Button2')}
+                        onPress={() => onButtonClick('No')}
                         disabled={buttonsDisabled}
                     >
-                        <Text style={styles.buttonText}>2</Text>
-                        <Text style={styles.buttonAbbreviation}>D</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => onButtonClick('Button3')}
-                        disabled={buttonsDisabled}
-                    >
-                        <Text style={styles.buttonText}>3</Text>
-                        <Text style={styles.buttonAbbreviation}>U</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => onButtonClick('Button4')}
-                        disabled={buttonsDisabled}
-                    >
-                        <Text style={styles.buttonText}>4</Text>
-                        <Text style={styles.buttonAbbreviation}>A</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => onButtonClick('Button5')}
-                        disabled={buttonsDisabled}
-                    >
-                        <Text style={styles.buttonText}>5</Text>
-                        <Text style={styles.buttonAbbreviation}>SA</Text>
+                        <Text style={styles.buttonText}>No</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -65,7 +39,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#0084FF',
         padding: 15,
         borderRadius: 5,
-        width: 50, // Adjust the width as needed
+        width: 100, // Adjust the width as needed
         alignItems: 'center',
     },
     buttonText: {

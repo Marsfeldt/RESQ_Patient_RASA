@@ -53,7 +53,6 @@ actions:
 intents:
   - greet
   - goodbye
-  - affirm
   - deny
   - mood_great
   - mood_unhappy

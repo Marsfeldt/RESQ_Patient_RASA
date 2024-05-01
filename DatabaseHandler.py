@@ -179,6 +179,23 @@ class DatabaseHandler:
             userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
             userDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
+    def determine_stage(self, tableName, uuid):
+        # Scoring Conditions
+        # if Q1 = NO and Q2 = NO = Precontemplation
+        # if Q1 = NO and Q2 = YES and Q3 = NO = Contemplation
+        # if Q1 = NO and Q2 = YES and Q3 = YES = Preparation
+        # if Q1 = YES and Q4 = NO = Action
+        # if Q1 = YES and Q4 = YES = Maintenance
+        scoring_sequences = {
+            "Pre-Contemplation": ["no", "no"],
+            "Contemplation": ["no", "yes", "no"],
+            "Preparation": ["no", "yes", "yes"],
+            "Action": ["yes", "no"],
+            "Maintenance": ["yes", "yes"],
+        }
+
+        
+
     def close_database(self):
         self.connection.close()
 
