@@ -119,7 +119,7 @@ const ChatWindowScreen = () => {
 
       const botStartMessage = {
         _id: generateUUID(),
-        text: "Hej, jeg håber du har en god dag!. For at starte spørgeskemaet kan du skrive 'spørgeskema' \n SD = Strongly Disagree \n D = Disagree \n U = Unsure \n A = Agree \n SA = Strongly Agree",
+        text: "Hej, jeg håber du har en god dag! For at starte spørgeskemaet kan du skrive 'spørgeskema' \n\n SD = Strongly Disagree \n D = Disagree \n U = Unsure \n A = Agree \n SA = Strongly Agree",
         createdAt: new Date(),
         user: { _id: 'bot' },
       };
