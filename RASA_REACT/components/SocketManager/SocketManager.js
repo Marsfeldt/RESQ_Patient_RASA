@@ -1,10 +1,10 @@
 import io from 'socket.io-client';
 
 // Socket responsible for connecting to RASA (This server is running on port 5005)
-const rasaServerSocket = io('http://192.168.0.157:5005');
+const rasaServerSocket = io('https://1d98-2a09-5e41-853-a30-58c5-9981-899e-c730.ngrok-free.app');
 
 // Socket responsible for connecting to the Python Server (This server is running on port 5006)
-const pythonServerSocket = io('http://192.168.0.157:5006');
+const pythonServerSocket = io('https://0151-2a09-5e41-853-a30-58c5-9981-899e-c730.ngrok-free.app');
 
 // Function to connect server sockets
 const connectSockets = () => {
