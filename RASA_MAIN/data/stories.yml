@@ -2,6 +2,15 @@ version: "3.1"
 
 stories:
 
+- story: onboarding
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: experience_level
+  - action: utter_goal_info
+  - intent: exercise_goals
+  - action: utter_get_to_know
+
 - story: handle user answers in a loop
   steps:
   - intent: answer_question

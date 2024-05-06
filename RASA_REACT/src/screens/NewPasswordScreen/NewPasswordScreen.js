@@ -10,20 +10,20 @@ const NewPasswordScreen = () => {
 
 
     const onSignInPressed = () => {
-        console.warn("OnSendPress")
+        //console.warn("OnSendPress")
     }
 
     const onGodkendPress = () => {
-        console.warn("OnSendPress")
+        //console.warn("OnSendPress")
     }
 
     return (
         <View style={styles.root}>
             <Text style={styles.title}>Reset Password</Text>
-            <CustomInput placeholder='Kode' value={code} setValue={setCode} />
-            <CustomInput placeholder='Indtast dit nye kodeord' value={newPassword} setValue={setNewPassword} />
-            <CustomButton text='Godkend' onPress={onGodkendPress} />
-            <CustomButton text='Tilbage til Log ind' onPress={onSignInPressed} type="TERTIARY" />
+            <CustomInput placeholder='Password' value={code} setValue={setCode} />
+            <CustomInput placeholder='Enter your new password' value={newPassword} setValue={setNewPassword} />
+            <CustomButton text='Confirm' onPress={onGodkendPress} />
+            <CustomButton text='Back to Log In' onPress={onSignInPressed} type="TERTIARY" />
         </View>
     );
 };

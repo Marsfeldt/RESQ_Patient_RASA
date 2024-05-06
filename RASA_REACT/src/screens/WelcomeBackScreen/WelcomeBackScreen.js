@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions, Button } from 'react-native';
+import { View, Text, Image, StyleSheet, useWindowDimensions, Button, BackHandler } from 'react-native';
 import Logo from '../../../assets/images/woman_stonks.png';
 import CustomButton from "../../../components/CustomButton";
 
@@ -7,16 +7,16 @@ const WelcomeBackScreen = () => {
     const { height } = useWindowDimensions(); // Get height from useWindowDimensions
 
     const CloseApplicationButton = () => {
-        console.log("Closed Application")
+        BackHandler.exitApp();
     }
 
     return (
         <View style={styles.root}>
             <Image source={Logo} style={[styles.logo, { height: height * 0.3 }]} resizeMode="contain" />
             <View style={styles.content}>
-                <Text style={styles.title}>Velkommen Tilbage!</Text>
-                <Text style={styles.description}>Fortæl venligst ikke andre i forsøget om denne besked, Vi ville bare se om du faktisk kom tilbage, forsøget er nu slut og du må have en rigtig god dag!</Text>
-                <CustomButton text='Luk Applikationen' onPress={CloseApplicationButton} />
+                <Text style={styles.title}>Welcome Back!</Text>
+                <Text style={styles.description}>Please do not tell others about this message in the experiment. We just wanted to see if you actually came back. The experiment is now over, we wish you a great day!</Text>
+                <CustomButton text='Close Application' onPress={CloseApplicationButton} />
             </View>
         </View>
     );

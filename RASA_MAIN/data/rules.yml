@@ -7,22 +7,7 @@ rules:
   - intent: goodbye
   - action: utter_goodbye
 
-- rule: Say 'I am a bot' anytime the user challenges
-  steps:
-  - intent: bot_challenge
-  - action: utter_iamabot
-
-- rule: Inform user about current stage
-  steps:
-  - intent: intent_inform_user_stage
-  - action: action_inform_stage_user
-
-- rule: Transition the user stage
-  steps:
-  - intent: intent_transition_user_stage
-  - action: action_transition_user_stage
-
 - rule: Always start questionnaire if asked
   steps:
-  - intent: start_questionnaire
+  - intent: im_ready
   - action: action_start_questionnaire

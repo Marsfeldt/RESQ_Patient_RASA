@@ -114,6 +114,7 @@ const ChatWindowScreen = () => {
       pythonServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
       console.log('attempting to establish session request ' + userUUID)
 
+      /*
       const botStartMessage = {
         _id: generateUUID(),
         text: `Hello ${username}! I’m Freja and I will be your personal companion to support you on your journey towards a healthier lifestyle. My goal is to help you increase your physical activity and achieve your fitness goals in a way that’s tailored to your needs.\n\nTo get started, I’ll guide you through a brief questionnaire. This will help me understand where you currently are in your fitness journey, and help me provide you with more personalised recommendations to guide you through the process.\n\nDon’t worry, your privacy is important to me, and all of your responses will be kept confidential. Whenever you are ready for the questions, you can write back “questionnaire” to get started.`,
@@ -124,6 +125,7 @@ const ChatWindowScreen = () => {
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, [botStartMessage])
       );
+      */
 
 
     }
@@ -143,17 +145,12 @@ const ChatWindowScreen = () => {
 
       setLastBotAnswer(data.text);
 
-      if (/afsluttet/.test(data.text)) {
+      if (/you belong in/.test(data.text)) {
         setQuestionnaireLayout(false);
         console.log('Disabling questionnaire layout.');
         emitToServerEvent('finished_questionnaire', {
           UUID: userUUID,
         });
-      }
-
-      if (typeof data.text === 'string' && /spørgeskema/.test(data.text)) {
-        setQuestionnaireLayout(true);
-        console.log('Enabling questionnaire layout.');
       }
 
       setMessages((previousMessages) =>
@@ -207,6 +204,12 @@ const ChatWindowScreen = () => {
         }
       );
       console.log(`${username} sending message ${userMessage.text} to RASA`);
+
+      if (typeof userMessage.text === 'string' && /ready/.test(userMessage.text)) {
+        setQuestionnaireLayout(true);
+        console.log('Enabling questionnaire layout.');
+      }
+
       emitToServerEvent('message_from_client', {
         UUID: userUUID,
         Username: username,

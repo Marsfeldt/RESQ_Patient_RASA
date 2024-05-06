@@ -31,12 +31,12 @@ const SignUpScreen = () => {
     }
 
     const onForgotPasswordPressed = () => {
-        console.warn("Forgot Password")
+        //console.warn("Forgot Password")
         navigation.navigate('ForgotPassword');
     }
 
     const onSignUpPressed = () => {
-        console.warn("On SignUp")
+        //console.warn("On SignUp")
     }
 
     const onRegisterPressed = () => {
@@ -63,24 +63,24 @@ const SignUpScreen = () => {
     }
 
     const onTermsOfUsePressed = () => {
-        console.warn("onTermsOfUsePressed")
+        //console.warn("onTermsOfUsePressed")
     }
 
     const onPrivacyPolicyPressed = () => {
-        console.warn("onPrivacyPolicyPressed")
+        //console.warn("onPrivacyPolicyPressed")
     }
 
     return (
         <View style={styles.root}>
             <Text style={styles.title}>Opret en Konto</Text>
-            <CustomInput placeholder='Brugernavn' value={username} setValue={setUsername} />
+            <CustomInput placeholder='Username' value={username} setValue={setUsername} />
             <CustomInput placeholder='Email' value={email} setValue={setEmail} />
-            <CustomInput placeholder='Kodeord' value={password} setValue={setPassword} secureTextEntry={true} />
-            <CustomInput placeholder='Gentag Kodeord' value={passwordRepeat} setValue={setPasswordRepeat} secureTextEntry={true} />
-            <CustomInput placeholder='Fødselsdag' value={dateOfBirth} setValue={setDateOfBirth} />
+            <CustomInput placeholder='Password' value={password} setValue={setPassword} secureTextEntry={true} />
+            <CustomInput placeholder='Repeat Password' value={passwordRepeat} setValue={setPasswordRepeat} secureTextEntry={true} />
+            <CustomInput placeholder='Birth Date' value={dateOfBirth} setValue={setDateOfBirth} />
             <CustomButton text='Register' onPress={onRegisterPressed} />
-            <Text style={styles.text}>Ved at oprette en konto, accepterer du vores <Text style={styles.link} onPress={onTermsOfUsePressed}>Terms of Use</Text> og vores <Text style={styles.link} onPress={onPrivacyPolicyPressed}>Privacy Policy</Text></Text>
-            <CustomButton text='Har du allerede en konto, log ind her' onPress={onSignInPressed} type="TERTIARY" />
+            <Text style={styles.text}>Ved at oprette en konto, accepterer du vores <Text style={styles.link} onPress={onTermsOfUsePressed}>Terms of Use</Text> and <Text style={styles.link} onPress={onPrivacyPolicyPressed}>Privacy Policy</Text></Text>
+            <CustomButton text='Do you already have an account? Log in here' onPress={onSignInPressed} type="TERTIARY" />
         </View>
     );
 };

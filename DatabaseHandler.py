@@ -107,11 +107,35 @@ class DatabaseHandler:
             stage = cursor.fetchone()
             return stage
 
+    def fetch_variable_from_uuid(self, tableName, variable, uuid):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                f'SELECT {variable} from {tableName} where UUID = ?', (uuid,))
+            result = cursor.fetchone()
+            return int(result[0])
+
+    def fetch_user_identification_variables(self, tableName, uuid):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(f'SELECT Username, Stage FROM {tableName} WHERE UUID = ?', (uuid,))
+            result = cursor.fetchone()
+            if result:
+                return result  # Return fetched values (username and stage)
+            else:
+                return None  # Handle case where no result is found
+
     def transition_user_stage(self, talbeName, uuid, newStage):
         with self.connection as connection:
             cursor = connection.cursor()
             cursor.execute(
                 f'UPDATE {talbeName} SET Stage = {newStage} WHERE UUID = ?', (uuid,))
+
+    def update_tutorial_completion(self, talbeName, uuid, newState):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                f'UPDATE {talbeName} SET CompletedTutorial = {newState} WHERE UUID = ?', (uuid,))
 
     def calculate_stage_score(self, tableName, uuid):
         with self.connection as connection:
@@ -179,22 +203,15 @@ class DatabaseHandler:
             userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
             userDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
-    def determine_stage(self, tableName, uuid):
-        # Scoring Conditions
-        # if Q1 = NO and Q2 = NO = Precontemplation
-        # if Q1 = NO and Q2 = YES and Q3 = NO = Contemplation
-        # if Q1 = NO and Q2 = YES and Q3 = YES = Preparation
-        # if Q1 = YES and Q4 = NO = Action
-        # if Q1 = YES and Q4 = YES = Maintenance
-        scoring_sequences = {
-            "Pre-Contemplation": ["no", "no"],
-            "Contemplation": ["no", "yes", "no"],
-            "Preparation": ["no", "yes", "yes"],
-            "Action": ["yes", "no"],
-            "Maintenance": ["yes", "yes"],
-        }
+    def fetch_user_responses(self, tableName, uuid):
+        with self.connection as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                f'SELECT UserResponse FROM {tableName} WHERE UUID = ?', (uuid,))
+            results = cursor.fetchall()
+            user_responses = [result[0].lower() for result in results]  # Convert to lower case
+            return user_responses
 
-        
 
     def close_database(self):
         self.connection.close()

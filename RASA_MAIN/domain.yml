@@ -9,6 +9,7 @@ entities:
   - getQuestionnaireNumber
   - user_answer
   - current_question_index
+  - last_strategy_3_question_index
 
 slots:
   userStage:
@@ -17,7 +18,19 @@ slots:
     influence_conversation: false
     mappings:
     - type: custom
+  strategy:
+    type: float
+    initial_value: 1
+    influence_conversation: false
+    mappings:
+    - type: custom
   current_question_index:
+    type: float
+    initial_value: 0
+    influence_conversation: false
+    mappings:
+    - type: custom
+  last_strategy_3_question_index:
     type: float
     initial_value: 0
     influence_conversation: false
@@ -44,15 +57,16 @@ actions:
   - action_start_questionnaire
   - action_process_answer
   - action_ask_next_question
-  - action_inform_stage_user
-  - action_transition_user_stage
-  - action_advise_help_based_on_stage
   - action_initialize_user_stage
+  - action_default_fallback
   
 
 intents:
   - greet
   - goodbye
+  - experience_level
+  - exercise_goals
+  - im_ready
   - deny
   - mood_great
   - mood_unhappy
@@ -66,7 +80,13 @@ intents:
 
 responses:
   utter_greet:
-  - text: "Hey! How are you?"
+  - text: "I’m Freja and I will be your personal companion to support you on your journey towards a healthier lifestyle. How much experience do you have with physical activity and exercise routines?"
+
+  utter_goal_info:
+  - text: "That is fine! I am ready to help anyone regardless of their personal experience. My goal is to help you increase your physical activity and achieve your fitness goals in a way that’s tailored to your needs. What are your current exercise goals?"
+
+  utter_get_to_know:
+  - text: "Great! setting goals for yourself is fundemental in keeping a good routine. Before I can get started with your personalized exercise profile, I would like to get to know you a little better. Let me know when you are ready"
 
   utter_cheer_up:
   - text: "Here is something to cheer you up:"

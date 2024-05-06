@@ -25,7 +25,7 @@ const TopNavigationBar = ({ username }) => {
             </TouchableOpacity>
             <Text style={styles.title}>{username}</Text>
             <TouchableOpacity onPress={onProfileNavigate} style={styles.button}>
-                <Text style={styles.buttonText}>Profil</Text>
+                <Text style={styles.buttonText}>Profile</Text>
             </TouchableOpacity>
         </View>
     );

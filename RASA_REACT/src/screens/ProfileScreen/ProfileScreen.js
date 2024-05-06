@@ -29,7 +29,6 @@ const ProfileScreen = () => {
         <SafeAreaView style={{ flex: 1 }}>
             <View style={{ flex: 1 }}>
                 <TopNavigationBar username={username} />
-                <Text style={styles.title}>Template</Text>
                 <LogOutScreen />
             </View>
         </SafeAreaView>

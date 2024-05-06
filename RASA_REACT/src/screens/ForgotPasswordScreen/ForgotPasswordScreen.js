@@ -11,19 +11,19 @@ const ForgotPasswordScreen = () => {
     const navigation = useNavigation();
 
     const onBackToLoginPressed = () => {
-        navigation.navigate('SignIn');
+        //navigation.navigate('SignIn');
     }
 
     const onSendNewPasswordPressed = () => {
-        console.warn("onSendNewPasswordPressed")
+        //console.warn("onSendNewPasswordPressed")
     }
 
     return (
         <View style={styles.root}>
             <Text style={styles.title}>Reset Password</Text>
-            <CustomInput placeholder='Brugernavn' value={username} setValue={setUsername} />
+            <CustomInput placeholder='Username' value={username} setValue={setUsername} />
             <CustomButton text='Send' onPress={onSendNewPasswordPressed} />
-            <CustomButton text='Tilbage til Log ind' onPress={onBackToLoginPressed} type="TERTIARY" />
+            <CustomButton text='Back to Log In' onPress={onBackToLoginPressed} type="TERTIARY" />
         </View>
     );
 };

@@ -17,6 +17,72 @@ nlu:
     - goodevening
     - good afternoon
 
+- intent: experience_level
+  examples: |
+    - I'm new
+    - I'm learning
+    - I'm trying
+    - I'm okay
+    - I'm active
+    - I'm into it
+    - I'm getting there
+    - I'm experienced
+    - I'm just starting
+    - I'm not sure
+    - I'm a beginner
+    - I'm just getting into it
+    - I'm not very experienced
+    - I'm fairly experienced
+    - I'm quite experienced
+    - I'm a bit rusty
+    - I'm not an expert
+    - I'm somewhat experienced
+    - I'm pretty experienced
+    - I'm a novice
+    - I'm seasoned
+    - I'm a pro
+    - I'm still figuring things out
+    - I'm not too experienced
+    - I'm not very familiar with it
+    - I'm not a complete beginner
+    - I'm not a total newbie
+    - I'm pretty new to this
+    - I'm somewhat familiar with it
+    - I'm not totally new
+    - I'm somewhat new to this
+
+- intent: exercise_goals
+  examples: |
+    - Lose weight and get fitter.
+    - to get stronger
+    - to exercise more
+    - to do more exercise
+    - to get more active
+    - to be faster
+    - Build strength and tone up.
+    - Improve endurance for a race.
+    - Become more flexible.
+    - Be able to do push-ups.
+    - Feel more confident in my body.
+    - Reduce stress.
+    - Improve balance and stability.
+    - Improve overall health.
+    - Have more energy throughout the day.
+    - Improve posture.
+    - Improve cardiovascular fitness.
+    - Fit into old clothes better.
+    - Be more active for my kids.
+    - Feel more comfortable in my own skin.
+
+- intent: im_ready
+  examples: |
+    - I'm ready
+    - Ready when you are!
+    - Lets go
+    - Im ready
+    - I am ready
+    - Lets begin
+
 - intent: goodbye
   examples: |
     - cu
@@ -142,5 +208,9 @@ nlu:
   
 - intent: answer_question
   examples: |
-    - Yes
     - No
+    - no
+    - Yes
+    - yes
+    - nO
+    - yEs

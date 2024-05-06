@@ -60,12 +60,12 @@ const SignInScreen = () => {
     useEffect(() => {
         const handleUserCredentials = (data) => {
             if (data.error) {
-                console.warn("User not found.");
+                //console.warn("User not found.");
             } else {
                 const receivedHash = data.password;
                 bcrypt.compare(password, receivedHash, (compareErr, result) => {
                     if (compareErr) {
-                        console.error('Error comparing passwords:', compareErr);
+                        //console.error('Error comparing passwords:', compareErr);
                     } else if (result) {
                         // Update userUUID in the context
                         setUserUUID(data.uuid);
@@ -80,12 +80,12 @@ const SignInScreen = () => {
                                 navigation.navigate('WelcomeBack', { username });
                             } else {
                                 navigation.navigate('ChatWindow', { username });
-                                console.warn("Login Successful!");
+                                //console.warn("Login Successful!");
                             }
                         });
                         //navigation.navigate('ChatWindow', { username });
                     } else {
-                        console.warn("Invalid Password");
+                        //console.warn("Invalid Password");
                         emitToServerEvent('interaction_log', {
                             UUID: rasaServerSocket.id,
                             Username: username,

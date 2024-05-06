@@ -13,13 +13,13 @@ const LogOutScreen = () => {
 
     const handleLogout = () => {
         disconnectSockets();
-        console.warn("Log Out Successful!");
+        //console.warn("Log Out Successful!");
         navigation.navigate('SignIn');
     }
 
     return (
         <View style={styles.root}>
-            <CustomButton text='Log Ud' onPress={handleLogout} />
+            <CustomButton text='Log Out' onPress={handleLogout} />
         </View>
     );
 };
