@@ -72,14 +72,14 @@ const SignUpScreen = () => {
 
     return (
         <View style={styles.root}>
-            <Text style={styles.title}>Opret en Konto</Text>
+            <Text style={styles.title}>Create Account</Text>
             <CustomInput placeholder='Username' value={username} setValue={setUsername} />
             <CustomInput placeholder='Email' value={email} setValue={setEmail} />
             <CustomInput placeholder='Password' value={password} setValue={setPassword} secureTextEntry={true} />
             <CustomInput placeholder='Repeat Password' value={passwordRepeat} setValue={setPasswordRepeat} secureTextEntry={true} />
             <CustomInput placeholder='Birth Date' value={dateOfBirth} setValue={setDateOfBirth} />
             <CustomButton text='Register' onPress={onRegisterPressed} />
-            <Text style={styles.text}>Ved at oprette en konto, accepterer du vores <Text style={styles.link} onPress={onTermsOfUsePressed}>Terms of Use</Text> and <Text style={styles.link} onPress={onPrivacyPolicyPressed}>Privacy Policy</Text></Text>
+            <Text style={styles.text}>By creating an account, you accept our <Text style={styles.link} onPress={onTermsOfUsePressed}>Terms of Use</Text> and <Text style={styles.link} onPress={onPrivacyPolicyPressed}>Privacy Policy</Text></Text>
             <CustomButton text='Do you already have an account? Log in here' onPress={onSignInPressed} type="TERTIARY" />
         </View>
     );

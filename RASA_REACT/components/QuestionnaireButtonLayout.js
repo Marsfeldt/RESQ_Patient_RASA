@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#0084FF',
         padding: 15,
         borderRadius: 5,
-        width: 100, // Adjust the width as needed
+        width: 170, // Adjust the width as needed
         alignItems: 'center',
     },
     buttonText: {

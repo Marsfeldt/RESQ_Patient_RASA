@@ -205,7 +205,7 @@ const ChatWindowScreen = () => {
       );
       console.log(`${username} sending message ${userMessage.text} to RASA`);
 
-      if (typeof userMessage.text === 'string' && /ready/.test(userMessage.text)) {
+      if (typeof userMessage.text === 'string' && /ready/.test(userMessage.text) || /rdy/.test(userMessage.text) || /readt/.test(userMessage.text)) {
         setQuestionnaireLayout(true);
         console.log('Enabling questionnaire layout.');
       }
@@ -250,17 +250,19 @@ const ChatWindowScreen = () => {
   return (
     <View style={styles.container}>
       <TopNavigationBar username={username} />
-      <QuestionnaireButtonLayout
-        showButtons={questionnaireLayout}
-        onButtonClick={handleQuestionnaireButtonClick}
-        buttonsDisabled={buttonsDisabled}
-      />
+      
       <GiftedChat
         messages={messages}
         onSend={(newMessages) => onSend(newMessages)}
         user={{ _id: sessionID }}
         isTyping={isLoading}
         renderAvatar={renderAvatar}
+        textInputStyle={{ color: 'black' }}
+      />
+      <QuestionnaireButtonLayout
+        showButtons={questionnaireLayout}
+        onButtonClick={handleQuestionnaireButtonClick}
+        buttonsDisabled={buttonsDisabled}
       />
     </View>
   );

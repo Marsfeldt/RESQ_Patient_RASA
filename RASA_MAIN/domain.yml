@@ -10,6 +10,7 @@ entities:
   - user_answer
   - current_question_index
   - last_strategy_3_question_index
+  - recently_asked_questionnaire
 
 slots:
   userStage:
@@ -28,6 +29,10 @@ slots:
     type: float
     initial_value: 0
     influence_conversation: false
+    mappings:
+    - type: custom
+  recently_asked_questionnaire:
+    type: bool
     mappings:
     - type: custom
   last_strategy_3_question_index:
@@ -67,14 +72,7 @@ intents:
   - experience_level
   - exercise_goals
   - im_ready
-  - deny
-  - mood_great
-  - mood_unhappy
-  - bot_challenge
-  - request_help
   - grateful
-  - intent_inform_user_stage
-  - intent_transition_user_stage
   - start_questionnaire
   - answer_question
 
@@ -87,6 +85,9 @@ responses:
 
   utter_get_to_know:
   - text: "Great! setting goals for yourself is fundemental in keeping a good routine. Before I can get started with your personalized exercise profile, I would like to get to know you a little better. Let me know when you are ready"
+
+  utter_respond_to_phonenumber:
+  - text: "That was all for today, thank you very much. I will remind you tomorrow when your exercise plan has been made, have a great day!"
 
   utter_cheer_up:
   - text: "Here is something to cheer you up:"
@@ -108,4 +109,4 @@ responses:
   - text: "Your stage is {userStage}"
 
   utter_appreciation:
-  - text: "Det var så lidt, spørg endelig hvis du har flere spørgsmål"
+  - text: "You are very welcome!"

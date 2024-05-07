@@ -11,3 +11,13 @@ rules:
   steps:
   - intent: im_ready
   - action: action_start_questionnaire
+
+- rule: Always provide ending when phone number has been sent
+  steps:
+  - intent: phone_number
+  - action: utter_respond_to_phonenumber
+
+- rule: Always respond to grateful
+  steps:
+  - intent: grateful
+  - action: utter_appreciation

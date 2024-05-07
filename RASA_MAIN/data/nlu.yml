@@ -59,20 +59,26 @@ nlu:
     - to do more exercise
     - to get more active
     - to be faster
-    - Build strength and tone up.
-    - Improve endurance for a race.
-    - Become more flexible.
-    - Be able to do push-ups.
-    - Feel more confident in my body.
-    - Reduce stress.
-    - Improve balance and stability.
-    - Improve overall health.
-    - Have more energy throughout the day.
-    - Improve posture.
-    - Improve cardiovascular fitness.
-    - Fit into old clothes better.
-    - Be more active for my kids.
-    - Feel more comfortable in my own skin.
+    - to lose weight
+    - to start exercising
+    - to begin exercising
+    - to build muscle mass
+
+- intent: phone_number
+  examples: |
+    - 12345678
+    - 23456789
+    - 34567890
+    - 45678901
+    - 56789012
+    - 67890123
+    - 78901234
+    - 89012345
+    - 90123456
+    - 01234567
+    - my phone number is 90123456
+    - my number is 89012345
+    - here is my number 23456789
 
 - intent: im_ready
   examples: |
@@ -96,100 +102,16 @@ nlu:
     - bye bye
     - see you later
 
-- intent: deny
-  examples: |
-    - no
-    - n
-    - never
-    - I don't think so
-    - don't like that
-    - no way
-    - not really
-
-- intent: mood_great
-  examples: |
-    - perfect
-    - great
-    - amazing
-    - feeling like a king
-    - wonderful
-    - I am feeling very good
-    - I am great
-    - I am amazing
-    - I am going to save the world
-    - super stoked
-    - extremely good
-    - so so perfect
-    - so good
-    - so perfect
-
-- intent: mood_unhappy
-  examples: |
-    - my day was horrible
-    - I am sad
-    - I don't feel very well
-    - I am disappointed
-    - super sad
-    - I'm so sad
-    - sad
-    - very sad
-    - unhappy
-    - not good
-    - not very good
-    - extremly sad
-    - so saad
-    - so sad
-
-- intent: bot_challenge
-  examples: |
-    - are you a bot?
-    - are you a human?
-    - am I talking to a bot?
-    - am I talking to a human?
-
-- intent: request_help
-  examples: |
-    - Hvad kan du hjælpe mig med i dag?
-    - Kan du hjælpe mig med noget?
-    - Hvordan kan du assistere mig i dag?
-    - Brug for hjælp med noget?
-    - Hvordan kan du være til hjælp i dag?
-    - Jeg har brug for assistance.
-
 - intent: grateful
   examples: |
-    - Tak
-    - Mange tak
-    - Tusind tak
-    - Tak skal du have
-    - Jeg sætter pris på det
-    - Det var meget hjælpsomt
-    - Jeg er taknemmelig
-    - Du har været en stor hjælp
-
-- intent: intent_inform_user_stage
-  examples: |
-    - What stage am I in
-    - Can you tell me what stage I am in
-    - What is my current stage
-    - Which phase am I currently in?
-    - Tell me my current status.
-    - What's my current stage?
-    - Could you inform me about my present phase?
-    - In which stage do I find myself right now?
-    - What phase of the process am I at currently?
-    - Give me information about the stage I'm in.
-    - I'd like to know the stage I'm currently at, please.
-    - Please let me know my current phase.
-    - Inform me of my current status in the process.
-
-- intent: intent_transition_user_stage
-  examples: |
-    - Transition my user stage
-    - Can you change my stage
-    - I would like to change stage
-    - Can you change my user stage
-    - Modify my user stage
+    - Thank you
+    - Thanks
+    - Thanks a lot
+    - Thank you very much
+    - I appreciate it
+    - That was very helpful
+    - I'm grateful
+    - You've been a great help
 
 #######################################################
 # Questionnaire Related Intents

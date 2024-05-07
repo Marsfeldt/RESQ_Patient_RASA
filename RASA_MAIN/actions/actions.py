@@ -105,6 +105,12 @@ strategy_responses = {
     "Q4_NO_R": "That's okay! Sometimes life gets busy, and our priorities shift. Whenever you're ready to get back into a regular routine, I'm here to support you every step of the way."
 }
 
+strategy_3_responses = {
+    "Q1_R_S3": "That is nice, have you ever done cardio?",
+    "Q2_R_S3": "Have you ever tried strength training?",
+    "Q3_R_S3": "Have you participated in any group fitness classes before?",
+    "Q4_R_S3": "Do you like outdoor activites like biking?",
+}
 
 stages = [
     "pre-contemplation",
@@ -160,6 +166,10 @@ class ActionAskNextQuestion(Action):
         user_response = tracker.latest_message["text"].lower()
         username, stage = acquire_user_identification_variables(tracker)
         strategy = tracker.get_slot("strategy")
+        recently_asked_questionnaire = tracker.get_slot("recently_asked_questionnaire")
+
+        if recently_asked_questionnaire is None:
+            recently_asked_questionnaire = False
 
         if current_question_index is not None:
             if current_question_index == 0:  # First question
@@ -178,28 +188,40 @@ class ActionAskNextQuestion(Action):
                 next_question_index = None  # Finish questionnaire
 
             # Process user response based on strategy
-            #if strategy == 1:  # Strategy 1
-            #    if next_question_index is not None:
-                    #next_question_type = readiness_to_change_questionnaire(username=username, stage=stages[stage-1], stage_def=stage_definitions[stage-1])[next_question_index]
-                    #dispatcher.utter_message(text=next_question_type)
             if strategy == 2:  # Strategy 2
                 response_key = f"Q{current_question_index + 1}_{user_response.upper()}_R"
-                response_message = strategy_responses[response_key]
+                response_message = strategy_responses.get(response_key, "I'm sorry, I didn't understand your response.")
                 dispatcher.utter_message(text=response_message)
 
-            # Ask the next question if there is one
-            if next_question_index is not None:
+            if strategy == 3:
+                if recently_asked_questionnaire == False:
+                    response_key = f"Q{current_question_index + 1}_R_S3"
+                    response_message = strategy_3_responses.get(response_key, "I'm sorry, I didn't understand your response.")
+                    dispatcher.utter_message(text=response_message)
+                    return [SlotSet("recently_asked_questionnaire", True)]
+
+                # Ask the next question if there is one
+                if next_question_index is not None:
+                    next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]
+                    dispatcher.utter_message(text=next_question)
+                    return [SlotSet('current_question_index', next_question_index), SlotSet("recently_asked_questionnaire", False)]
+
+            # Ask the next question if there is one (excluding the case of strategy 3)
+            if strategy != 3 and next_question_index is not None:
                 next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]
                 dispatcher.utter_message(text=next_question)
                 return [SlotSet('current_question_index', next_question_index)]
-            else:
-                # No more questions, end the conversation
-                summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[4]
-                dispatcher.utter_message(text=summary_message)
-                userDB.update_tutorial_completion('Users', tracker.sender_id, 1)
-                return [SlotSet('current_question_index', None)]
+
+            # No more questions, end the conversation
+            summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[4]
+            userDB.update_tutorial_completion('Users', tracker.sender_id, 1)
+            dispatcher.utter_message(text=summary_message)
+
+            return [SlotSet('current_question_index', None)]
+
         else:
             return []
+
 
 class ActionProcessAnswer(Action):
     def name(self) -> Text:
@@ -241,7 +263,7 @@ class ActionProcessAnswer(Action):
                     ]
                 else:
                     dispatcher.utter_message(
-                        text="Thank you very much for your time. I will begin preparations to create your customized exercise plan for you. If you return tomorrow, I will have the plan ready for you. Have a great day!")
+                        text="Thank you very much for your time. I will begin preparations to create your customized exercise plan for you. If you return tomorrow, I will have the plan ready for you. If you would like a reminder for when the plan is ready you can provide your phone number.")
                     return [SlotSet("current_question_index", None)]
             else:
                 dispatcher.utter_message(
