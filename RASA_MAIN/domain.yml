@@ -9,8 +9,8 @@ entities:
   - getQuestionnaireNumber
   - user_answer
   - current_question_index
-  - last_strategy_3_question_index
   - recently_asked_questionnaire
+  - readiness_questionnaire_finished
 
 slots:
   userStage:
@@ -35,10 +35,9 @@ slots:
     type: bool
     mappings:
     - type: custom
-  last_strategy_3_question_index:
-    type: float
-    initial_value: 0
-    influence_conversation: false
+  readiness_questionnaire_finished:
+    type: bool
+    initial_value: false
     mappings:
     - type: custom
   current_question_type:

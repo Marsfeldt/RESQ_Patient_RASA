@@ -1,14 +1,29 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions, Button, BackHandler } from 'react-native';
 import Logo from '../../../assets/images/woman_stonks.png';
 import CustomButton from "../../../components/CustomButton";
+import { useUserContext } from '../../../components/UserContext';
+import emitToServerEvent from "../../../components/SocketUtils";
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const WelcomeBackScreen = () => {
     const { height } = useWindowDimensions(); // Get height from useWindowDimensions
+    const route = useRoute();
+    const { userUUID } = useUserContext();
+    const { username } = route.params;
 
     const CloseApplicationButton = () => {
         BackHandler.exitApp();
     }
+
+    useEffect(() => {
+        emitToServerEvent('interaction_log', {
+            UUID: userUUID,
+            Username: username,
+            InteractionType: 'Navigation',
+            InteractionOutput: '-> Welcome Back Screen',
+        });
+    }, []);
 
     return (
         <View style={styles.root}>

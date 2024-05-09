@@ -78,7 +78,7 @@ const SignUpScreen = () => {
             <CustomInput placeholder='Password' value={password} setValue={setPassword} secureTextEntry={true} />
             <CustomInput placeholder='Repeat Password' value={passwordRepeat} setValue={setPasswordRepeat} secureTextEntry={true} />
             <CustomInput placeholder='Birth Date' value={dateOfBirth} setValue={setDateOfBirth} />
-            <CustomButton text='Register' onPress={onRegisterPressed} />
+            <CustomButton text='Register' />
             <Text style={styles.text}>By creating an account, you accept our <Text style={styles.link} onPress={onTermsOfUsePressed}>Terms of Use</Text> and <Text style={styles.link} onPress={onPrivacyPolicyPressed}>Privacy Policy</Text></Text>
             <CustomButton text='Do you already have an account? Log in here' onPress={onSignInPressed} type="TERTIARY" />
         </View>

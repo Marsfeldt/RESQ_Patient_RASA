@@ -28,7 +28,6 @@ questionnaireDatabase1 = DatabaseHandler("../PYTHON/QUESTIONNAIRE_DATABASES/Ques
 
 def acquire_user_strategy(tracker: Tracker):
     strategy = userDB.fetch_variable_from_uuid('Users', 'Strategy', tracker.sender_id)
-    print(f"{tracker.sender_id} is using Strategy {strategy}")
     return strategy
 
 def acquire_user_identification_variables(tracker: Tracker):
@@ -37,15 +36,9 @@ def acquire_user_identification_variables(tracker: Tracker):
     return username, int(stage)
 
 def match_sequence(user_sequence, scoring_sequences):
-    print("User sequence before matching:", user_sequence)
     for stage, sequence in scoring_sequences.items():
-        print("Checking sequence for stage:", stage)
-        print("Expected sequence:", sequence)
-        print("User sequence:", user_sequence)
         if len(user_sequence) == len(sequence) and all(user_seq == exp_seq for user_seq, exp_seq in zip(user_sequence, sequence)):
-            print("Matching sequence found for stage:", stage)
             return stage
-    print("No matching sequence found.")
     return None
 
 def determine_stage(tracker: Tracker):
@@ -58,18 +51,22 @@ def determine_stage(tracker: Tracker):
         "Maintenance": ['yes', 'yes'],
     }
 
-    user_score_sequence = questionnaireDatabase1.fetch_user_responses('QuestionnaireName1', tracker.sender_id)
+    stage_mapping = {
+        "Pre-Contemplation": 1,
+        "Contemplation": 2,
+        "Preparation": 3,
+        "Action": 4,
+        "Maintenance": 5
+    }
 
-    print("User Score Sequence:", user_score_sequence)
+    user_score_sequence = questionnaireDatabase1.fetch_user_responses('QuestionnaireName1', tracker.sender_id)
 
     # Find matching stage
     matched_stage = match_sequence(user_score_sequence, scoring_sequences)
 
-    print("Stage:", matched_stage)
-
     # Define stage definitions
     stage_definitions = [
-        "I do not intend to be more physically active in the foreseeable future (~6 Months)",
+        "I do not intend to be more physically active in the foreseeable future, around 6 Months",
         "I do intend to be more physically active in the next 6 months",
         "I do intend to be more physically active already in the upcoming month",
         "I am already physically active and have been for the past 6 months",
@@ -79,7 +76,10 @@ def determine_stage(tracker: Tracker):
     # Get the definition of the matched stage
     matched_stage_definition = stage_definitions[list(scoring_sequences.keys()).index(matched_stage)] if matched_stage else None
 
-    print("Stage Definition:", matched_stage_definition)
+    # Update the user's stage in the database
+    if matched_stage:
+        new_stage = stage_mapping[matched_stage]
+        userDB.transition_user_stage('Users', tracker.sender_id, new_stage)
 
     return matched_stage, matched_stage_definition
 
@@ -89,6 +89,20 @@ def readiness_to_change_questionnaire(username, stage, stage_def):
         "Do you intend to engage in regular physical activity in the next 6 months?",
         "Do you intend to engage in regular physical activity in the next 30 days?",
         "Have you been regularly physically active for the past six months?",
+        f'Thank you {username}, very much for your answers. From my assessment you belong in {stage}, with the following definition: “{stage_def}”. Do you agree with this assessment?'
+    ]
+    return questionnaire
+
+def readiness_to_change_questionnaire_strat3(username, stage, stage_def): 
+    questionnaire = [
+        "Do you currently engage in regular physical activity?",
+        "Do you intend to engage in regular physical activity in the next 6 months?",
+        "Do you intend to engage in regular physical activity in the next 30 days?",
+        "Have you been regularly physically active for the past six months?",
+        "Have you ever done cardio?",
+        "Have you ever tried strength training?",
+        "Have you participated in any group fitness classes before?",
+        "Do you like outdoor activites like biking?",
         f'Thank you {username}, very much for your answers. From my assessment you belong in {stage}, with the following definition: “{stage_def}”. Do you agree with this assessment?'
     ]
     return questionnaire
@@ -106,7 +120,7 @@ strategy_responses = {
 }
 
 strategy_3_responses = {
-    "Q1_R_S3": "That is nice, have you ever done cardio?",
+    "Q1_R_S3": "Have you ever done cardio?",
     "Q2_R_S3": "Have you ever tried strength training?",
     "Q3_R_S3": "Have you participated in any group fitness classes before?",
     "Q4_R_S3": "Do you like outdoor activites like biking?",
@@ -166,62 +180,85 @@ class ActionAskNextQuestion(Action):
         user_response = tracker.latest_message["text"].lower()
         username, stage = acquire_user_identification_variables(tracker)
         strategy = tracker.get_slot("strategy")
-        recently_asked_questionnaire = tracker.get_slot("recently_asked_questionnaire")
 
-        if recently_asked_questionnaire is None:
-            recently_asked_questionnaire = False
-
-        if current_question_index is not None:
-            if current_question_index == 0:  # First question
-                if user_response == "yes":
-                    next_question_index = 3  # Go to Question 4 directly
-                else:
-                    next_question_index = 1  # Go to Question 2
-            elif current_question_index == 1:  # Second question
-                if user_response == "yes":
-                    next_question_index = 2  # Go to Question 3
-                else:
+        if strategy != 3:
+            if current_question_index is not None:
+                if current_question_index == 0:  # First question
+                    if user_response == "yes":
+                        next_question_index = 3  # Go to Question 4 directly
+                    else:
+                        next_question_index = 1  # Go to Question 2
+                elif current_question_index == 1:  # Second question
+                    if user_response == "yes":
+                        next_question_index = 2  # Go to Question 3
+                    else:
+                        next_question_index = None  # Finish questionnaire
+                elif current_question_index == 2:  # Third question
                     next_question_index = None  # Finish questionnaire
-            elif current_question_index == 2:  # Third question
-                next_question_index = None  # Finish questionnaire
-            elif current_question_index == 3:  # Fourth question
-                next_question_index = None  # Finish questionnaire
+                elif current_question_index == 3:  # Fourth question
+                    next_question_index = None  # Finish questionnaire
 
-            # Process user response based on strategy
-            if strategy == 2:  # Strategy 2
-                response_key = f"Q{current_question_index + 1}_{user_response.upper()}_R"
-                response_message = strategy_responses.get(response_key, "I'm sorry, I didn't understand your response.")
-                dispatcher.utter_message(text=response_message)
-
-            if strategy == 3:
-                if recently_asked_questionnaire == False:
-                    response_key = f"Q{current_question_index + 1}_R_S3"
-                    response_message = strategy_3_responses.get(response_key, "I'm sorry, I didn't understand your response.")
+                # Process user response based on strategy
+                #if strategy == 1:  # Strategy 1
+                #    if next_question_index is not None:
+                        #next_question_type = readiness_to_change_questionnaire(username=username, stage=stages[stage-1], stage_def=stage_definitions[stage-1])[next_question_index]
+                        #dispatcher.utter_message(text=next_question_type)
+                if strategy == 2:  # Strategy 2
+                    response_key = f"Q{current_question_index + 1}_{user_response.upper()}_R"
+                    response_message = strategy_responses[response_key]
                     dispatcher.utter_message(text=response_message)
-                    return [SlotSet("recently_asked_questionnaire", True)]
 
                 # Ask the next question if there is one
                 if next_question_index is not None:
                     next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]
                     dispatcher.utter_message(text=next_question)
-                    return [SlotSet('current_question_index', next_question_index), SlotSet("recently_asked_questionnaire", False)]
-
-            # Ask the next question if there is one (excluding the case of strategy 3)
-            if strategy != 3 and next_question_index is not None:
-                next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]
-                dispatcher.utter_message(text=next_question)
-                return [SlotSet('current_question_index', next_question_index)]
-
-            # No more questions, end the conversation
-            summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[4]
-            userDB.update_tutorial_completion('Users', tracker.sender_id, 1)
-            dispatcher.utter_message(text=summary_message)
-
-            return [SlotSet('current_question_index', None)]
-
+                    return [SlotSet('current_question_index', next_question_index)]
+                else:
+                    # No more questions, end the conversation
+                    summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[4]
+                    dispatcher.utter_message(text=summary_message)
+                    userDB.update_tutorial_completion('Users', tracker.sender_id, 1)
+                    return [SlotSet('current_question_index', None)]
+            else:
+                return []    
         else:
-            return []
+            if current_question_index is not None:
+                print("CQI is set: ", current_question_index)
+                if current_question_index == 0:  # First question
+                    if user_response == "yes":
+                        next_question_index = 3  # Go to Question 4 directly
+                    else:
+                        next_question_index = 1  # Go to Question 2
+                elif current_question_index == 1:  # Second question
+                    if user_response == "yes":
+                        next_question_index = 2  # Go to Question 3
+                    else:
+                        next_question_index = 4  # Finish questionnaire
+                elif current_question_index == 2:  # Third question
+                    next_question_index = 4  # Finish questionnaire
+                elif current_question_index == 3:  # Fourth question
+                    next_question_index = 4  # Finish questionnaire
+                elif current_question_index == 4:  # Fifth question
+                    next_question_index = 5
+                elif current_question_index == 5:  # Sixth question
+                    next_question_index = 6
+                elif current_question_index == 6:  # Seventh question
+                    next_question_index = 7
+                elif current_question_index == 7:  # Eighth question
+                    next_question_index = None
+                
 
+                # Ask the next question if there is one
+                if next_question_index is not None:
+                    next_question = readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]
+                    dispatcher.utter_message(text=next_question)
+                    return [SlotSet('current_question_index', next_question_index)]
+                else:
+                    # No more questions, end the conversation
+                    summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[4]
+                    dispatcher.utter_message(text=summary_message)
+                    userDB.update_tutorial_completion('Users', tracker.sender_id, 1)
+                    return [SlotSet('current_question_index', None)]
 
 class ActionProcessAnswer(Action):
     def name(self) -> Text:
@@ -233,33 +270,27 @@ class ActionProcessAnswer(Action):
         user_answer = tracker.latest_message["text"].lower()
         username, stage = acquire_user_identification_variables(tracker)
         matched_stage, matched_stage_definition = determine_stage(tracker)
+        strategy = tracker.get_slot("strategy")
         try:
             current_question_index = tracker.get_slot("current_question_index")
 
             if user_answer == "yes" or user_answer == "no":
 
-                #if user_answer == "yes":
-                #    below_or_eq_3_message = "User answered Yes"
-                #    #dispatcher.utter_message(text=positive_below_natural_responses[current_question_index])
-                #    dispatcher.utter_message(text=below_or_eq_3_message)
-                #    print("User rating was below or equal to 3")
-                #elif user_answer == "no":
-                #    #dispatcher.utter_message(text=positive_above_natural_responses[current_question_index])
-                #    above_3_message = "RUser answered No"
-                #    dispatcher.utter_message(text=above_3_message)
-                #else:
-                #    print("Error Occured on Yes-No Check")
-
-                if (
-                    current_question_index is not None
-                    and current_question_index < len(readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)) - 1
-                ):
+                if (current_question_index is not None and current_question_index < len(readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)) - 1 and strategy != 3):
                     next_question_index = current_question_index + 1
 
                     return [
                         SlotSet("current_question_index", next_question_index),
                         {"event": "user", "timestamp": None, "metadata": None,
                          "text": readiness_to_change_questionnaire(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]}
+                    ]
+                elif (current_question_index is not None and current_question_index < len(readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage, stage_def=matched_stage_definition)) - 1 and strategy == 3):
+                    next_question_index = current_question_index + 1
+
+                    return [
+                        SlotSet("current_question_index", next_question_index),
+                        {"event": "user", "timestamp": None, "metadata": None,
+                         "text": readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage, stage_def=matched_stage_definition)[next_question_index]}
                     ]
                 else:
                     dispatcher.utter_message(
