@@ -27,5 +27,7 @@ plt.title('Strategy Ratings (Likert Scale 1-5)')
 plt.xlabel('Strategy')
 plt.ylabel('Rating')
 
+plt.savefig("PYTHON/DataAnalysis/Graphs/strategy_ratings_likert.png")
+
 # Show plot
-plt.show()
+#plt.show()
