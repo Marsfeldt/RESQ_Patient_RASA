@@ -45,3 +45,5 @@ print("Pairwise t-test and Shapiro-Wilk test results:")
 print(f"{'Group1':<5} {'Group2':<5} {'MeanDiff':<8} {'t-value':<8} {'p-value':<8} {'Reject Null':<12} {'Shapiro-Wilk p-value Group1':<25} {'Shapiro-Wilk p-value Group2':<25}")
 for res in results:
     print(f"{res[0]:<5} {res[1]:<5} {res[2]:<8.3f} {res[3]:<8.3f} {res[4]:<8.3f} {res[5]:<12} {res[6]:<25} {res[7]:<25}")
+
+# TEST
