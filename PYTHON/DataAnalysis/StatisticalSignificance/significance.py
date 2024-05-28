@@ -101,7 +101,3 @@ if run:
                     
                     # Print the results
                     print(f"{stage1_name.capitalize()} vs. {stage2_name.capitalize()} ({metric}) | P-value: {p_value}")
-
-
-p = chi_square_test(a_pct_data_leftnumber, m_pct_data_returned)
-print(p)
