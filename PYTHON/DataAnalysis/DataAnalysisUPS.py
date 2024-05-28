@@ -2,7 +2,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Data
-strategies = ['1', '2', '3']
+strategies = ['Control Strategy', 'Empathetic Strategy', 'Extended Conversation Strategy']
 u_scores = [4.166667, 5.000000, 4.833333]
 p_scores = [4.525, 4.225, 4.200]
 
@@ -28,7 +28,7 @@ plt.title('U-Score & P-Score by Strategy')
 plt.xlabel('Strategy')
 plt.ylabel('Score')
 
-plt.savefig("PYTHON/DataAnalysis/Graphs/strategy_uscore_pscore.png")
+plt.savefig("PYTHON/DataAnalysis/NewGraphs/strategy_uscore_pscore.png")
 
 # Show plot
-#plt.show()
+plt.show()

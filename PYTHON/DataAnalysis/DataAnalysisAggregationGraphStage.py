@@ -60,18 +60,21 @@ bar_width = 0.35
 # X axis positions
 x = np.arange(len(df.columns))
 
+# Custom colors
+colors = ['#3d5a80', '#FF4500']
+
 # Left Number For Reminder bars
-left_bars = ax.bar(x - bar_width/2, df.loc['Left Number For Reminder'], bar_width, label='Left Number For Reminder')
+left_bars = ax.bar(x - bar_width/2, df.loc['Left Number For Reminder'], bar_width, label='Left Number For Reminder', color=colors[0])
 
 # Returned Next Day bars
-returned_bars = ax.bar(x + bar_width/2, df.loc['Returned Next Day'], bar_width, label='Returned Next Day', alpha=0.6)
+returned_bars = ax.bar(x + bar_width/2, df.loc['Returned Next Day'], bar_width, label='Returned Next Day', alpha=0.6, color=colors[1])
 
 # Add percentages on top of bars
 for bars in [left_bars, returned_bars]:
     for bar in bars:
         height = bar.get_height()
         ax.annotate(f'{height:.1f}%', xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 3),
-                    textcoords="offset points", ha='center', va='bottom', fontweight='bold')
+                    textcoords="offset points", ha='center', va='bottom', fontweight='bold', fontsize=9)
 
 # Set labels, title, and legend
 ax.set_xlabel('Stage')
@@ -80,35 +83,8 @@ ax.set_title('Percentage of Participants Who Left Number For Reminder and Return
 ax.set_xticks(x)
 ax.set_xticklabels(df.columns)
 ax.legend()
-
+plt.savefig("PYTHON/DataAnalysis/Graphs/aggregation_graph_stage.png")
 # Show plot
 plt.tight_layout()
-
-#plt.savefig("PYTHON/DataAnalysis/Graphs/aggregation_graph_stage.png")
-#plt.show()
-
-# Function to perform z-test and print results
-def perform_z_test(stage1, stage2, column):
-    count = np.array([raw_data[stage1][column]['Yes'], raw_data[stage2][column]['Yes']])
-    nobs = np.array([sum(raw_data[stage1][column].values()), sum(raw_data[stage2][column].values())])
-    z_score, p_value = proportions_ztest(count, nobs)
-    print(f"Comparison between {stage1} and {stage2} for '{column}':")
-    print(f"Z-score: {z_score:.2f}")
-    print(f"P-value: {p_value:.4f}")
-    if p_value < 0.05:
-        print("Statistically significant at alpha = 0.05")
-    else:
-        print("Not statistically significant at alpha = 0.05")
-    print()
-
-# Perform z-test for each pair of stages and each column
-for stage1 in raw_data.keys():
-    for stage2 in raw_data.keys():
-        if stage1 != stage2:
-            perform_z_test(stage1, stage2, 'Left Number For Reminder')
-            perform_z_test(stage1, stage2, 'Returned Next Day')
-
-
-# Example of performing z-test for "left phone number" between "Pre-Contemplation" and "Contemplation"
-perform_z_test("Pre-Contemplation", "Contemplation", "Left Number For Reminder")
+plt.show()
 

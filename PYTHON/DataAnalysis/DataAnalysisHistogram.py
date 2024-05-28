@@ -1,7 +1,6 @@
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy.stats import chi2_contingency
-
 
 # Data
 participants = [
@@ -20,37 +19,30 @@ stages = [
     'Maintenance', 'Preparation', 'Pre-Contemplation', 'Maintenance', 'Maintenance'
 ]
 
+# Define the desired order of stages
+order = ['Pre-Contemplation', 'Contemplation', 'Preparation', 'Action', 'Maintenance']
+
+# Convert stages to a Pandas Series
+stages_series = pd.Series(stages)
+
+# Convert the Series to a categorical type with the specified order
+stages_series = pd.Categorical(stages_series, categories=order, ordered=True)
+
 # Create histogram with Seaborn
 plt.figure(figsize=(8, 6))
-ax = sns.histplot(stages, bins=5, color='#3d5a80', discrete=True)
+ax = sns.histplot(stages_series, bins=len(order), color='#3d5a80', discrete=True)
 
 # Add title and labels
 plt.title('Distribution of Stages')
 plt.xlabel('Stage')
-plt.ylabel('Count')
+plt.ylabel('Participants')
 
-#plt.savefig("PYTHON/DataAnalysis/Graphs/stage_distribution_histogram.png")
+# Ensure the color of the bars is correct
+for patch in ax.patches:
+    patch.set_facecolor('#3d5a80')
+
+plt.savefig("PYTHON/DataAnalysis/NewGraphs/stage_distribution.png")
+
 
 # Show plot
-#plt.show()
-
-# Count occurrences of each stage
-stage_counts = {stage: stages.count(stage) for stage in set(stages)}
-
-# Observed frequencies
-observed_freq = list(stage_counts.values())
-
-# Expected frequencies (assuming uniform distribution)
-total_obs = len(stages)
-expected_freq = [total_obs / len(set(stages))] * len(set(stages))
-
-# Perform chi-square test
-chi2, p_value = chi2_contingency([observed_freq, expected_freq])[:2]
-
-print("Chi-square statistic:", chi2)
-print("p-value:", p_value)
-
-if p_value < 0.05:
-    print("There is a significant difference between the distribution of stages.")
-else:
-    print("There is no significant difference between the distribution of stages.")
+plt.show()

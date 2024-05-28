@@ -1,0 +1,59 @@
+Chi-squared test for pc vs co:
+Drop for pc: 0.034
+Drop for co: 0.0
+p-value: 1.0
+There is no significant difference between pc and co.
+
+Chi-squared test for pc vs pr:
+Drop for pc: 0.034
+Drop for pr: 0.167
+p-value: 1.0
+There is no significant difference between pc and pr.
+
+Chi-squared test for pc vs a:
+Drop for pc: 0.034
+Drop for a: 0.067
+p-value: 1.0
+There is no significant difference between pc and a.
+
+Chi-squared test for pc vs m:
+Drop for pc: 0.034
+Drop for m: 0.066
+p-value: 1.0
+There is no significant difference between pc and m.
+
+Chi-squared test for co vs pr:
+Drop for co: 0.0
+Drop for pr: 0.167
+p-value: 1.0
+There is no significant difference between co and pr.
+
+Chi-squared test for co vs a:
+Drop for co: 0.0
+Drop for a: 0.067
+p-value: 1.0
+There is no significant difference between co and a.
+
+Chi-squared test for co vs m:
+Drop for co: 0.0
+Drop for m: 0.066
+p-value: 1.0
+There is no significant difference between co and m.
+
+Chi-squared test for pr vs a:
+Drop for pr: 0.167
+Drop for a: 0.067
+p-value: 1.0
+There is no significant difference between pr and a.
+
+Chi-squared test for pr vs m:
+Drop for pr: 0.167
+Drop for m: 0.066
+p-value: 1.0
+There is no significant difference between pr and m.
+
+Chi-squared test for a vs m:
+Drop for a: 0.067
+Drop for m: 0.066
+p-value: 1.0
+There is no significant difference between a and m.
