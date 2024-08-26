@@ -85,14 +85,19 @@ const ChatWindowScreen = () => {
     }
   };
 
-  // Connect the socket when the component mounts
-  useEffect(() => {
-    connectSockets();
+    useEffect(() => {
+        // Connect the socket when the component mounts
+        connectSockets();
 
-    return () => {
-      disconnectSockets();
-    };
-  }, []);
+        if (!socket) {
+            setSocket(rasaServerSocket);
+            rasaServerSocket.connect();
+        }
+
+        return () => {
+        disconnectSockets();
+        };
+    }, []);
 
   useEffect(() => {
     if (isFocused) {
@@ -114,76 +119,54 @@ const ChatWindowScreen = () => {
       pythonServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
       console.log('attempting to establish session request ' + userUUID)
 
-      /*
-      const botStartMessage = {
-        _id: generateUUID(),
-        text: `Hello ${username}! I’m Freja and I will be your personal companion to support you on your journey towards a healthier lifestyle. My goal is to help you increase your physical activity and achieve your fitness goals in a way that’s tailored to your needs.\n\nTo get started, I’ll guide you through a brief questionnaire. This will help me understand where you currently are in your fitness journey, and help me provide you with more personalised recommendations to guide you through the process.\n\nDon’t worry, your privacy is important to me, and all of your responses will be kept confidential. Whenever you are ready for the questions, you can write back “questionnaire” to get started.`,
-        createdAt: new Date(),
-        user: { _id: 'bot' },
-      };
-
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [botStartMessage])
-      );
-      */
-
-
     }
   }, [socket, sessionID, userUUID, username]);
 
-  useEffect(() => {
-    // Add event listener for bot messages
-    const handleBotMessage = (data) => {
-      const botMessageId = generateMessageID();
+useEffect(() => {
+  const handleBotMessage = (data) => {
+    console.log("Bot message received:", data);  // Logging for debug
+    const botMessageId = generateMessageID();
 
-      const botMessage = {
-        _id: botMessageId,
-        text: data.text,
-        createdAt: new Date(),
-        user: { _id: 'bot' },
-      };
-
-      setLastBotAnswer(data.text);
-
-      if (/you belong in/.test(data.text)) {
-        setQuestionnaireLayout(false);
-        console.log('Disabling questionnaire layout.');
-        emitToServerEvent('finished_questionnaire', {
-          UUID: userUUID,
-        });
-      }
-
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [botMessage])
-      );
-
-      setButtonsDisabled(false);
-
-      emitToServerEvent('message_from_client', {
-        UUID: userUUID,
-        Username: 'RASA BOT',
-        Message: data.text,
-        MessageID: botMessageId,
-        IsSystemMessage: 'False',
-        MessageType: 'Bot Answer'
-      });
-
-      setIsLoading(false);
+    const botMessage = {
+      _id: botMessageId,
+      text: data.text,
+      createdAt: new Date(),
+      user: { _id: 'bot' },
     };
 
+    setLastBotAnswer(data.text);
 
-    if (socket) {
-      socket.on('bot_uttered', handleBotMessage);
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, [botMessage])
+    );
 
-      return () => {
-        socket.off('bot_uttered', handleBotMessage);
-      };
-    } else {
-      // Socket is not available, reconnect
-      setSocket(rasaServerSocket);
-      rasaServerSocket.connect();
-    }
-  }, [socket, userUUID]);
+    setButtonsDisabled(false);
+
+    emitToServerEvent('message_from_client', {
+      UUID: userUUID,
+      Username: 'RASA BOT',
+      Message: data.text,
+      MessageID: botMessageId,
+      IsSystemMessage: 'False',
+      MessageType: 'Bot Answer'
+    });
+
+    setIsLoading(false);
+  };
+
+  if (socket) {
+    socket.on('bot_uttered', handleBotMessage);
+
+    return () => {
+      socket.off('bot_uttered', handleBotMessage);
+    };
+  } else {
+    setSocket(rasaServerSocket);
+    rasaServerSocket.connect();
+  }
+}, [socket, userUUID]);
+
+
 
   const onSend = (newMessages) => {
     setMessages((previousMessages) =>
@@ -230,7 +213,7 @@ const ChatWindowScreen = () => {
 
   const renderAvatar = (props) => {
     const { currentMessage } = props;
-  
+
     if (currentMessage.user._id === 'bot') {
       // Render a bot avatar (you can replace the image source with your bot's avatar)
       return (
@@ -250,7 +233,7 @@ const ChatWindowScreen = () => {
   return (
     <View style={styles.container}>
       <TopNavigationBar username={username} />
-      
+
       <GiftedChat
         messages={messages}
         onSend={(newMessages) => onSend(newMessages)}
