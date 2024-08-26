@@ -107,13 +107,16 @@ class DatabaseHandler:
             stage = cursor.fetchone()
             return stage
 
-    def fetch_variable_from_uuid(self, tableName, variable, uuid):
-        with self.connection as connection:
-            cursor = connection.cursor()
-            cursor.execute(
-                f'SELECT {variable} from {tableName} where UUID = ?', (uuid,))
-            result = cursor.fetchone()
-            return int(result[0])
+    def fetch_variable_from_uuid(self, table_name, variable_name, uuid):
+        query = f"SELECT {variable_name} FROM {table_name} WHERE UUID = ?"
+        self.cursor.execute(query, (uuid,))
+        result = self.cursor.fetchone()
+
+        if result is None:
+            print(f"No {variable_name} found for UUID {uuid}")
+            return None
+
+        return int(result[0])
 
     def fetch_user_identification_variables(self, tableName, uuid):
         with self.connection as connection:
