@@ -9,6 +9,7 @@ import TopNavigationBar from '../../../components/TopNavigationBar';
 import QuestionnaireButtonLayout from '../../../components/QuestionnaireButtonLayout';
 
 const ChatWindowScreen = () => {
+  // State hooks to manage various aspects of the chat window
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
   const [sessionID, setSessionID] = useState('');
@@ -19,12 +20,14 @@ const ChatWindowScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const route = useRoute();
-  const { username } = route.params;
+  const { username } = route.params; // Get the username from the navigation route
 
   const isFocused = useIsFocused(); // Hook to check if the screen is focused
 
+  // Function to generate a unique UUID for messages or sessions
   const generateUUID = () => `${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
 
+  // Function to create a user message object for GiftedChat
   const createUserMessage = (text) => ({
     _id: generateMessageID(),
     text,
@@ -32,14 +35,15 @@ const ChatWindowScreen = () => {
     user: { _id: userUUID },
   });
 
+  // Handle button clicks in the questionnaire layout
   const handleQuestionnaireButtonClick = (buttonName) => {
     const handleButtonClickLogic = (messageText) => {
       setIsLoading(true);
       if (!buttonsDisabled) {
-        setButtonsDisabled(true)
+        setButtonsDisabled(true);
         const messageId = generateUUID();
-        const messageSentTime = new Date();
 
+        // Create a new message object and update the message state
         const newMessage = {
           _id: messageId,
           text: messageText,
@@ -49,6 +53,7 @@ const ChatWindowScreen = () => {
 
         setMessages(previousMessages => GiftedChat.append(previousMessages, [newMessage]));
 
+        // Emit the user's message to the RASA server
         rasaServerSocket.emit('user_uttered', { session_id: userUUID, message: messageText }, () => {
           emitToServerEvent('message_from_client', {
             UUID: userUUID,
@@ -62,6 +67,7 @@ const ChatWindowScreen = () => {
 
         setIsLoading(false);
 
+        // Log the user's response to a questionnaire question
         emitToServerEvent('questionnaire_question_answered', {
           UUID: userUUID,
           Username: username,
@@ -71,10 +77,11 @@ const ChatWindowScreen = () => {
           QuestionType: 'Binary (Yes-No)',
         });
       } else {
-        console.log("Buttons Disabled")
+        console.log("Buttons Disabled");
       }
     };
 
+    // Handle the specific button clicks (Yes or No)
     switch (buttonName) {
       case 'Yes':
       case 'No':
@@ -85,23 +92,23 @@ const ChatWindowScreen = () => {
     }
   };
 
-    useEffect(() => {
-        // Connect the socket when the component mounts
-        connectSockets();
+  // useEffect to manage socket connection when the component mounts
+  useEffect(() => {
+    connectSockets(); // Connect the sockets when the component mounts
 
-        if (!socket) {
-            setSocket(rasaServerSocket);
-            rasaServerSocket.connect();
-        }
+    if (!socket) {
+      setSocket(rasaServerSocket);
+      rasaServerSocket.connect();
+    }
 
-        return () => {
-        disconnectSockets();
-        };
-    }, []);
+    return () => {
+      disconnectSockets(); // Disconnect the sockets when the component unmounts
+    };
+  }, []);
 
+  // useEffect to log interaction whenever the screen is focused
   useEffect(() => {
     if (isFocused) {
-      // This will run every time the screen is focused
       emitToServerEvent('interaction_log', {
         UUID: userUUID,
         Username: username,
@@ -111,63 +118,64 @@ const ChatWindowScreen = () => {
     }
   }, [isFocused, userUUID, username]);
 
+  // useEffect to establish a session with RASA when the component mounts
   useEffect(() => {
-    // Establish a unique session when the component mounts
     if (socket && !sessionID && userUUID) {
       setSessionID(userUUID); // Set userUUID as sessionID
-      socket.emit('session_request', { session_id: userUUID }); // This opens a unique session with RASA with a specified ID
+      socket.emit('session_request', { session_id: userUUID }); // Open a unique session with RASA
       pythonServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
-      console.log('attempting to establish session request ' + userUUID)
-
+      console.log('Attempting to establish session request ' + userUUID);
     }
   }, [socket, sessionID, userUUID, username]);
 
-useEffect(() => {
-  const handleBotMessage = (data) => {
-    console.log("Bot message received:", data);  // Logging for debug
-    const botMessageId = generateMessageID();
+  // useEffect to handle messages received from the bot
+  useEffect(() => {
+    const handleBotMessage = (data) => {
+      console.log("Bot message received:", data);  // Logging for debug
 
-    const botMessage = {
-      _id: botMessageId,
-      text: data.text,
-      createdAt: new Date(),
-      user: { _id: 'bot' },
+      const botMessageId = generateMessageID();
+      const botMessage = {
+        _id: botMessageId,
+        text: data.text,
+        createdAt: new Date(),
+        user: { _id: 'bot' },
+      };
+
+      setLastBotAnswer(data.text); // Store the last bot answer for future reference
+
+      // Update the chat with the bot's message
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [botMessage])
+      );
+
+      setButtonsDisabled(false);
+
+      // Log the bot's message
+      emitToServerEvent('message_from_client', {
+        UUID: userUUID,
+        Username: 'RASA BOT',
+        Message: data.text,
+        MessageID: botMessageId,
+        IsSystemMessage: 'False',
+        MessageType: 'Bot Answer'
+      });
+
+      setIsLoading(false);
     };
 
-    setLastBotAnswer(data.text);
+    if (socket) {
+      socket.on('bot_uttered', handleBotMessage);
 
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, [botMessage])
-    );
+      return () => {
+        socket.off('bot_uttered', handleBotMessage); // Cleanup when the component unmounts
+      };
+    } else {
+      setSocket(rasaServerSocket);
+      rasaServerSocket.connect();
+    }
+  }, [socket, userUUID]);
 
-    setButtonsDisabled(false);
-
-    emitToServerEvent('message_from_client', {
-      UUID: userUUID,
-      Username: 'RASA BOT',
-      Message: data.text,
-      MessageID: botMessageId,
-      IsSystemMessage: 'False',
-      MessageType: 'Bot Answer'
-    });
-
-    setIsLoading(false);
-  };
-
-  if (socket) {
-    socket.on('bot_uttered', handleBotMessage);
-
-    return () => {
-      socket.off('bot_uttered', handleBotMessage);
-    };
-  } else {
-    setSocket(rasaServerSocket);
-    rasaServerSocket.connect();
-  }
-}, [socket, userUUID]);
-
-
-
+  // Function to handle sending messages
   const onSend = (newMessages) => {
     setMessages((previousMessages) =>
       GiftedChat.append(previousMessages, newMessages)
@@ -181,18 +189,17 @@ useEffect(() => {
         {
           message: newMessages[0].text,
           session_id: sessionID,
-        },
-        () => {
-          // Handle acknowledgment if needed
         }
       );
       console.log(`${username} sending message ${userMessage.text} to RASA`);
 
+      // Check if the user is ready to start a questionnaire
       if (typeof userMessage.text === 'string' && /ready/.test(userMessage.text) || /rdy/.test(userMessage.text) || /readt/.test(userMessage.text)) {
         setQuestionnaireLayout(true);
         console.log('Enabling questionnaire layout.');
       }
 
+      // Log the user's message
       emitToServerEvent('message_from_client', {
         UUID: userUUID,
         Username: username,
@@ -202,6 +209,7 @@ useEffect(() => {
         MessageType: 'Question'
       });
 
+      // Log the interaction
       emitToServerEvent('interaction_log', {
         UUID: userUUID,
         Username: username,
@@ -211,6 +219,7 @@ useEffect(() => {
     }
   };
 
+  // Function to render the avatar for the bot
   const renderAvatar = (props) => {
     const { currentMessage } = props;
 
@@ -227,8 +236,9 @@ useEffect(() => {
     }
   };
 
+  // Function to generate a simple random ID for messages
   const generateMessageID = () =>
-    Math.round(Math.random() * 1000000).toString(); // Generate a simple random ID
+    Math.round(Math.random() * 1000000).toString();
 
   return (
     <View style={styles.container}>
@@ -242,6 +252,8 @@ useEffect(() => {
         renderAvatar={renderAvatar}
         textInputStyle={{ color: 'black' }}
       />
+
+      {/* Render questionnaire buttons if the layout is enabled */}
       <QuestionnaireButtonLayout
         showButtons={questionnaireLayout}
         onButtonClick={handleQuestionnaireButtonClick}
@@ -254,6 +266,14 @@ useEffect(() => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  botAvatarContainer: {
+    marginRight: 10,
+  },
+  botAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
 });
 
