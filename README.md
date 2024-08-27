@@ -16,7 +16,7 @@ This guide utilizes Visual Studio Code (https://code.visualstudio.com/) you can 
 
 **STEP 2:** Install Python
 -----
-If you do not already have Python installed you can get it here https://www.python.org/downloads/ - you need either version 3.7 or 3.8 to run RASA, but we would recommend 3.8.
+If you do not already have Python installed you can get it here https://www.python.org/downloads/ - you need either version 3.7 or 3.8 to run RASA, but we would recommend 3.10.
 
 Once Python is installed ensure that you can use the PIP package manager by opening a command prompt and typing "pip". 
 
@@ -26,7 +26,7 @@ Once Python is installed ensure that you can use the PIP package manager by open
 -----
 Once Python and the pip work, you have to install RASA (https://rasa.com/) by typing:
 ```
-pip3 install rasa
+pip install rasa
 ```
 
 **STEP 3:** Installation of Android Studio, Emulator, React, NPM and Expo
