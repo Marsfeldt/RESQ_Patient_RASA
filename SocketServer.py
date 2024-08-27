@@ -8,7 +8,7 @@ import sys
 import os
 
 # Change the working directory to the specified path
-os.chdir("C:/Users/jorda/Documents/Cesi/A4/MI_WORK/Project_RESQ_Patient_RASA/Project")
+os.chdir(os.getcwd())
 
 from DatabaseHandler import *
 
