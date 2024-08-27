@@ -136,49 +136,98 @@ Then once it is done installing the application and launching the emulator you s
 We have 3 servers that run the project. The RASA and RASA Actions are basically the same server, although run independently in 2 terminals. Then there is a Python flask backend server which is responsible for anything that needs to interact with the database through the front end: Login, account creation, saving information to the database, and so forth. The Python server utilizes socket.io and this allows us to create events that can communicate between the front-end and the back-end. One such example
 
 ```
-@socketio.on("create_account")
 def handle_account_creation(data):
     """
-    Handles account creation from the react front-end signup screen
+    Handle requests to create a new user account.
+    Checks if the username already exists, and if not, creates the new account in the database.
     """
-    # Data values for account creation
-    # Universally Unique Identifier to separate different users
-    uuid = data.get('uuid')
-    username = data.get('username')  # Account Username
-    email = data.get('email')  # Account Email
-    # Account Password - Hashed through the front-end
-    password = data.get('password')
-    dateOfBirth = data.get('dateOfBirth')  # Account date of birth
-    accountCreatedTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Account creation time
-    accountToCreate = {'UUID': uuid, 'Username': username, 'Email': email, 'Password': password, 'DateOfBirth': dateOfBirth, 'AccountCreatedTime': accountCreatedTime}
-    userDB.create_user_account('users', accountToCreate)
-    print(f'User Account: \n {uuid} , {username} , {email} , {password} , {dateOfBirth} , {accountCreatedTime} \n Created Successfully!')
+    try:
+        logging.info(f"Account creation requested with data: {data}")
+        uuid = data.get('uuid')
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        dateOfBirth = data.get('dateOfBirth')
+        accountCreatedTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Check if username already exists
+        existing_user = userDB.fetch_informatiom_from_user('users', username)
+        if existing_user[0]:  # Assuming fetch_informatiom_from_user returns (username, uuid)
+            logging.warning(f"User creation failed, username already exists: {username}")
+            return {'status': 'error', 'error': 'Username already exists'}
+
+        accountToCreate = {
+            'UUID': uuid,
+            'Username': username,
+            'Email': email,
+            'Password': password,
+            'DateOfBirth': dateOfBirth,
+            'AccountCreatedTime': accountCreatedTime
+        }
+
+        # Create the new user account in the database
+        userDB.create_user_account('users', accountToCreate)
+        logging.info(f"User account created: {accountToCreate}")
+
+        # Return a success response
+        return {'status': 'ok'}
+
+    except Exception as e:
+        logging.error(f"Account creation failed due to an error: {str(e)}")
+        return {'status': 'error', 'error': str(e)}
 ```
 This event is called 'create_account' and this one is emitted from the mobile application, on the signup screen whenever a user presses the button to register an account. The code from the front end can be seen below.
 
 ```
 const onRegisterPressed = () => {
-        if (pythonServerSocket) {
-            // Hash the password before sending it
+        console.log("Register button pressed");
+
+        if (pythonServerSocket && pythonServerSocket.connected) {
+            console.log("Socket is available");
             hash(password, 5, (hashErr, hashedPassword) => {
                 if (hashErr) {
                     console.error('Error hashing password:', hashErr);
                 } else {
-                    console.log("pass " + password)
-                    // Send the account data to the Python Server
+                    console.log("Password hashed successfully");
+
+                    console.log("Sending the following data to the server:");
+                    console.log({
+                        uuid: pythonServerSocket.id,
+                        username: username,
+                        email: email,
+                        password: hashedPassword,
+                        dateOfBirth: dateOfBirth
+                    });
+
                     pythonServerSocket.emit('create_account', {
                         uuid: pythonServerSocket.id,
                         username: username,
                         email: email,
-                        password: hashedPassword, // Send the hashed password
+                        password: hashedPassword,
                         dateOfBirth: dateOfBirth
+                    }, (response) => {
+                        if (response && response.status === 'ok') {
+                            console.log('Account created successfully:', response);
+                            // Navigate to the SignIn screen after successful account creation
+                            navigation.navigate('SignIn');
+                        } else if (response && response.status === 'error') {
+                            console.error('Server responded with an error:', response.error);
+                            // Show an error message to the user
+                        } else if (!response) {
+                            console.error('No response from server');
+                            // Handle the absence of response from the server
+                        } else {
+                            console.error('Unexpected error');
+                        }
                     });
+
+                    console.log("Data sent to server, awaiting confirmation...");
                 }
             });
         } else {
             console.error('Socket is not available.');
         }
-    }
+    };
 ```
 Anything new that you might implement that requires some communication with the database or the backend should always be through sockets to and from the backend as having methods to write and read directly in the front-end can have security risks. To create an event and functionality you can do the following:
 ```
