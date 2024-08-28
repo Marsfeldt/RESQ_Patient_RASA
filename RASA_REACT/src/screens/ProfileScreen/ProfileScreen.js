@@ -5,7 +5,7 @@ import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
 import { useNavigation, useRoute } from '@react-navigation/native';
 import TopNavigationBar from "../../../components/TopNavigationBar";
-import LogOutScreen from "../LogOutScreen";
+//import LogOutScreen from "../LogOutScreen";
 import { useUserContext } from '../../../components/UserContext';
 import emitToServerEvent from "../../../components/SocketUtils";
 
