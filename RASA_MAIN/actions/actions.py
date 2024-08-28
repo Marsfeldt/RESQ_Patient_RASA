@@ -1,7 +1,9 @@
 from typing import Any, Text, Dict, List
+import sys
 import logging
-import os
-os.chdir(os.getcwd())
+
+sys.path.append('C:/Users/jorda/Documents/Cesi/A4/MI_WORK/GIT/Projet_26082024')
+
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
@@ -11,10 +13,8 @@ from DatabaseHandler import DatabaseHandler
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
-questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
-
-
+userDB = DatabaseHandler("../PYTHON/DATABASE/Users.db")
+questionnaireDatabase1 = DatabaseHandler("../PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
 
 def acquire_user_strategy(tracker: Tracker):
     strategy = userDB.fetch_variable_from_uuid('Users', 'Strategy', tracker.sender_id)
