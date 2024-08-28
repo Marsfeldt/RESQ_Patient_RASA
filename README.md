@@ -107,7 +107,7 @@ python -m rasa train
 3. After the model has been trained you should see a console message that it was successful as well as the model appearing in the models folder.
 4. Now you can start the rasa server with the following command
 ```
-python -m rasa run --model models --enable-api --cors "*"
+rasa run --model models --enable-api --cors "*" --debug 
 ```
 5. After the server has started it should say "Rasa server running..."
 6. Open a new terminal and start the RASA Action Server by pasting this command
