@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions, Button, BackHandler } from 'react-native';
-import Logo from '../../../assets/images/woman_stonks.png';
-import CustomButton from "../../../components/CustomButton";
-import { useUserContext } from '../../../components/UserContext';
-import emitToServerEvent from "../../../components/SocketUtils";
+import Logo from '../../assets/images/icons/woman_stonks.png';
+import CustomButton from "../../components/common/CustomButton";
+import { useUserContext } from '../../components/utils/contexts/UserContext';
+import emitToServerEvent from "../../components/sockets/SocketUtils";
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const WelcomeBackScreen = () => {

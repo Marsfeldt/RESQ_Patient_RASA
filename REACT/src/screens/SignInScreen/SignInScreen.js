@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
-import Logo from '../../../assets/images/woman_stonks.png';
-import CustomInput from "../../../components/CustomInput";
-import CustomButton from "../../../components/CustomButton";
-import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets, reconnectSockets } from "../../../components/SocketManager/SocketManager";
+import Logo from '../../assets/images/icons/woman_stonks.png';
+import CustomInput from "../../components/common/CustomInput";
+import CustomButton from "../../components/common/CustomButton";
+import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets, reconnectSockets } from "../../components/sockets/SocketManager/SocketManager";
 import { useNavigation } from '@react-navigation/native';
 import bcrypt from 'bcryptjs';
-import { useUserContext } from "../../../components/UserContext";
-import emitToServerEvent from "../../../components/SocketUtils";
+import { useUserContext } from "../../components/utils/contexts/UserContext";
+import emitToServerEvent from "../../components/sockets/SocketUtils";
 
 const SignInScreen = () => {
     // State hooks for managing username and password inputs

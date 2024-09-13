@@ -1,12 +1,19 @@
-/**
- * Metro configuration
- * https://facebook.github.io/metro/docs/configuration
- *
- * @format
- */
+const path = require('path');
+const {getDefaultConfig} = require('@react-native/metro-config');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
 module.exports = {
-  transformer: {
-    assetPlugins: ['expo-asset/tools/hashAssetFiles'],
+  ...defaultConfig,
+  resolver: {
+    ...defaultConfig.resolver,
+    extraNodeModules: {
+      'react-native': path.resolve(__dirname, '../node_modules/react-native'), // Adjusted to resolve correctly
+    },
   },
-  // No manual resolution of '@babel/runtime'
+  watchFolders: [
+    path.resolve(__dirname, '../node_modules'), // Ensure the correct node_modules folder is watched
+    path.resolve(__dirname, '../src'),
+    path.resolve(__dirname, '../'),
+  ],
 };

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions, StatusBar, SafeAreaView } from 'react-native';
-import Logo from '../../../assets/images/logo.png';
-import CustomInput from "../../../components/CustomInput";
-import CustomButton from "../../../components/CustomButton";
+import Logo from '../../assets/images/logos/logo.png';
+import CustomInput from "../../components/common/CustomInput";
+import CustomButton from "../../components/common/CustomButton";
 import { useNavigation, useRoute } from '@react-navigation/native';
-import TopNavigationBar from "../../../components/TopNavigationBar";
+import TopNavigationBar from "../../components/navigation/TopNavigationBar";
 //import LogOutScreen from "../LogOutScreen";
-import { useUserContext } from '../../../components/UserContext';
-import emitToServerEvent from "../../../components/SocketUtils";
+import { useUserContext } from '../../components/utils/contexts/UserContext';
+import emitToServerEvent from "../../components/sockets/SocketUtils";
 
 
 const ProfileScreen = () => {

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
-import { useUserContext } from '../../../components/UserContext';
-import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from '../../../components/SocketManager/SocketManager';
+import { useUserContext } from '../../components/utils/contexts/UserContext';
+import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from '../../components/sockets/SocketManager/SocketManager';
 import { useRoute, useIsFocused } from '@react-navigation/native';
-import emitToServerEvent from '../../../components/SocketUtils';
-import TopNavigationBar from '../../../components/TopNavigationBar';
-import QuestionnaireButtonLayout from '../../../components/QuestionnaireButtonLayout';
+import emitToServerEvent from '../../components/sockets/SocketUtils';
+import TopNavigationBar from '../../components/navigation/TopNavigationBar';
+import QuestionnaireButtonLayout from '../../components/questionnaire/QuestionnaireButtonLayout';
 
 const ChatWindowScreen = () => {
   // State hooks to manage various aspects of the chat window
@@ -228,7 +228,7 @@ const ChatWindowScreen = () => {
       return (
         <View style={styles.botAvatarContainer}>
           <Image
-            source={require('../../../assets/images/woman_stonks_64.png')} // Replace with your bot's avatar image
+            source={require('../../assets/images/icons/woman_stonks_64.png')} // Replace with your bot's avatar image
             style={styles.botAvatar}
           />
         </View>

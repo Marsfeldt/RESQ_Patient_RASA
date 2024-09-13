@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
-import Logo from '../../../assets/images/logo.png';
-import CustomInput from "../../../components/CustomInput";
-import CustomButton from "../../../components/CustomButton";
+import Logo from '../../assets/images/logos/logo.png';
+import CustomInput from "../../components/common/CustomInput";
+import CustomButton from "../../components/common/CustomButton";
 import { hash } from 'react-native-bcrypt';
 import { useNavigation } from '@react-navigation/native';
-import { disconnectSockets, pythonServerSocket } from "../../../components/SocketManager/SocketManager";
+import { disconnectSockets, pythonServerSocket } from "../../components/sockets/SocketManager/SocketManager";
 
 const SignUpScreen = () => {
     // State hooks for managing input fields
