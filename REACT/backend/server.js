@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
      * Expects a username to be sent from the client
      */
     socket.on('login', (username) => {
-        console.log(`Login request received from: ${username}`);
+        console.log(`Login request received for username: ${username}`);
 
         // Fetch user data from the database
         userDB.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
@@ -50,16 +50,19 @@ io.on('connection', (socket) => {
                 console.error('Database error: ', err.message);
                 socket.emit('user_credentials', { error: 'Database error' });
             } else if (row) {
-                const receivedHash = row.password;
-
-                // Send back hashed password and UUID to front-end for comparison
-                socket.emit('user_credentials', { password: receivedHash, uuid: row.uuid });
+                console.log('User data retrieved from database:', row);
+                const receivedHash = row.Password;
+                console.log('Hashed password retrieved:', receivedHash);
+                socket.emit('user_credentials', { password: receivedHash, uuid: row.UUID });
             } else {
-                // Handle case where user is not found
+                console.log('User not found in the database');
                 socket.emit('user_credentials', { error: 'User not found' });
             }
         });
+
     });
+
+
 
     /**
      * Handle account creation from front-end

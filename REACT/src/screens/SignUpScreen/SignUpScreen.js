@@ -7,6 +7,7 @@ import { hash } from 'react-native-bcrypt'; // Used to hash passwords
 import { useNavigation } from '@react-navigation/native';
 import { disconnectSockets, nodeServerSocket } from "../../components/sockets/SocketManager/SocketManager";
 
+
 const SignUpScreen = () => {
     // State hooks for managing input fields
     const [username, setUsername] = useState('');
@@ -42,7 +43,7 @@ const SignUpScreen = () => {
             console.log("Socket is available");
 
             // Hash the password with bcrypt
-            hash(password, 5, (hashErr, hashedPassword) => {
+            hash(password, 10, (hashErr, hashedPassword) => {
                 if (hashErr) {
                     console.error('Error hashing password:', hashErr);
                 } else {

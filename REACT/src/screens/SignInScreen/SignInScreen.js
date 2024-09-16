@@ -44,28 +44,18 @@ const SignInScreen = () => {
                 const receivedHash = data.password;
 
                 bcrypt.compare(password, receivedHash, (compareErr, result) => {
+                    console.log('Password entered by user:', password);
+                    console.log('Hashed password from database:', receivedHash);
                     if (compareErr) {
                         console.error('Error comparing passwords:', compareErr);
                     } else if (result) {
+                        console.log('Password match successful');
                         setUserUUID(data.uuid);
-                        emitToServerEvent('interaction_log', {
-                            UUID: rasaServerSocket.id,
-                            Username: username,
-                            InteractionType: 'Successful Login',
-                            InteractionOutput: data.uuid + ' logged in',
-                        });
-
-                        checkVariableInDatabase(data.uuid, (variableValue) => {
-                            if (variableValue === 1) {
-                                navigation.navigate('WelcomeBack', { username });
-                            } else {
-                                navigation.navigate('ChatWindow', { username });
-                            }
-                        });
                     } else {
-                        console.warn("Invalid Password");
+                        console.log('Passwords do not match');
                     }
                 });
+
             }
         };
 
