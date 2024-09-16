@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Logo from '../../assets/images/logos/logo.png';
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
-import { hash } from 'react-native-bcrypt';
+import { hash } from 'react-native-bcrypt'; // Used to hash passwords
 import { useNavigation } from '@react-navigation/native';
-import { disconnectSockets, pythonServerSocket } from "../../components/sockets/SocketManager/SocketManager";
+import { disconnectSockets, nodeServerSocket } from "../../components/sockets/SocketManager/SocketManager";
 
 const SignUpScreen = () => {
     // State hooks for managing input fields
@@ -14,10 +14,10 @@ const SignUpScreen = () => {
     const [dateOfBirth, setDateOfBirth] = useState('');
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
-    
+
     // Hook to get window dimensions, particularly height
     const { height } = useWindowDimensions();
-    
+
     // Navigation hook for navigating between screens
     const navigation = useNavigation();
 
@@ -28,17 +28,17 @@ const SignUpScreen = () => {
         };
     }, []);
 
-    // Function to navigate to SignIn screen when Sign In button is pressed
+    // Function to navigate to the SignIn screen when Sign In button is pressed
     const onSignInPressed = () => {
         navigation.navigate('SignIn');
-    }
+    };
 
     // Function to handle Register button press
     const onRegisterPressed = () => {
         console.log("Register button pressed");
 
         // Check if the socket is available and connected
-        if (pythonServerSocket && pythonServerSocket.connected) {
+        if (nodeServerSocket && nodeServerSocket.connected) {
             console.log("Socket is available");
 
             // Hash the password with bcrypt
@@ -50,7 +50,7 @@ const SignUpScreen = () => {
 
                     console.log("Sending the following data to the server:");
                     console.log({
-                        uuid: pythonServerSocket.id,  // Unique identifier for the socket session
+                        uuid: nodeServerSocket.id,  // Unique identifier for the socket session
                         username: username,
                         email: email,
                         password: hashedPassword,  // Use the hashed password
@@ -58,14 +58,14 @@ const SignUpScreen = () => {
                     });
 
                     // Emit event to create a new account
-                    pythonServerSocket.emit('create_account', {
-                        uuid: pythonServerSocket.id,
+                    nodeServerSocket.emit('create_account', {
+                        uuid: nodeServerSocket.id,
                         username: username,
                         email: email,
                         password: hashedPassword,
                         dateOfBirth: dateOfBirth
                     }, (response) => {
-                        // Handle server response after attempting to create account
+                        // Handle server response after attempting to create an account
                         if (response && response.status === 'ok') {
                             console.log('Account created successfully:', response);
                             // Navigate to the SignIn screen after successful account creation
@@ -75,7 +75,7 @@ const SignUpScreen = () => {
                             // Show an error message to the user
                         } else if (!response) {
                             console.error('No response from server');
-                            // Handle the absence of response from the server
+                            // Handle the absence of a response from the server
                         } else {
                             console.error('Unexpected error');
                         }
@@ -93,13 +93,13 @@ const SignUpScreen = () => {
     const onTermsOfUsePressed = () => {
         console.log("Terms of Use pressed");
         // Additional logic for navigating to Terms of Use can be added here
-    }
+    };
 
     // Function to handle pressing the Privacy Policy text
     const onPrivacyPolicyPressed = () => {
         console.log("Privacy Policy pressed");
         // Additional logic for navigating to Privacy Policy can be added here
-    }
+    };
 
     return (
         <View style={styles.root}>

@@ -4,7 +4,7 @@ import Logo from '../../assets/images/logos/logo.png';
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import { useNavigation } from '@react-navigation/native';
-import { rasaServerSocket, pythonServerSocket, disconnectSockets } from "../../components/sockets/SocketManager/SocketManager";
+import { rasaServerSocket, nodeServerSocket, disconnectSockets } from "../../components/sockets/SocketManager/SocketManager";
 import Navigation from "../Navigation";
 
 const LogOutScreen = () => {

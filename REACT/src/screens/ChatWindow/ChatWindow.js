@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { useUserContext } from '../../components/utils/contexts/UserContext';
-import { rasaServerSocket, pythonServerSocket, connectSockets, disconnectSockets } from '../../components/sockets/SocketManager/SocketManager';
+import { rasaServerSocket, nodeServerSocket, connectSockets, disconnectSockets } from '../../components/sockets/SocketManager/SocketManager';
 import { useRoute, useIsFocused } from '@react-navigation/native';
 import emitToServerEvent from '../../components/sockets/SocketUtils';
 import TopNavigationBar from '../../components/navigation/TopNavigationBar';
@@ -123,7 +123,7 @@ const ChatWindowScreen = () => {
     if (socket && !sessionID && userUUID) {
       setSessionID(userUUID); // Set userUUID as sessionID
       socket.emit('session_request', { session_id: userUUID }); // Open a unique session with RASA
-      pythonServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
+      nodeServerSocket.emit('connection_log', { UUID: userUUID, Username: username, Connection: rasaServerSocket.id, ConnectionType: 'Session Request (RASA)' });
       console.log('Attempting to establish session request ' + userUUID);
     }
   }, [socket, sessionID, userUUID, username]);

@@ -182,7 +182,7 @@ This event is called 'create_account' and this one is emitted from the mobile ap
 const onRegisterPressed = () => {
         console.log("Register button pressed");
 
-        if (pythonServerSocket && pythonServerSocket.connected) {
+        if (nodeServerSocket && nodeServerSocket.connected) {
             console.log("Socket is available");
             hash(password, 5, (hashErr, hashedPassword) => {
                 if (hashErr) {
