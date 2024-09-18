@@ -42,49 +42,40 @@ const SignUpScreen = () => {
         if (nodeServerSocket && nodeServerSocket.connected) {
             console.log("Socket is available");
 
-            // Hash the password with bcrypt
-            hash(password, 10, (hashErr, hashedPassword) => {
-                if (hashErr) {
-                    console.error('Error hashing password:', hashErr);
+            console.log("Sending the following data to the server:");
+            console.log({
+                uuid: nodeServerSocket.id,  // Unique identifier for the socket session
+                username: username,
+                email: email,
+                password: password,  // Send the raw password, backend will handle hashing
+                dateOfBirth: dateOfBirth
+            });
+
+            // Emit event to create a new account
+            nodeServerSocket.emit('create_account', {
+                uuid: nodeServerSocket.id,
+                username: username,
+                email: email,
+                password: password,  // Raw password
+                dateOfBirth: dateOfBirth
+            }, (response) => {
+                // Handle server response after attempting to create an account
+                if (response && response.status === 'ok') {
+                    console.log('Account created successfully:', response);
+                    // Navigate to the SignIn screen after successful account creation
+                    navigation.navigate('SignIn');
+                } else if (response && response.status === 'error') {
+                    console.error('Server responded with an error:', response.error);
+                    // Show an error message to the user
+                } else if (!response) {
+                    console.error('No response from server');
+                    // Handle the absence of a response from the server
                 } else {
-                    console.log("Password hashed successfully");
-
-                    console.log("Sending the following data to the server:");
-                    console.log({
-                        uuid: nodeServerSocket.id,  // Unique identifier for the socket session
-                        username: username,
-                        email: email,
-                        password: hashedPassword,  // Use the hashed password
-                        dateOfBirth: dateOfBirth
-                    });
-
-                    // Emit event to create a new account
-                    nodeServerSocket.emit('create_account', {
-                        uuid: nodeServerSocket.id,
-                        username: username,
-                        email: email,
-                        password: hashedPassword,
-                        dateOfBirth: dateOfBirth
-                    }, (response) => {
-                        // Handle server response after attempting to create an account
-                        if (response && response.status === 'ok') {
-                            console.log('Account created successfully:', response);
-                            // Navigate to the SignIn screen after successful account creation
-                            navigation.navigate('SignIn');
-                        } else if (response && response.status === 'error') {
-                            console.error('Server responded with an error:', response.error);
-                            // Show an error message to the user
-                        } else if (!response) {
-                            console.error('No response from server');
-                            // Handle the absence of a response from the server
-                        } else {
-                            console.error('Unexpected error');
-                        }
-                    });
-
-                    console.log("Data sent to server, awaiting confirmation...");
+                    console.error('Unexpected error');
                 }
             });
+
+            console.log("Data sent to server, awaiting confirmation...");
         } else {
             console.error('Socket is not available.');
         }
