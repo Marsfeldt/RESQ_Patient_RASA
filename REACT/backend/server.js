@@ -3,6 +3,8 @@ const express = require('express');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const bcrypt = require('bcryptjs'); // Import bcrypt for password hashing
+const nodemailer = require('nodemailer'); // For sending emails
+const crypto = require('crypto'); // For generating reset tokens
 const path = require('path');
 
 // Import the database connections from the correct path
@@ -33,6 +35,151 @@ app.get('/', (req, res) => {
     res.send("Server is running!");
 });
 
+/**
+ * Handle password reset request
+ * Expects a username to be sent from the front-end
+ */
+app.post('/forgot-password', (req, res) => {
+    const { username } = req.body;
+
+    if (!username) {
+        return res.status(400).json({ status: 'error', error: 'Username is required' });
+    }
+
+    // Check if the user exists in the database
+    userDB.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+        if (err) {
+            console.error('Database error:', err.message);
+            return res.status(500).json({ status: 'error', error: 'Database error' });
+        }
+
+        if (!row) {
+            return res.status(404).json({ status: 'error', error: 'User not found' });
+        }
+
+        // Generate a password reset token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+
+        // Token expiration time (e.g., 1 hour)
+        const expirationTime = new Date(Date.now() + 3600000); // 1 hour from now
+
+        // Save the token and expiration time to the database
+        const updateQuery = `UPDATE users SET resetToken = ?, resetTokenExpires = ? WHERE username = ?`;
+        const params = [resetToken, expirationTime.toISOString(), username];
+
+        userDB.run(updateQuery, params, function (updateErr) {
+            if (updateErr) {
+                console.error('Database update error:', updateErr.message);
+                return res.status(500).json({ status: 'error', error: 'Database update error' });
+            }
+
+            // Set up the email transport (using nodemailer)
+            const transporter = nodemailer.createTransport({
+                service: 'Gmail', // or any other email service
+                auth: {
+                    user: 'your-email@gmail.com',
+                    pass: 'your-email-password',
+                },
+            });
+
+            const mailOptions = {
+                from: 'your-email@gmail.com',
+                to: row.email, // The user's email from the database
+                subject: 'Password Reset',
+                text: `You requested a password reset. Use this token: ${resetToken}. This token will expire in 1 hour.`,
+            };
+
+            // Send the email
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error sending email:', error);
+                    return res.status(500).json({ status: 'error', error: 'Failed to send email' });
+                }
+                console.log('Email sent:', info.response);
+                return res.json({ status: 'ok', message: 'Password reset email sent' });
+            });
+        });
+    });
+});
+
+/**
+ * Handle password reset confirmation (setting new password)
+ * Expects a reset token and new password from the front-end
+ */
+// Route for handling the new password confirmation
+app.post('/reset-password', (req, res) => {
+    const { resetToken, newPassword } = req.body;
+
+    if (!resetToken || !newPassword) {
+        return res.status(400).json({ status: 'error', error: 'Token and new password are required' });
+    }
+
+    // Check if the reset token exists and has not expired
+    userDB.get(
+        'SELECT * FROM users WHERE resetToken = ? AND resetTokenExpires > ?',
+        [resetToken, new Date().toISOString()],
+        (err, row) => {
+            if (err) {
+                console.error('Database error:', err.message);
+                return res.status(500).json({ status: 'error', error: 'Database error' });
+            }
+
+            if (!row) {
+                return res.status(400).json({ status: 'error', error: 'Invalid or expired token' });
+            }
+
+            // Hash the new password before saving it
+            bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
+                if (hashErr) {
+                    console.error('Error hashing password:', hashErr);
+                    return res.status(500).json({ status: 'error', error: 'Password hashing error' });
+                }
+
+                // Update the user's password in the database and remove the reset token
+                const updatePasswordQuery = `
+                    UPDATE users
+                    SET password = ?, resetToken = NULL, resetTokenExpires = NULL
+                    WHERE username = ?
+                `;
+                const params = [hashedPassword, row.username];
+
+                userDB.run(updatePasswordQuery, params, function (updateErr) {
+                    if (updateErr) {
+                        console.error('Database update error:', updateErr.message);
+                        return res.status(500).json({ status: 'error', error: 'Database update error' });
+                    }
+
+                    console.log('Password reset successfully for:', row.username);
+                    return res.json({ status: 'ok', message: 'Password reset successfully' });
+                });
+            });
+        }
+    );
+});
+
+/**
+ * Handle user logout request
+ * Expects the user's socket ID to disconnect the socket
+ */
+app.post('/logout', (req, res) => {
+    const { socketId } = req.body;
+
+    if (!socketId) {
+        return res.status(400).json({ status: 'error', error: 'Socket ID is required' });
+    }
+
+    // Find and disconnect the socket
+    const socketToDisconnect = io.sockets.sockets.get(socketId);
+    if (socketToDisconnect) {
+        socketToDisconnect.disconnect(true);
+        console.log(`User with socket ID ${socketId} has been logged out.`);
+        return res.json({ status: 'ok', message: 'Logout successful' });
+    } else {
+        console.log(`Socket with ID ${socketId} not found.`);
+        return res.status(404).json({ status: 'error', error: 'Socket not found' });
+    }
+});
+
 // Socket.IO connection event
 io.on('connection', (socket) => {
     console.log(`New client connected: ${socket.id}`);
@@ -59,10 +206,7 @@ io.on('connection', (socket) => {
                 socket.emit('user_credentials', { error: 'User not found' });
             }
         });
-
     });
-
-
 
     /**
      * Handle account creation from front-end
@@ -93,7 +237,14 @@ io.on('connection', (socket) => {
                             INSERT INTO users (uuid, username, email, password, dateOfBirth, AccountCreatedTime)
                             VALUES (?, ?, ?, ?, ?, ?)
                         `;
-                        const params = [uuid, username, email, hashedPassword, dateOfBirth, new Date().toISOString()];
+                        const params = [
+                            uuid,
+                            username,
+                            email,
+                            hashedPassword,
+                            dateOfBirth,
+                            new Date().toISOString(),
+                        ];
 
                         console.log('Executing query:', insertQuery);
                         console.log('With params:', params);
@@ -113,7 +264,6 @@ io.on('connection', (socket) => {
             }
         });
     });
-
 
     /**
      * Handle check_tutorial_completion event from front-end
@@ -144,16 +294,19 @@ io.on('connection', (socket) => {
         console.log(`Message from client: ${message}`);
 
         // Send message to RASA server
-        axios.post('http://localhost:5005/webhooks/rest/webhook', {
-            sender: socket.id, // You can replace this with user ID
-            message: message
-        }).then((response) => {
-            console.log('Response from RASA:', response.data);
-            socket.emit('rasa_response', response.data);
-        }).catch((error) => {
-            console.error('Error communicating with RASA:', error);
-            socket.emit('rasa_error', { error: 'RASA server communication failed' });
-        });
+        axios
+            .post('http://localhost:5005/webhooks/rest/webhook', {
+                sender: socket.id, // You can replace this with user ID
+                message: message,
+            })
+            .then((response) => {
+                console.log('Response from RASA:', response.data);
+                socket.emit('rasa_response', response.data);
+            })
+            .catch((error) => {
+                console.error('Error communicating with RASA:', error);
+                socket.emit('rasa_error', { error: 'RASA server communication failed' });
+            });
     });
 
     /**
@@ -161,9 +314,19 @@ io.on('connection', (socket) => {
      * Logs interactions for analytics or debugging
      */
     socket.on('interaction_log', (interactionData) => {
-        console.log(`Logging interaction: ${interactionData.InteractionType} by ${interactionData.Username}`);
+        console.log(
+            `Logging interaction: ${interactionData.InteractionType} by ${interactionData.Username}`
+        );
         // Logic to store interaction data in the database (implement as needed)
         // e.g., connectionLogDB.insert(interactionData)
+    });
+
+    /**
+     * Handle logout event from front-end
+     */
+    socket.on('logout', () => {
+        console.log(`User logged out: ${socket.id}`);
+        socket.disconnect(true);
     });
 
     // Handle disconnection event

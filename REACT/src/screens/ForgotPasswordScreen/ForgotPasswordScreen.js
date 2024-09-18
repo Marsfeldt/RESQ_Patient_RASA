@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
-import Logo from '../../assets/images/logos/logo.png';
+import { View, Text, StyleSheet } from 'react-native';
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import { useNavigation } from '@react-navigation/native';
@@ -11,12 +10,30 @@ const ForgotPasswordScreen = () => {
     const navigation = useNavigation();
 
     const onBackToLoginPressed = () => {
-        //navigation.navigate('SignIn');
-    }
+        navigation.navigate('SignIn');
+    };
 
-    const onSendNewPasswordPressed = () => {
-        //console.warn("onSendNewPasswordPressed")
-    }
+    const onSendNewPasswordPressed = async () => {
+        try {
+            // Call the backend server to send a password reset email
+            const response = await fetch('http://localhost:5006/forgot-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username }),
+            });
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                console.log('Password reset email sent');
+            } else {
+                console.error('Error:', data.error);
+            }
+        } catch (error) {
+            console.error('Failed to reset password:', error);
+        }
+    };
 
     return (
         <View style={styles.root}>
@@ -33,24 +50,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
-    logo: {
-        width: '70%',
-        maxHeight: 300,
-        maxWidth: 200,
-    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         color: '#051C60',
         margin: 10,
     },
-    text: {
-        color: 'gray',
-        marginVertical: 10,
-    },
-    link: {
-        color: '#FDB075'
-    }
 });
 
 export default ForgotPasswordScreen;

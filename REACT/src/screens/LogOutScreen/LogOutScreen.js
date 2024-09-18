@@ -1,20 +1,27 @@
-import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
-import Logo from '../../assets/images/logos/logo.png';
-import CustomInput from "../../components/common/CustomInput";
+import React from "react";
+import { View, StyleSheet } from 'react-native';
 import CustomButton from "../../components/common/CustomButton";
 import { useNavigation } from '@react-navigation/native';
-import { rasaServerSocket, nodeServerSocket, disconnectSockets } from "../../components/sockets/SocketManager/SocketManager";
-import Navigation from "../Navigation";
 
 const LogOutScreen = () => {
 
     const navigation = useNavigation();
 
-    const handleLogout = () => {
-        disconnectSockets();
-        //console.warn("Log Out Successful!");
-        navigation.navigate('SignIn');
+    const handleLogout = async () => {
+        try {
+            // Send a request to the backend to handle logout and disconnect sockets
+            await fetch('http://localhost:5006/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            // After successful logout, navigate back to SignIn screen
+            navigation.navigate('SignIn');
+        } catch (error) {
+            console.error('Failed to log out:', error);
+        }
     }
 
     return (
@@ -29,24 +36,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
-    logo: {
-        width: '70%',
-        maxHeight: 300,
-        maxWidth: 200,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#051C60',
-        margin: 10,
-    },
-    text: {
-        color: 'gray',
-        marginVertical: 10,
-    },
-    link: {
-        color: '#FDB075'
-    }
 });
 
 export default LogOutScreen;

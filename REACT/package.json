@@ -19,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "express": "^5.0.0",
     "http": "^0.0.1-security",
+    "nodemailer": "^6.9.15",
     "react": "18.2.0",
     "react-native": "^0.72.17",
     "react-native-bcrypt": "^2.4.0",
