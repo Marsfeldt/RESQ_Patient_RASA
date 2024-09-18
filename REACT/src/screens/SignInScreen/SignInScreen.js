@@ -43,19 +43,22 @@ const SignInScreen = () => {
             } else {
                 const receivedHash = data.password;
 
+                // Compare the received hashed password with the user's input
                 bcrypt.compare(password, receivedHash, (compareErr, result) => {
-                    console.log('Password entered by user:', password);
-                    console.log('Hashed password from database:', receivedHash);
                     if (compareErr) {
                         console.error('Error comparing passwords:', compareErr);
                     } else if (result) {
+                        // If the password matches
                         console.log('Password match successful');
                         setUserUUID(data.uuid);
+
+                        // Navigate to the ChatWindow screen after successful login
+                        navigation.navigate('ChatWindow');
                     } else {
+                        // If the passwords do not match
                         console.log('Passwords do not match');
                     }
                 });
-
             }
         };
 
@@ -63,6 +66,7 @@ const SignInScreen = () => {
             nodeServerSocket.on('user_credentials', handleUserCredentials);
         }
 
+        // Clean up the event listener when component unmounts
         return () => {
             nodeServerSocket.off('user_credentials', handleUserCredentials);
         };
@@ -70,6 +74,8 @@ const SignInScreen = () => {
 
     const onSignInPressed = () => {
         console.log("Sign In Button Pressed");
+
+        // Log the interaction
         emitToServerEvent('interaction_log', {
             UUID: rasaServerSocket.id,
             Username: "Anonymous User",
@@ -77,19 +83,31 @@ const SignInScreen = () => {
             InteractionOutput: 'Sign In',
         });
 
+        // Check if both WebSocket connections are available
         if (nodeServerSocket.connected && rasaServerSocket.connected) {
             nodeServerSocket.emit('login', username);
+
+            // Navigate to ChatWindow with the username
+            navigation.navigate('ChatWindow', { username: username });  // Pass username as a parameter
         } else {
             reconnectSockets();
             nodeServerSocket.emit('login', username);
+
+            // Navigate to ChatWindow with the username
+            navigation.navigate('ChatWindow', { username: username });  // Pass username as a parameter
         }
     };
 
+
+    // Ajout de la fonction pour gérer "Forgot Password"
     const onForgotPasswordPressed = () => {
+        console.log("Forgot Password Button Pressed");
+        // Logique de navigation ou d'action pour le mot de passe oublié
         navigation.navigate('ForgotPassword');
     };
 
     const onSignUpPressed = () => {
+        console.log("Sign Up Button Pressed");
         navigation.navigate('SignUp');
     };
 
