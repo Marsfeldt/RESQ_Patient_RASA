@@ -21,7 +21,9 @@ const io = new Server(httpServer, {
     cors: {
         origin: "*",  // Allow all origins for development purposes
         methods: ["GET", "POST"]
-    }
+    },
+    pingInterval: 25000, // Intervalle des pings (en millisecondes) pour maintenir la connexion
+    pingTimeout: 60000   // Durée avant de considérer que la connexion est perdue (en millisecondes)
 });
 
 // Port configuration
@@ -290,23 +292,17 @@ io.on('connection', (socket) => {
      * Example event: forward message to RASA server
      * This event forwards a message from the client to the RASA chatbot server
      */
-    socket.on('send_message_to_rasa', (message) => {
-        console.log(`Message from client: ${message}`);
-
-        // Send message to RASA server
-        axios
-            .post('http://localhost:5005/webhooks/rest/webhook', {
-                sender: socket.id, // You can replace this with user ID
+    socket.on('send_message_to_rasa', async (message) => {
+        try {
+            const response = await axios.post('http://localhost:5005/webhooks/rest/webhook', {
+                sender: socket.id,
                 message: message,
-            })
-            .then((response) => {
-                console.log('Response from RASA:', response.data);
-                socket.emit('rasa_response', response.data);
-            })
-            .catch((error) => {
-                console.error('Error communicating with RASA:', error);
-                socket.emit('rasa_error', { error: 'RASA server communication failed' });
             });
+            socket.emit('rasa_response', response.data);
+        } catch (error) {
+            console.error('Error communicating with RASA:', error);
+            socket.emit('rasa_error', { error: 'RASA server communication failed' });
+        }
     });
 
     /**

@@ -19,7 +19,7 @@ const ChatWindowScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const route = useRoute();
-  const { username } = route.params;
+  const { username } = route.params || {};
   const isFocused = useIsFocused();
 
   const generateUUID = () => `${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
@@ -33,7 +33,7 @@ const ChatWindowScreen = () => {
 
   useEffect(() => {
     connectSockets();
-    if (!socket) {
+    if (!socket) {http://localhost:5006
       setSocket(rasaServerSocket);
       rasaServerSocket.connect();
     }
@@ -168,7 +168,7 @@ const ChatWindowScreen = () => {
 
       <QuestionnaireButtonLayout
         showButtons={questionnaireLayout}
-        onButtonClick={handleQuestionnaireButtonClick} // Utilise la fonction définie
+        onButtonClick={handleQuestionnaireButtonClick}
         buttonsDisabled={buttonsDisabled}
       />
     </View>
