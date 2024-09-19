@@ -53,7 +53,7 @@ const SignInScreen = () => {
                         setUserUUID(data.uuid);
 
                         // Navigate to the ChatWindow screen after successful login
-                        navigation.navigate('ChatWindow');
+                        navigation.navigate('ChatWindow', { username: username });
                     } else {
                         // If the passwords do not match
                         console.log('Passwords do not match');
