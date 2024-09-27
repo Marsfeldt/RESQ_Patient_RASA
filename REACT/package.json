@@ -17,6 +17,7 @@
     "@reduxjs/toolkit": "^1.9.7",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
     "express": "^5.0.0",
     "http": "^0.0.1-security",
     "nodemailer": "^6.9.15",

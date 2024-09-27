@@ -1,9 +1,13 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [userUUID, setUserUUID] = useState(null);
+
+  useEffect(() => {
+    console.log('UserContext initialized or updated:', { userUUID });
+  }, [userUUID]);
 
   return (
     <UserContext.Provider value={{ userUUID, setUserUUID }}>
@@ -13,5 +17,3 @@ export const UserProvider = ({ children }) => {
 };
 
 export const useUserContext = () => useContext(UserContext);
-
-export default UserContext;

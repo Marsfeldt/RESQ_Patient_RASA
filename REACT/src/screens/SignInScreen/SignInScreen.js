@@ -1,138 +1,101 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
+// SignInScreen.js
+import React, { useState } from 'react';
+import { View, Image, StyleSheet, useWindowDimensions, Alert } from 'react-native';
 import Logo from '../../assets/images/icons/woman_stonks.png';
-import CustomInput from "../../components/common/CustomInput";
-import CustomButton from "../../components/common/CustomButton";
-import { rasaServerSocket, nodeServerSocket, connectSockets, disconnectSockets, reconnectSockets } from "../../components/sockets/SocketManager/SocketManager";
+import CustomInput from '../../components/common/CustomInput';
+import CustomButton from '../../components/common/CustomButton';
 import { useNavigation } from '@react-navigation/native';
-import bcrypt from 'bcryptjs';
-import { useUserContext } from "../../components/utils/contexts/UserContext";
-import emitToServerEvent from "../../components/sockets/SocketUtils";
+import { useUserContext } from '../../components/utils/contexts/UserContext';
 
 const SignInScreen = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const { setUserUUID } = useUserContext();
-    const { height } = useWindowDimensions();
-    const navigation = useNavigation();
+  // State variables for username and password input fields
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-    useEffect(() => {
-        console.log('SignIn Screen Mounted');
-        if (!nodeServerSocket.connected && !rasaServerSocket.connected) {
-            connectSockets();
-        }
+  // Context hook to set the user's UUID after successful sign-in
+  const { setUserUUID } = useUserContext();
 
-        // Log interaction for navigation to this screen
-        emitToServerEvent('interaction_log', {
-            UUID: "Anonymous User",
-            Username: "Anonymous User",
-            InteractionType: 'Navigation',
-            InteractionOutput: '-> Sign In Screen'
-        });
+  // Get the device's window dimensions for responsive styling
+  const { height } = useWindowDimensions();
 
-        // Clean up when component unmounts
-        return () => {
-            disconnectSockets();
-        };
-    }, []);
+  // Navigation hook to navigate between screens
+  const navigation = useNavigation();
 
-    useEffect(() => {
-        const handleUserCredentials = (data) => {
-            if (data.error) {
-                console.warn("User not found.");
-            } else {
-                const receivedHash = data.password;
+  // Handler for the "Forgot Password" button press
+  const onForgotPasswordPressed = () => {
+    navigation.navigate('ForgotPassword');
+  };
 
-                // Compare the received hashed password with the user's input
-                bcrypt.compare(password, receivedHash, (compareErr, result) => {
-                    if (compareErr) {
-                        console.error('Error comparing passwords:', compareErr);
-                    } else if (result) {
-                        // If the password matches
-                        console.log('Password match successful');
-                        setUserUUID(data.uuid);
+  // Handler for the "Sign Up" button press
+  const onSignUpPressed = () => {
+    navigation.navigate('SignUp');
+  };
 
-                        // Navigate to the ChatWindow screen after successful login
-                        navigation.navigate('ChatWindow');
-                    } else {
-                        // If the passwords do not match
-                        console.log('Passwords do not match');
-                    }
-                });
-            }
-        };
+  // Handler for the "Sign In" button press
+  const onSignInPressed = async () => {
+    // Validate that both username and password are provided
+    if (!username || !password) {
+      Alert.alert('Validation Error', 'Please enter both username and password.');
+      return;
+    }
 
-        if (nodeServerSocket) {
-            nodeServerSocket.on('user_credentials', handleUserCredentials);
-        }
+    try {
+      // Send a POST request to the server for authentication
+      const response = await fetch('http://10.0.2.2:5006/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Include username and password in the request body
+        body: JSON.stringify({ username, password }),
+      });
 
-        // Clean up the event listener when component unmounts
-        return () => {
-            nodeServerSocket.off('user_credentials', handleUserCredentials);
-        };
-    }, [password, navigation, setUserUUID]);
+      // Parse the response data as JSON
+      const data = await response.json();
 
-    const onSignInPressed = () => {
-        console.log("Sign In Button Pressed");
+      if (data.status === 'ok') {
+        setUserUUID(data.userUUID);
+        navigation.navigate('ChatWindow', { username });
+      } else {
+        // Handle login failure by showing an alert to the user
+        Alert.alert('Login Failed', data.error || 'Invalid username or password.');
+      }
+    } catch (error) {
+      // Handle network or server errors
+      console.error('Login request error:', error);
+      Alert.alert('Network Error', 'An error occurred while trying to log in. Please try again later.');
+    }
+  };
 
-        // Log the interaction
-        emitToServerEvent('interaction_log', {
-            UUID: rasaServerSocket.id,
-            Username: "Anonymous User",
-            InteractionType: 'Button Press',
-            InteractionOutput: 'Sign In',
-        });
+  return (
+    <View style={styles.root}>
+      {/* Display the logo image */}
+      <Image source={Logo} style={[styles.logo, { height: height * 0.3 }]} resizeMode="contain" />
 
-        // Check if both WebSocket connections are available
-        if (nodeServerSocket.connected && rasaServerSocket.connected) {
-            nodeServerSocket.emit('login', username);
+      {/* Input fields for username and password */}
+      <CustomInput placeholder="Username" value={username} setValue={setUsername} />
+      <CustomInput placeholder="Password" value={password} setValue={setPassword} secureTextEntry />
 
-            // Navigate to ChatWindow with the username
-            navigation.navigate('ChatWindow', { username: username });  // Pass username as a parameter
-        } else {
-            reconnectSockets();
-            nodeServerSocket.emit('login', username);
+      {/* Sign In button */}
+      <CustomButton text="Sign In" onPress={onSignInPressed} />
 
-            // Navigate to ChatWindow with the username
-            navigation.navigate('ChatWindow', { username: username });  // Pass username as a parameter
-        }
-    };
-
-
-    // Ajout de la fonction pour gérer "Forgot Password"
-    const onForgotPasswordPressed = () => {
-        console.log("Forgot Password Button Pressed");
-        // Logique de navigation ou d'action pour le mot de passe oublié
-        navigation.navigate('ForgotPassword');
-    };
-
-    const onSignUpPressed = () => {
-        console.log("Sign Up Button Pressed");
-        navigation.navigate('SignUp');
-    };
-
-    return (
-        <View style={styles.root}>
-            <Image source={Logo} style={[styles.logo, { height: height * 0.3 }]} resizeMode="contain" />
-            <CustomInput placeholder='Username' value={username} setValue={setUsername} />
-            <CustomInput placeholder='Password' value={password} setValue={setPassword} secureTextEntry={true} />
-            <CustomButton text='Sign In' onPress={onSignInPressed} />
-            <CustomButton text='Forgot Password?' onPress={onForgotPasswordPressed} type="TERTIARY" />
-            <CustomButton text="Don't have an account? Sign Up" onPress={onSignUpPressed} type="TERTIARY" />
-        </View>
-    );
+      {/* Navigation buttons for Forgot Password and Sign Up */}
+      <CustomButton text="Forgot Password?" onPress={onForgotPasswordPressed} type="TERTIARY" />
+      <CustomButton text="Don't have an account? Sign Up" onPress={onSignUpPressed} type="TERTIARY" />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    root: {
-        alignItems: 'center',
-        padding: 20,
-    },
-    logo: {
-        width: '70%',
-        maxHeight: 300,
-        maxWidth: 200,
-    },
+  root: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  logo: {
+    width: '70%',
+    maxHeight: 300,
+    maxWidth: 200,
+  },
 });
 
 export default SignInScreen;
