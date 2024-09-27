@@ -1,5 +1,3 @@
-// server.js
-
 // Import necessary modules
 const express = require('express');
 const http = require('http');
@@ -120,7 +118,6 @@ app.post('/forgot-password', (req, res) => {
               .status(500)
               .json({ status: 'error', error: 'Failed to send email' });
           }
-          console.log('Email sent:', info.response);
           return res.json({
             status: 'ok',
             message: 'Password reset email sent',
@@ -138,60 +135,75 @@ app.post('/forgot-password', (req, res) => {
 app.post('/register', (req, res) => {
   const { username, email, password, dateOfBirth } = req.body;
 
-  // Valider les données reçues
+  // Validate received data
   if (!username || !email || !password || !dateOfBirth) {
-    return res.status(400).json({ status: 'error', error: 'All fields are required' });
+    return res
+      .status(400)
+      .json({ status: 'error', error: 'All fields are required' });
   }
 
-  // Vérifier si le nom d'utilisateur existe déjà
-  userDB.get('SELECT * FROM users WHERE Username = ?', [username], (err, row) => {
-    if (err) {
-      console.error('Erreur de base de données:', err.message);
-      return res.status(500).json({ status: 'error', error: 'Database error' });
-    }
-
-    if (row) {
-      // Le nom d'utilisateur existe déjà
-      return res.status(400).json({ status: 'error', error: 'Username already exists' });
-    }
-
-    // Hacher le mot de passe
-    bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
-      if (hashErr) {
-        console.error('Erreur lors du hachage du mot de passe:', hashErr);
-        return res.status(500).json({ status: 'error', error: 'Error hashing password' });
+  // Check if the username already exists
+  userDB.get(
+    'SELECT * FROM users WHERE Username = ?',
+    [username],
+    (err, row) => {
+      if (err) {
+        console.error('Database error:', err.message);
+        return res
+          .status(500)
+          .json({ status: 'error', error: 'Database error' });
       }
 
-      // Générer un UUID
-      const uuid = crypto.randomUUID();
+      if (row) {
+        // Username already exists
+        return res
+          .status(400)
+          .json({ status: 'error', error: 'Username already exists' });
+      }
 
-      // Insérer le nouvel utilisateur dans la base de données
-      const insertQuery = `
-        INSERT INTO users (uuid, Username, Email, Password, dateOfBirth, AccountCreatedTime)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `;
-      const params = [
-        uuid,
-        username,
-        email,
-        hashedPassword,
-        dateOfBirth,
-        new Date().toISOString(),
-      ];
-
-      userDB.run(insertQuery, params, function (insertErr) {
-        if (insertErr) {
-          console.error('Erreur lors de l\'insertion dans la base de données:', insertErr.message);
-          return res.status(500).json({ status: 'error', error: 'Database insert error' });
+      // Hash the password
+      bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
+        if (hashErr) {
+          console.error('Error hashing password:', hashErr);
+          return res
+            .status(500)
+            .json({ status: 'error', error: 'Error hashing password' });
         }
 
-        console.log('Compte créé avec succès pour :', username);
-        return res.json({ status: 'ok' });
-      });
-    });
-  });
-});
+        // Generate a UUID
+        const uuid = crypto.randomUUID();
 
+        // Insert the new user into the database
+        const insertQuery = `
+          INSERT INTO users (UUID, Username, Email, Password, dateOfBirth, AccountCreatedTime)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        const params = [
+          uuid,
+          username,
+          email,
+          hashedPassword,
+          dateOfBirth,
+          new Date().toISOString(),
+        ];
+
+        userDB.run(insertQuery, params, function (insertErr) {
+          if (insertErr) {
+            console.error(
+              'Database insert error:',
+              insertErr.message
+            );
+            return res
+              .status(500)
+              .json({ status: 'error', error: 'Database insert error' });
+          }
+
+          return res.json({ status: 'ok' });
+        });
+      });
+    }
+  );
+});
 
 /**
  * Handle password reset confirmation (setting new password)
@@ -203,7 +215,10 @@ app.post('/reset-password', (req, res) => {
   if (!resetToken || !newPassword) {
     return res
       .status(400)
-      .json({ status: 'error', error: 'Token and new password are required' });
+      .json({
+        status: 'error',
+        error: 'Token and new password are required',
+      });
   }
 
   // Check if the reset token exists and has not expired
@@ -221,7 +236,10 @@ app.post('/reset-password', (req, res) => {
       if (!row) {
         return res
           .status(400)
-          .json({ status: 'error', error: 'Invalid or expired token' });
+          .json({
+            status: 'error',
+            error: 'Invalid or expired token',
+          });
       }
 
       // Hash the new password before saving it
@@ -230,7 +248,10 @@ app.post('/reset-password', (req, res) => {
           console.error('Error hashing password:', hashErr);
           return res
             .status(500)
-            .json({ status: 'error', error: 'Password hashing error' });
+            .json({
+              status: 'error',
+              error: 'Password hashing error',
+            });
         }
 
         // Update the user's password in the database and remove the reset token
@@ -241,20 +262,29 @@ app.post('/reset-password', (req, res) => {
         `;
         const params = [hashedPassword, row.username];
 
-        userDB.run(updatePasswordQuery, params, function (updateErr) {
-          if (updateErr) {
-            console.error('Database update error:', updateErr.message);
-            return res
-              .status(500)
-              .json({ status: 'error', error: 'Database update error' });
-          }
+        userDB.run(
+          updatePasswordQuery,
+          params,
+          function (updateErr) {
+            if (updateErr) {
+              console.error(
+                'Database update error:',
+                updateErr.message
+              );
+              return res
+                .status(500)
+                .json({
+                  status: 'error',
+                  error: 'Database update error',
+                });
+            }
 
-          console.log('Password reset successfully for:', row.username);
-          return res.json({
-            status: 'ok',
-            message: 'Password reset successfully',
-          });
-        });
+            return res.json({
+              status: 'ok',
+              message: 'Password reset successfully',
+            });
+          }
+        );
       });
     }
   );
@@ -267,42 +297,72 @@ app.post('/reset-password', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  // Adjust the SQL query if necessary
-  userDB.get('SELECT * FROM users WHERE Username = ?', [username], (err, row) => {
-    if (err) {
-      console.error('Erreur de base de données:', err.message);
-      return res.status(500).json({ status: 'error', error: 'Database error' });
-    }
-
-    if (!row) {
-      // If the user does not exist
-      return res.status(401).json({ status: 'error', error: 'Invalid username or password' });
-    }
-
-    // Check that 'row.Password' is not undefined
-    if (!row.Password) {
-      console.error('Le mot de passe haché est undefined.');
-      return res.status(500).json({ status: 'error', error: 'Password not found in database' });
-    }
-
-    // Compares the password with the stored hash
-    bcrypt.compare(password, row.Password, (compareErr, isMatch) => {
-      if (compareErr) {
-        console.error('Erreur lors de la comparaison des mots de passe:', compareErr);
-        return res.status(500).json({ status: 'error', error: 'Internal error' });
+  userDB.get(
+    'SELECT * FROM users WHERE Username = ?',
+    [username],
+    (err, row) => {
+      if (err) {
+        console.error('Database error:', err.message);
+        return res
+          .status(500)
+          .json({ status: 'error', error: 'Database error' });
       }
 
-      if (isMatch) {
-        // If the password is correct, return the user’s UUID
-        return res.json({ status: 'ok', userUUID: row.uuid });
-      } else {
-        // If the password is incorrect
-        return res.status(401).json({ status: 'error', error: 'Invalid username or password' });
+      if (!row) {
+        return res
+          .status(401)
+          .json({
+            status: 'error',
+            error: 'Invalid username or password',
+          });
       }
-    });
-  });
+
+      if (!row.Password) {
+        console.error('Hashed password is undefined.');
+        return res
+          .status(500)
+          .json({
+            status: 'error',
+            error: 'Password not found in database',
+          });
+      }
+
+      // Compare the password with the stored hash
+      bcrypt.compare(
+        password,
+        row.Password,
+        (compareErr, isMatch) => {
+          if (compareErr) {
+            console.error(
+              'Error comparing passwords:',
+              compareErr
+            );
+            return res
+              .status(500)
+              .json({
+                status: 'error',
+                error: 'Internal error',
+              });
+          }
+
+          if (isMatch) {
+            return res.json({
+              status: 'ok',
+              userUUID: row.UUID,
+            });
+          } else {
+            return res
+              .status(401)
+              .json({
+                status: 'error',
+                error: 'Invalid username or password',
+              });
+          }
+        }
+      );
+    }
+  );
 });
-
 
 /**
  * Handle user logout request
@@ -321,71 +381,157 @@ app.post('/logout', (req, res) => {
   const socketToDisconnect = io.sockets.sockets.get(socketId);
   if (socketToDisconnect) {
     socketToDisconnect.disconnect(true);
-    console.log(`User with socket ID ${socketId} has been logged out.`);
     return res.json({ status: 'ok', message: 'Logout successful' });
   } else {
-    console.log(`Socket with ID ${socketId} not found.`);
     return res
       .status(404)
       .json({ status: 'error', error: 'Socket not found' });
   }
 });
 
+/**
+ * Handle sending a message to the bot and returning the response
+ * Expects 'message' and 'session_id' from the client
+ */
+app.post('/send_message', async (req, res) => {
+  const { message, session_id } = req.body;
+
+  // Validate received data
+  if (!message || !session_id) {
+    return res
+      .status(400)
+      .json({
+        status: 'error',
+        error: 'Message and session_id are required',
+      });
+  }
+
+  try {
+    // Send the message to the RASA server
+    const response = await axios.post(
+      'http://localhost:5005/webhooks/rest/webhook',
+      {
+        sender: session_id,
+        message: message,
+      }
+    );
+
+    // RASA returns an array of messages
+    const botResponses = response.data;
+
+    // Take the first message to simplify
+    const botMessage = botResponses[0] || { text: '' };
+
+    // Return the bot's message to the client
+    res.json({ text: botMessage.text });
+  } catch (error) {
+    console.error('Error communicating with RASA:', error.message);
+
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error headers:', error.response.headers);
+      console.error('Error data:', error.response.data);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Request setup error:', error.message);
+    }
+
+    res
+      .status(500)
+      .json({ status: 'error', error: 'Error communicating with bot' });
+  }
+});
+
+/**
+ * Handle interaction logs from the client
+ * Expects interaction data in the request body
+ */
+app.post('/interaction_log', (req, res) => {
+  const interactionData = req.body;
+
+  // Validate interaction data
+  if (
+    !interactionData ||
+    !interactionData.UUID ||
+    !interactionData.InteractionType
+  ) {
+    return res
+      .status(400)
+      .json({ status: 'error', error: 'Invalid interaction data' });
+  }
+
+  // Log the interaction
+  // Replace this with your actual logging logic, e.g., save to database
+
+  res.json({ status: 'ok' });
+});
+
 // Socket.IO connection event
 io.on('connection', (socket) => {
-  console.log(`New client connected: ${socket.id}`);
-
   /**
    * Handle account creation from front-end
    * Expects user registration data to be sent from the client
    */
   socket.on('create_account', (data, callback) => {
     const { uuid, username, email, password, dateOfBirth } = data;
-    console.log('Account creation request received from:', uuid);
 
     // Check if the username already exists in the database
-    userDB.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
-      if (err) {
-        console.error('Database error:', err.message);
-        callback({ status: 'error', error: 'Database error' });
-      } else if (row) {
-        // Username already exists
-        console.log('Username already exists:', username);
-        callback({ status: 'error', error: 'Username already exists' });
-      } else {
-        // Hash the user's password before saving it
-        bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
-          if (hashErr) {
-            console.error('Error hashing password:', hashErr);
-            callback({ status: 'error', error: 'Password hashing error' });
-          } else {
-            // Insert the new user into the database
-            const insertQuery = `
-              INSERT INTO users (uuid, username, email, password, dateOfBirth, AccountCreatedTime)
-              VALUES (?, ?, ?, ?, ?, ?)
-            `;
-            const params = [
-              uuid,
-              username,
-              email,
-              hashedPassword,
-              dateOfBirth,
-              new Date().toISOString(),
-            ];
+    userDB.get(
+      'SELECT * FROM users WHERE username = ?',
+      [username],
+      (err, row) => {
+        if (err) {
+          console.error('Database error:', err.message);
+          callback({ status: 'error', error: 'Database error' });
+        } else if (row) {
+          callback({
+            status: 'error',
+            error: 'Username already exists',
+          });
+        } else {
+          // Hash the user's password before saving it
+          bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
+            if (hashErr) {
+              console.error('Error hashing password:', hashErr);
+              callback({
+                status: 'error',
+                error: 'Password hashing error',
+              });
+            } else {
+              // Insert the new user into the database
+              const insertQuery = `
+                INSERT INTO users (uuid, username, email, password, dateOfBirth, AccountCreatedTime)
+                VALUES (?, ?, ?, ?, ?, ?)
+              `;
+              const params = [
+                uuid,
+                username,
+                email,
+                hashedPassword,
+                dateOfBirth,
+                new Date().toISOString(),
+              ];
 
-            userDB.run(insertQuery, params, function (insertErr) {
-              if (insertErr) {
-                console.error('Database insert error:', insertErr.message);
-                callback({ status: 'error', error: 'Database insert error' });
-              } else {
-                console.log('Account created successfully for:', username);
-                callback({ status: 'ok' });
-              }
-            });
-          }
-        });
+              userDB.run(insertQuery, params, function (insertErr) {
+                if (insertErr) {
+                  console.error(
+                    'Database insert error:',
+                    insertErr.message
+                  );
+                  callback({
+                    status: 'error',
+                    error: 'Database insert error',
+                  });
+                } else {
+                  callback({ status: 'ok' });
+                }
+              });
+            }
+          });
+        }
       }
-    });
+    );
   });
 
   /**
@@ -404,82 +550,26 @@ io.on('connection', (socket) => {
       socket.emit('rasa_response', response.data);
     } catch (error) {
       console.error('Error communicating with RASA:', error);
-      socket.emit('rasa_error', { error: 'RASA server communication failed' });
+      socket.emit('rasa_error', {
+        error: 'RASA server communication failed',
+      });
     }
   });
-
-/**
- * Handle sending a message to the bot and returning the response
- * Expects 'message' and 'session_id' from the client
- */
-app.post('/send_message', async (req, res) => {
-  const { message, session_id } = req.body;
-
-  if (!message || !session_id) {
-    return res.status(400).json({ status: 'error', error: 'Message and session_id are required' });
-  }
-
-  try {
-    // Send the message to the RASA server
-    const response = await axios.post('http://localhost:5005/webhooks/rest/webhook', {
-      sender: session_id,
-      message: message,
-    });
-
-    // RASA returns an array of messages
-    const botResponses = response.data;
-
-    // Take the first message for simplicity
-    const botMessage = botResponses[0] || { text: '' };
-
-    // Return the bot's message to the client
-    res.json({ text: botMessage.text });
-
-    // Optionally, log the interaction
-    // Replace this with your actual logging logic
-    console.log(`User (${session_id}) sent message: ${message}`);
-    console.log(`Bot replied: ${botMessage.text}`);
-
-  } catch (error) {
-    console.error('Error communicating with RASA:', error);
-    res.status(500).json({ status: 'error', error: 'Error communicating with bot' });
-  }
-});
-
-/**
- * Handle interaction logs from the client
- * Expects interaction data in the request body
- */
-app.post('/interaction_log', (req, res) => {
-  const interactionData = req.body;
-
-  // Validate interaction data
-  if (!interactionData || !interactionData.UUID || !interactionData.InteractionType) {
-    return res.status(400).json({ status: 'error', error: 'Invalid interaction data' });
-  }
-
-  // Log the interaction
-  // Replace this with your actual logging logic, e.g., save to database
-  console.log('Interaction log:', interactionData);
-
-  res.json({ status: 'ok' });
-});
 
   /**
    * Handle logout event from front-end
    */
   socket.on('logout', () => {
-    console.log(`User logged out: ${socket.id}`);
     socket.disconnect(true);
   });
 
   // Handle disconnection event
   socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    // Client disconnected
   });
 });
 
 // Start the server and listen on the specified port
-httpServer.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on http://10.0.2.2:${PORT}`);
 });

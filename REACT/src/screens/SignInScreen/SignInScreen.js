@@ -54,9 +54,8 @@ const SignInScreen = () => {
       const data = await response.json();
 
       if (data.status === 'ok') {
-        // Successful login: set user UUID and navigate to HomeScreen
         setUserUUID(data.userUUID);
-        navigation.navigate('ChatWindow');
+        navigation.navigate('ChatWindow', { username });
       } else {
         // Handle login failure by showing an alert to the user
         Alert.alert('Login Failed', data.error || 'Invalid username or password.');
