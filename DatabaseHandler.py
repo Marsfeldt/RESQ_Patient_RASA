@@ -116,8 +116,7 @@ class DatabaseHandler:
         query = f"SELECT {variable_name} FROM {table_name} WHERE UUID = ?"
         self.cursor.execute(query, (uuid,))
         result = self.cursor.fetchone()
-
-        if result is None:
+        if result[0] is None: #changed result to result[0] to avoid issues with return int(result[0])
             print(f"No {variable_name} found for UUID {uuid}")
             return None
 
@@ -152,7 +151,7 @@ class DatabaseHandler:
             cursor = connection.cursor()
             cursor.execute(f'SELECT UserResponse FROM {tableName} WHERE UUID = ?', (uuid,))
             rows = cursor.fetchall()
-
+            print(f"results test:{[row[0] for row in rows]}")
             # Clean and map the user responses to scores
             clean_numbers = [int(row[0]) for row in rows]
             number_mapping = {
@@ -202,7 +201,7 @@ class DatabaseHandler:
             print('======== RESULTS ========')
 
             # Update the user's stage in the database
-            userDB = DatabaseHandler("./PYTHON/DATABASE/Users.db")
+            userDB = DatabaseHandler("./DATA/DATABASE/Users.db")
             userDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
     def fetch_user_responses(self, tableName, uuid):
@@ -219,5 +218,5 @@ class DatabaseHandler:
         self.connection.close()
 
 # Uncomment the following lines to test the database handler
-# questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
-# questionnaireDatabase1.calculate_stage_score("QuestionnaireName1", "HB0iFCHQJd3PRv0KAAAL")
+    #questionnaireDatabase1 = DatabaseHandler("./PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
+    #questionnaireDatabase1.calculate_stage_score("QuestionnaireName1", "HB0iFCHQJd3PRv0KAAAL")
