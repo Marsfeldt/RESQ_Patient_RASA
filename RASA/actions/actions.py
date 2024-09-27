@@ -3,13 +3,10 @@ import sys
 import os
 import logging
 
-# Obtenir le répertoire du fichier actuel (actions.py)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Remonter au répertoire racine du projet
 root_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 
-# Ajouter le chemin racine au sys.path
 sys.path.append(root_dir)
 
 from rasa_sdk import Action, Tracker
