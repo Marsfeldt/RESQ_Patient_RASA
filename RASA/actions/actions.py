@@ -3,6 +3,9 @@ import sys
 import os
 import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 root_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
@@ -14,23 +17,30 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 from DatabaseHandler import DatabaseHandler
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+user_db_path = os.path.join(root_dir, 'DATA', 'DATABASE', 'Users.db')
+questionnaire_db_path = os.path.join(root_dir, 'DATA', 'QUESTIONNAIRE_DATABASES', 'Questionnaire_Name.db')
 
-userDB = DatabaseHandler("../DATA/DATABASE/Users.db")
-questionnaireDatabase1 = DatabaseHandler("../DATA/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
+if not os.path.exists(user_db_path):
+    logger.error(f"User database not found at {user_db_path}")
+if not os.path.exists(questionnaire_db_path):
+    logger.error(f"Questionnaire database not found at {questionnaire_db_path}")
+
+# Initialisation des bases de données
+userDB = DatabaseHandler(user_db_path)
+questionnaireDatabase1 = DatabaseHandler(questionnaire_db_path)
+
 
 def acquire_user_identification_variables(tracker: Tracker):
     try:
-        logger.error(f"UUID: {tracker.sender_id}")
+        logger.debug(f"UUID: {tracker.sender_id}")
         result = userDB.fetch_user_identification_variables('Users', tracker.sender_id)
         if result is None or len(result) != 2:
             logger.error(f"User identification variables not found for sender_id: {tracker.sender_id}")
             return None, None
         username, stage = result
-        if stage is None: #temporary workaround !!!!!!!!!!
+        if stage is None:  # temporary workaround
             stage = 1
-        logger.error(f"stage:{result}")
+        logger.debug(f"stage: {stage}")
         return username, int(stage)
     except Exception as e:
         logger.error(f"Error fetching user identification variables: {e}")
