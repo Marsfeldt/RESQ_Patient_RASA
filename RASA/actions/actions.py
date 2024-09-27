@@ -1,8 +1,16 @@
 from typing import Any, Text, Dict, List
 import sys
+import os
 import logging
 
-sys.path.append('C:/Users/jorda/Documents/Cesi/A4/MI_WORK/GIT/RESQ_Patient_RASA')
+# Obtenir le répertoire du fichier actuel (actions.py)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Remonter au répertoire racine du projet
+root_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+
+# Ajouter le chemin racine au sys.path
+sys.path.append(root_dir)
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
