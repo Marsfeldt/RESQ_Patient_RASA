@@ -1,29 +1,62 @@
 from typing import Any, Text, Dict, List
 import sys
+import os
 import logging
 
-sys.path.append('C:/Users/jorda/Documents/Cesi/A4/MI_WORK/GIT/Projet_26082024')
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+root_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+
+sys.path.append(root_dir)
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 from DatabaseHandler import DatabaseHandler
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+user_db_path = os.path.join(root_dir, 'DATA', 'DATABASE', 'Users.db')
+questionnaire_db_path = os.path.join(root_dir, 'DATA', 'QUESTIONNAIRE_DATABASES', 'Questionnaire_Name.db')
 
-userDB = DatabaseHandler("../PYTHON/DATABASE/Users.db")
-questionnaireDatabase1 = DatabaseHandler("../PYTHON/QUESTIONNAIRE_DATABASES/Questionnaire_Name.db")
+if not os.path.exists(user_db_path):
+    logger.error(f"User database not found at {user_db_path}")
+if not os.path.exists(questionnaire_db_path):
+    logger.error(f"Questionnaire database not found at {questionnaire_db_path}")
 
-def acquire_user_strategy(tracker: Tracker):
-    strategy = userDB.fetch_variable_from_uuid('Users', 'Strategy', tracker.sender_id)
-    return strategy
+# Initialisation des bases de données
+userDB = DatabaseHandler(user_db_path)
+questionnaireDatabase1 = DatabaseHandler(questionnaire_db_path)
+
 
 def acquire_user_identification_variables(tracker: Tracker):
-    username, stage = userDB.fetch_user_identification_variables('Users', tracker.sender_id)
-    return username, int(stage)
+    try:
+        logger.debug(f"UUID: {tracker.sender_id}")
+        result = userDB.fetch_user_identification_variables('Users', tracker.sender_id)
+        if result is None or len(result) != 2:
+            logger.error(f"User identification variables not found for sender_id: {tracker.sender_id}")
+            return None, None
+        username, stage = result
+        if stage is None:  # temporary workaround
+            stage = 1
+        logger.debug(f"stage: {stage}")
+        return username, int(stage)
+    except Exception as e:
+        logger.error(f"Error fetching user identification variables: {e}")
+        return None, None
 
+def acquire_user_strategy(tracker: Tracker):
+    try:
+        strategy = userDB.fetch_variable_from_uuid('Users', 'Strategy', tracker.sender_id)
+        if strategy is None:
+            logger.error(f"User strategy not found for sender_id: {tracker.sender_id}")
+            return None
+        logger.error(f"strategy:{strategy}")
+        return strategy
+    except Exception as e:
+        logger.error(f"Error fetching user strategy: {e}")
+        return None
 
 def match_sequence(user_sequence, scoring_sequences):
     try:
@@ -55,8 +88,9 @@ def determine_stage(tracker: Tracker):
         "Maintenance": 5
     }
 
+    #need this to work !!!!!!!!!!!!!!!
     user_score_sequence = questionnaireDatabase1.fetch_user_responses('QuestionnaireName1', tracker.sender_id)
-
+    logger.error(user_score_sequence)
     matched_stage = match_sequence(user_score_sequence, scoring_sequences)
 
     stage_definitions = [
@@ -89,6 +123,7 @@ def readiness_to_change_questionnaire(username, stage, stage_def):
 
 
 def readiness_to_change_questionnaire_strat3(username, stage, stage_def):
+    logger.error(f"readiness_to_change_questionnaire_strat3 executed")
     questionnaire = [
         "Do you currently engage in regular physical activity?",
         "Do you intend to engage in regular physical activity in the next 6 months?",
@@ -114,6 +149,7 @@ strategy_responses = {
     "Q4_NO_R": "That's okay! Sometimes life gets busy, and our priorities shift. Whenever you're ready to get back into a regular routine, I'm here to support you every step of the way."
 }
 
+#never called, can probably be removed
 strategy_3_responses = {
     "Q1_R_S3": "Have you ever done cardio?",
     "Q2_R_S3": "Have you ever tried strength training?",
@@ -158,21 +194,47 @@ class ActionStartQuestionnaire(Action):
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         try:
             dispatcher.utter_message(
-                text="Alright let's get started! When answering my questions, keep in mind that for exercise to be regular it should be done for approximately 150 minutes with moderate intensity per week, which includes walking, cycling, swimming or dancing")
-            matched_stage, matched_stage_definition = determine_stage(tracker)
+                text="Alright, let's get started! Keep in mind that for exercise to be regular, it should be done for approximately 150 minutes with moderate intensity per week, including walking, cycling, swimming, or dancing."
+            )
+            # Get user info
             username, stage = acquire_user_identification_variables(tracker)
+            if username is None or stage is None:
+                dispatcher.utter_message(text="I couldn't retrieve your user data. Let's start with the first question.")
+                next_question = readiness_to_change_questionnaire(username="User", stage=None, stage_def=None)[0]
+                dispatcher.utter_message(text=next_question)
+                return [SlotSet("current_question_index", 0), SlotSet("strategy", None)]
+
             strategy = acquire_user_strategy(tracker)
+            if strategy is None:
+                dispatcher.utter_message(text="It seems we couldn't retrieve your strategy. Starting with the default question.")
+                next_question = readiness_to_change_questionnaire(username=username, stage=None, stage_def=None)[0]
+                dispatcher.utter_message(text=next_question)
+                return [SlotSet("current_question_index", 0), SlotSet("strategy", None)]
 
-            current_question_index = 0
-            next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                              stage_def=matched_stage_definition)[
-                current_question_index]
-            dispatcher.utter_message(text=next_question)
+            # Check if user already has responses
+            user_score_sequence = questionnaireDatabase1.fetch_user_responses('QuestionnaireName1', tracker.sender_id)
+            if not user_score_sequence:
+                # Start the questionnaire if no responses are found
+                next_question = readiness_to_change_questionnaire(username=username, stage=None, stage_def=None)[0]
+                dispatcher.utter_message(text=next_question)
+                return [SlotSet("current_question_index", 0), SlotSet("strategy", strategy)]
+            else:
+                # If responses exist, determine the user's stage
+                matched_stage, matched_stage_definition = determine_stage(tracker)
+                dispatcher.utter_message(text="It seems you have already started the questionnaire. Let's continue.")
 
-            return [SlotSet("current_question_index", current_question_index), SlotSet("strategy", strategy)]
+                # Ask the next relevant question based on the user's current stage and previous responses
+                current_question_index = 0  # This can be adjusted depending on saved progress
+                next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage,
+                                                                  stage_def=matched_stage_definition)[current_question_index]
+                dispatcher.utter_message(text=next_question)
+
+                return [SlotSet("current_question_index", current_question_index), SlotSet("strategy", strategy)]
         except Exception as e:
             logger.error(f"Error starting questionnaire: {e}")
+            dispatcher.utter_message(text="Something went wrong when starting the questionnaire. Please try again later.")
             return []
+
 
 
 class ActionAskNextQuestion(Action):
@@ -267,6 +329,21 @@ class ActionProcessAnswer(Action):
             current_question_index = tracker.get_slot("current_question_index")
 
             if user_answer in ["yes", "no"]:
+
+                if strategy != 3:
+                    current_question = readiness_to_change_questionnaire(username=username, stage=matched_stage,
+                                                                         stage_def=matched_stage_definition)[current_question_index]
+                else:
+                    current_question = readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage,
+                                                                                stage_def=matched_stage_definition)[current_question_index]
+
+                data = {
+                    'UUID': tracker.sender_id,
+                    'Username': username,
+                    'UserResponse': user_answer,
+                    'QuestionText': current_question
+                }
+                questionnaireDatabase1.insert_data("QuestionnaireName1", data)
                 if current_question_index is not None and current_question_index < len(
                         readiness_to_change_questionnaire(username=username, stage=matched_stage,
                                                           stage_def=matched_stage_definition)) - 1 and strategy != 3:

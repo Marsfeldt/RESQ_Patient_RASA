@@ -1,29 +1,31 @@
+// ChatWindowScreen.js
+
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { useUserContext } from '../../components/utils/contexts/UserContext';
-import { rasaServerSocket, connectSockets, disconnectSockets } from '../../components/sockets/SocketManager/SocketManager';
 import { useRoute, useIsFocused } from '@react-navigation/native';
-import emitToServerEvent from '../../components/sockets/SocketUtils';
 import TopNavigationBar from '../../components/navigation/TopNavigationBar';
 import QuestionnaireButtonLayout from '../../components/questionnaire/QuestionnaireButtonLayout';
 
 const ChatWindowScreen = () => {
   const [messages, setMessages] = useState([]);
-  const [socket, setSocket] = useState(null);
-  const [sessionID, setSessionID] = useState('');
   const { userUUID } = useUserContext();
   const [questionnaireLayout, setQuestionnaireLayout] = useState(false);
   const [lastBotAnswer, setLastBotAnswer] = useState('');
   const [buttonsDisabled, setButtonsDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
   const route = useRoute();
   const { username } = route.params || {};
   const isFocused = useIsFocused();
 
-  const generateUUID = () => `${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
+  // Function to generate a unique ID for messages
+  const generateUUID = () =>
+    `${Math.random().toString(36).substring(2, 15)}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
 
+  // Function to create a user message object
   const createUserMessage = (text) => ({
     _id: generateUUID(),
     text,
@@ -32,20 +34,13 @@ const ChatWindowScreen = () => {
   });
 
   useEffect(() => {
-    connectSockets();
-    if (!socket) {http://localhost:5006
-      setSocket(rasaServerSocket);
-      rasaServerSocket.connect();
-    }
-
-    return () => {
-      disconnectSockets();
-    };
-  }, []);
+    // Effect when userUUID or username changes
+  }, [userUUID, username]);
 
   useEffect(() => {
     if (isFocused) {
-      emitToServerEvent('interaction_log', {
+      // Log the navigation interaction
+      logInteraction({
         UUID: userUUID,
         Username: username,
         InteractionType: 'Navigation',
@@ -54,90 +49,125 @@ const ChatWindowScreen = () => {
     }
   }, [isFocused, userUUID, username]);
 
-  useEffect(() => {
-    if (socket && !sessionID && userUUID) {
-      setSessionID(userUUID);
-      socket.emit('session_request', { session_id: userUUID });
-    }
-  }, [socket, sessionID, userUUID]);
-
-  useEffect(() => {
-    const handleBotMessage = (data) => {
-      const botMessageId = generateUUID();
+  // Function to handle receiving messages from the bot
+  const handleBotMessage = (data) => {
+    if (data && data.text) {
       const botMessage = {
-        _id: botMessageId,
+        _id: generateUUID(),
         text: data.text,
         createdAt: new Date(),
         user: { _id: 'bot' },
       };
 
-      setLastBotAnswer(data.text);
-      setMessages((previousMessages) => GiftedChat.append(previousMessages, [botMessage]));
-      setButtonsDisabled(false);
-      setIsLoading(false);
-    };
-
-    if (socket) {
-      socket.on('bot_uttered', handleBotMessage);
-
-      return () => {
-        socket.off('bot_uttered', handleBotMessage);
-      };
-    } else {
-      setSocket(rasaServerSocket);
-      rasaServerSocket.connect();
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, botMessage)
+      );
     }
-  }, [socket, userUUID]);
 
-  const onSend = (newMessages) => {
-    setMessages((previousMessages) => GiftedChat.append(previousMessages, newMessages));
+    setIsLoading(false);
+  };
+
+  // Function to send messages to the bot
+  const onSend = async (newMessages) => {
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, newMessages)
+    );
     setIsLoading(true);
 
-    if (socket) {
-      const userMessage = createUserMessage(newMessages[0].text);
-      socket.emit('user_uttered', { message: newMessages[0].text, session_id: sessionID });
+    const userMessage = createUserMessage(newMessages[0].text);
 
-      emitToServerEvent('message_from_client', {
-        UUID: userUUID,
-        Username: username,
-        Message: userMessage.text,
-        MessageID: userMessage._id,
-        IsSystemMessage: 'False',
-        MessageType: 'Question',
+    try {
+      // Send the message to the backend via HTTP request
+      const response = await fetch('http://10.0.2.2:5006/send_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: newMessages[0].text,
+          session_id: userUUID,
+        }),
       });
 
-      emitToServerEvent('interaction_log', {
+      // Read the response as text first to capture raw output
+      const responseText = await response.text();
+
+      // Attempt to parse the response text as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        throw new Error('Failed to parse server response');
+      }
+
+      if (data.status === 'error') {
+        // Handle errors returned by the backend
+        console.error('Backend error:', data.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Handle the bot's response
+      handleBotMessage(data);
+
+      // Log the interaction
+      logInteraction({
         UUID: userUUID,
         Username: username,
         InteractionType: 'Send Message (Chat Window)',
         InteractionOutput: userMessage.text,
       });
+    } catch (error) {
+      // Log detailed error information
+      console.error('Error sending message:', error);
+
+      // Check if it's a network-related error or server-side issue
+      if (error instanceof TypeError) {
+        console.error('Network or CORS issue:', error.message);
+      }
+
+      setIsLoading(false);
+      // Optionally, display an alert to the user or handle the error gracefully
     }
   };
 
-  // Fonction pour gérer les clics sur les boutons du questionnaire
-  const handleQuestionnaireButtonClick = (buttonName) => {
-    console.log(`Button clicked: ${buttonName}`);
+  // Function to log interactions to the server
+  const logInteraction = async (interactionData) => {
+    try {
+      await fetch('http://10.0.2.2:5006/interaction_log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(interactionData),
+      });
+    } catch (error) {
+      console.error('Error logging interaction:', error);
+      // Handle error if necessary
+    }
+  };
 
-    // Logique spécifique en fonction du bouton cliqué
+  // Function to handle clicks on questionnaire buttons
+  const handleQuestionnaireButtonClick = (buttonName) => {
+    // Specific logic based on the button clicked
     switch (buttonName) {
       case 'Yes':
-        // Logique pour le bouton "Yes"
-        console.log("You clicked Yes");
+        // User clicked Yes
         break;
       case 'No':
-        // Logique pour le bouton "No"
-        console.log("You clicked No");
+        // User clicked No
         break;
       default:
-        console.log(`Unknown button: ${buttonName}`);
+        // Unknown button clicked
         break;
     }
 
-    // Désactiver les boutons après un clic pour éviter des clics multiples
+    // Disable buttons after a click to prevent multiple clicks
     setButtonsDisabled(true);
   };
 
+  // Function to render the bot's avatar
   const renderAvatar = (props) => {
     const { currentMessage } = props;
 
@@ -151,6 +181,7 @@ const ChatWindowScreen = () => {
         </View>
       );
     }
+    return null;
   };
 
   return (
@@ -160,7 +191,7 @@ const ChatWindowScreen = () => {
       <GiftedChat
         messages={messages}
         onSend={(newMessages) => onSend(newMessages)}
-        user={{ _id: sessionID }}
+        user={{ _id: userUUID }}
         isTyping={isLoading}
         renderAvatar={renderAvatar}
         textInputStyle={{ color: 'black' }}
