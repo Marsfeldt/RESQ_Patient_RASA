@@ -9,7 +9,7 @@ const SignUpScreen = () => {
   // State hooks for managing input fields
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [date_of_birth, setDateOfBirth] = useState('');
   const [password, setPassword] = useState('');
   const [passwordRepeat, setPasswordRepeat] = useState('');
 
@@ -24,7 +24,7 @@ const SignUpScreen = () => {
   // Function to handle Register button press
   const onRegisterPressed = async () => {
     // Input validation
-    if (!username || !email || !dateOfBirth || !password || !passwordRepeat) {
+    if (!username || !email || !date_of_birth || !password || !passwordRepeat) {
       Alert.alert('Error', 'Please fill all the fields.');
       return;
     }
@@ -45,7 +45,7 @@ const SignUpScreen = () => {
           username,
           email,
           password,
-          dateOfBirth,
+          date_of_birth,
         }),
       });
 
@@ -83,7 +83,7 @@ const SignUpScreen = () => {
       {/* Input fields for user details */}
       <CustomInput placeholder="Username" value={username} setValue={setUsername} />
       <CustomInput placeholder="Email" value={email} setValue={setEmail} />
-      <CustomInput placeholder="Birth Date (YYYY-MM-DD)" value={dateOfBirth} setValue={setDateOfBirth} />
+      <CustomInput placeholder="Birth Date (YYYY-MM-DD)" value={date_of_birth} setValue={setDateOfBirth} />
       <CustomInput placeholder="Password" value={password} setValue={setPassword} secureTextEntry />
       <CustomInput placeholder="Repeat Password" value={passwordRepeat} setValue={setPasswordRepeat} secureTextEntry />
 

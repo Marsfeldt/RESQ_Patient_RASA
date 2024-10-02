@@ -201,8 +201,8 @@ class DatabaseHandler:
             print('======== RESULTS ========')
 
             # Update the user's stage in the database
-            userDB = DatabaseHandler("./DATA/DATABASE/Users.db")
-            userDB.transition_user_stage("users", uuid, clean_int_max_stage)
+            RESQDB = DatabaseHandler("./DATA/DATABASE/RESQ.db")
+            RESQDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
     def fetch_user_responses(self, tableName, uuid):
         # Fetch user responses based on their uuid
