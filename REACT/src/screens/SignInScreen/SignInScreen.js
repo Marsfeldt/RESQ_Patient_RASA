@@ -52,9 +52,10 @@ const SignInScreen = () => {
 
       // Parse the response data as JSON
       const data = await response.json();
+      console.log('Login response:', data);
 
       if (data.status === 'ok') {
-        setUserUUID(data.userUUID);
+        setUserUUID(data.useruuid);
         navigation.navigate('ChatWindow', { username });
       } else {
         // Handle login failure by showing an alert to the user
@@ -62,7 +63,6 @@ const SignInScreen = () => {
       }
     } catch (error) {
       // Handle network or server errors
-      console.error('Login request error:', error);
       Alert.alert('Network Error', 'An error occurred while trying to log in. Please try again later.');
     }
   };

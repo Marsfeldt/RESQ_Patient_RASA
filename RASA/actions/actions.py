@@ -17,17 +17,14 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 from DatabaseHandler import DatabaseHandler
 
-user_db_path = os.path.join(root_dir, 'DATA', 'DATABASE', 'Users.db')
-questionnaire_db_path = os.path.join(root_dir, 'DATA', 'QUESTIONNAIRE_DATABASES', 'Questionnaire_Name.db')
+RESQ_db_path = os.path.join(root_dir, 'DATA', 'DATABASE', 'RESQ.db')
 
-if not os.path.exists(user_db_path):
-    logger.error(f"User database not found at {user_db_path}")
-if not os.path.exists(questionnaire_db_path):
-    logger.error(f"Questionnaire database not found at {questionnaire_db_path}")
+if not os.path.exists(RESQ_db_path):
+    logger.error(f"RESQ database not found at {RESQ_db_path}")
 
 # Initialisation des bases de données
-RESQDB = DatabaseHandler(user_db_path)
-questionnaireDatabase1 = DatabaseHandler(questionnaire_db_path)
+RESQDB = DatabaseHandler(RESQ_db_path)
+questionnaireDatabase1 = DatabaseHandler(RESQ_db_path)
 
 
 def acquire_user_identification_variables(tracker: Tracker):

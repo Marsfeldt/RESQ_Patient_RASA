@@ -303,7 +303,6 @@ app.post('/login', (req, res) => {
           .status(500)
           .json({ status: 'error', error: 'Database error' });
       }
-      console.log(username);
 
       if (!row) {
         return res
