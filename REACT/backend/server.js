@@ -303,6 +303,7 @@ app.post('/login', (req, res) => {
           .status(500)
           .json({ status: 'error', error: 'Database error' });
       }
+      console.log(username);
 
       if (!row) {
         return res
@@ -313,7 +314,7 @@ app.post('/login', (req, res) => {
           });
       }
 
-      if (!row.Password) {
+      if (!row.password) {
         console.error('Hashed password is undefined.');
         return res
           .status(500)
@@ -326,7 +327,7 @@ app.post('/login', (req, res) => {
       // Compare the password with the stored hash
       bcrypt.compare(
         password,
-        row.Password,
+        row.password,
         (compareErr, isMatch) => {
           if (compareErr) {
             console.error(
