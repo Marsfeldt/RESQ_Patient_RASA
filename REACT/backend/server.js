@@ -42,89 +42,6 @@ app.get('/', (req, res) => {
 });
 
 /**
- * Handle password reset request
- * Expects a username to be sent from the front-end
- */
-app.post('/forgot-password', (req, res) => {
-  const { username } = req.body;
-
-  if (!username) {
-    return res
-      .status(400)
-      .json({ status: 'error', error: 'username is required' });
-  }
-
-  // Check if the user exists in the database
-  RESQDB.get(
-    'SELECT * FROM user WHERE username = ?',
-    [username],
-    (err, row) => {
-      if (err) {
-        console.error('Database error:', err.message);
-        return res
-          .status(500)
-          .json({ status: 'error', error: 'Database error' });
-      }
-
-      if (!row) {
-        return res
-          .status(404)
-          .json({ status: 'error', error: 'User not found' });
-      }
-
-      // Generate a password reset token
-      const resetToken = crypto.randomBytes(20).toString('hex');
-
-      // Token expiration time (e.g., 1 hour)
-      const expirationTime = new Date(Date.now() + 3600000); // 1 hour from now
-
-      // Save the token and expiration time to the database
-      const updateQuery = `UPDATE user SET resetToken = ?, resetTokenExpires = ? WHERE username = ?`;
-      const params = [resetToken, expirationTime.toISOString(), username];
-
-      RESQDB.run(updateQuery, params, function (updateErr) {
-        if (updateErr) {
-          console.error('Database update error:', updateErr.message);
-          return res
-            .status(500)
-            .json({ status: 'error', error: 'Database update error' });
-        }
-
-        // Set up the email transport (using nodemailer)
-        const transporter = nodemailer.createTransport({
-          service: 'Gmail', // or any other email service
-          auth: {
-            user: 'your-email@gmail.com',
-            pass: 'your-email-password',
-          },
-        });
-
-        const mailOptions = {
-          from: 'your-email@gmail.com',
-          to: row.email, // The user's email from the database
-          subject: 'Password Reset',
-          text: `You requested a password reset. Use this token: ${resetToken}. This token will expire in 1 hour.`,
-        };
-
-        // Send the email
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error('Error sending email:', error);
-            return res
-              .status(500)
-              .json({ status: 'error', error: 'Failed to send email' });
-          }
-          return res.json({
-            status: 'ok',
-            message: 'Password reset email sent',
-          });
-        });
-      });
-    }
-  );
-});
-
-/**
  * Handle user registration
  * Expects username, email, password, and date_of_birth from the front-end
  */
@@ -476,7 +393,7 @@ io.on('connection', (socket) => {
 
               // 3. Mettre à jour la base de données avec le mot de passe haché
               try {
-                   userDB.run('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+                   RESQDB.run('UPDATE user SET password = ? WHERE email = ?', [hashedPassword, email]);
                    console.log('password succes change');
               } catch (error) {
                   console.error('Error updating password in the database:', error);
@@ -511,20 +428,20 @@ io.on('connection', (socket) => {
           }
 
           // Recherche dans la base de données et envoi de l'email
-          userDB.get('SELECT UUID, Username, Email FROM users WHERE email = ?', [mail], (err, row) => {
+          RESQDB.get('SELECT uuid, username, email FROM user WHERE email = ? OR username = ?', [mail, mail], (err, row) => {
               if (err) {
                   // Si une erreur de base de données survient, l'afficher et renvoyer une réponse d'erreur
                   console.error('Database error:', err.message);
                   socket.emit('reset_password_response', { error: 'Database error' });
               } else if (row) {
                   // Si un utilisateur est trouvé, afficher le UUID et le Username
-                  console.log(`User found: UUID = ${row.UUID}, Username = ${row.Username}, Email = ${row.Email}`);
+                  console.log(`User found: UUID = ${row.uuid}, Username = ${row.username}, Email = ${row.email}`);
 
                   // Envoi de l'email à l'utilisateur
-                  sendResetPasswordEmail(row.Email, row.Username, row.UUID);
+                  sendResetPasswordEmail(row.email, row.username, row.uuid);
 
                   // Renvoie l'UUID et le Username dans la réponse au client
-                  socket.emit('reset_password_response', { UUID: row.UUID, username: row.Username, success: true });
+                  socket.emit('reset_password_response', { UUID: row.uuid, username: row.username, success: true });
               } else {
                   // Si aucun utilisateur n'est trouvé, afficher un message approprié
                   console.log('User not found');
