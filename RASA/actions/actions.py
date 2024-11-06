@@ -30,7 +30,7 @@ questionnaireDatabase1 = DatabaseHandler(RESQ_db_path)
 def acquire_user_identification_variables(tracker: Tracker):
     try:
         logger.debug(f"UUID: {tracker.sender_id}")
-        result = RESQDB.fetch_user_identification_variables('Users', tracker.sender_id)
+        result = RESQDB.fetch_user_identification_variables('stage', tracker.sender_id)
         if result is None or len(result) != 2:
             logger.error(f"User identification variables not found for sender_id: {tracker.sender_id}")
             return None, None
@@ -45,7 +45,7 @@ def acquire_user_identification_variables(tracker: Tracker):
 
 def acquire_user_strategy(tracker: Tracker):
     try:
-        strategy = RESQDB.fetch_variable_from_uuid('Users', 'Strategy', tracker.sender_id)
+        strategy = RESQDB.fetch_variable_from_uuid('user', 'Strategy', tracker.sender_id)
         if strategy is None:
             logger.error(f"User strategy not found for sender_id: {tracker.sender_id}")
             return None
@@ -103,7 +103,7 @@ def determine_stage(tracker: Tracker):
 
     if matched_stage:
         new_stage = stage_mapping[matched_stage]
-        RESQDB.transition_user_stage('Users', tracker.sender_id, new_stage)
+        RESQDB.transition_user_stage('user', tracker.sender_id, new_stage)
 
     return matched_stage, matched_stage_definition
 
@@ -171,7 +171,8 @@ class ActionInitializeUserStage(Action):
     def run(self, dispatcher, tracker, domain):
         try:
             user_id = tracker.sender_id
-            stage = RESQDB.fetch_userStage_from_uuid('Users', user_id)
+            stage = RESQDB.fetch_userStage_from_uuid('stage', user_id)
+            logger.error(f"stage:{stage}")
             return [SlotSet("userStage", stage)]
         except Exception as e:
             logger.error(f"Error initializing user stage: {e}")
@@ -262,7 +263,7 @@ class ActionAskNextQuestion(Action):
                     summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage,
                                                                         stage_def=matched_stage_definition)[4]
                     dispatcher.utter_message(text=summary_message)
-                    RESQDB.update_tutorial_completion('Users', tracker.sender_id, 1)
+                    RESQDB.update_tutorial_completion('user', tracker.sender_id, 1)
                     return [SlotSet('current_question_index', None)]
             else:
                 next_question_index = self.get_next_question_index(current_question_index, user_response, strategy)
@@ -276,7 +277,7 @@ class ActionAskNextQuestion(Action):
                     summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage,
                                                                         stage_def=matched_stage_definition)[4]
                     dispatcher.utter_message(text=summary_message)
-                    RESQDB.update_tutorial_completion('Users', tracker.sender_id, 1)
+                    RESQDB.update_tutorial_completion('user', tracker.sender_id, 1)
                     return [SlotSet('current_question_index', None)]
         except Exception as e:
             logger.error(f"Error asking next question: {e}")
