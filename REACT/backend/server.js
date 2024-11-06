@@ -205,90 +205,6 @@ app.post('/register', (req, res) => {
   );
 });
 
-/**
- * Handle password reset confirmation (setting new password)
- * Expects a reset token and new password from the front-end
- */
-app.post('/reset-password', (req, res) => {
-  const { resetToken, newPassword } = req.body;
-
-  if (!resetToken || !newPassword) {
-    return res
-      .status(400)
-      .json({
-        status: 'error',
-        error: 'Token and new password are required',
-      });
-  }
-
-  // Check if the reset token exists and has not expired
-  userDB.get(
-    'SELECT * FROM users WHERE resetToken = ? AND resetTokenExpires > ?',
-    [resetToken, new Date().toISOString()],
-    (err, row) => {
-      if (err) {
-        console.error('Database error:', err.message);
-        return res
-          .status(500)
-          .json({ status: 'error', error: 'Database error' });
-      }
-
-      if (!row) {
-        return res
-          .status(400)
-          .json({
-            status: 'error',
-            error: 'Invalid or expired token',
-          });
-      }
-
-      // Hash the new password before saving it
-      bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
-        if (hashErr) {
-          console.error('Error hashing password:', hashErr);
-          return res
-            .status(500)
-            .json({
-              status: 'error',
-              error: 'Password hashing error',
-            });
-        }
-
-        // Update the user's password in the database and remove the reset token
-        const updatePasswordQuery = `
-          UPDATE users
-          SET password = ?, resetToken = NULL, resetTokenExpires = NULL
-          WHERE username = ?
-        `;
-        const params = [hashedPassword, row.username];
-
-        userDB.run(
-          updatePasswordQuery,
-          params,
-          function (updateErr) {
-            if (updateErr) {
-              console.error(
-                'Database update error:',
-                updateErr.message
-              );
-              return res
-                .status(500)
-                .json({
-                  status: 'error',
-                  error: 'Database update error',
-                });
-            }
-
-            return res.json({
-              status: 'ok',
-              message: 'Password reset successfully',
-            });
-          }
-        );
-      });
-    }
-  );
-});
 
 /**
  * Handle user login request
@@ -533,6 +449,95 @@ io.on('connection', (socket) => {
       }
     );
   });
+
+// Event to handle password reset request
+  socket.on('reset_password', (mail) => {
+          console.log('Etape_2.1')
+          console.log(`Password reset request for: ${mail}`);
+
+          // Recherche l'utilisateur dans la base de données
+          const transporter = nodemailer.createTransport({
+              host: 'smtp.gmail.com',
+              port: 465, // Port for SSL
+              secure: true, // Use SSL
+              auth: {
+                  user: 'resq.reset.passord@gmail.com',
+                  pass: 'pfqj cgst nwkf zmxb', // Utilise ici un App Password si 2FA est activé
+              },
+          });
+          function generatePassword(length) {
+              return crypto.randomBytes(Math.ceil(length / 2))
+                  .toString('hex') // Convertir en chaîne hexadécimale
+                  .slice(0, length); // Tronquer à la longueur souhaitée
+          }
+
+          async function sendResetPasswordEmail(email, username, db) {
+              // 1. Générer un nouveau mot de passe aléatoire
+              const newPassword = generatePassword(5);
+
+              // 2. Hacher le mot de passe avec bcrypt (10 tours)
+              const saltRounds = 10;
+              const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+              // 3. Mettre à jour la base de données avec le mot de passe haché
+              try {
+                   userDB.run('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+                   console.log('password succes change');
+              } catch (error) {
+                  console.error('Error updating password in the database:', error);
+                  return { status: 'error', error: 'Failed to update password in the database' };
+              }
+
+              // 4. Configurer et envoyer l'email avec le nouveau mot de passe
+              const transporter = nodemailer.createTransport({
+                  service: 'Gmail',
+                  auth: {
+                      user: 'resq.reset.passord@gmail.com',
+                      pass: 'pfqj cgst nwkf zmxb', // App password recommandé
+                  },
+              });
+
+              const mailOptions = {
+                  from: 'resq.reset.passord@gmail.com',
+                  to: email,
+                  subject: 'Your New Password',
+                  text: `Hello ${username},\n\nYour new password is: ${newPassword}\n\nPlease log in and change it as soon as possible.\n\nBest regards,\nYour App Team`,
+              };
+
+              // 5. Envoyer l'email
+              transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                      console.error('Error sending email:', error);
+                      return { status: 'error', error: 'Failed to send email' };
+                  }
+                  console.log('Email sent:', info.response);
+                  return { status: 'ok', message: 'New password email sent' };
+              });
+          }
+
+          // Recherche dans la base de données et envoi de l'email
+          userDB.get('SELECT UUID, Username, Email FROM users WHERE email = ?', [mail], (err, row) => {
+              if (err) {
+                  // Si une erreur de base de données survient, l'afficher et renvoyer une réponse d'erreur
+                  console.error('Database error:', err.message);
+                  socket.emit('reset_password_response', { error: 'Database error' });
+              } else if (row) {
+                  // Si un utilisateur est trouvé, afficher le UUID et le Username
+                  console.log(`User found: UUID = ${row.UUID}, Username = ${row.Username}, Email = ${row.Email}`);
+
+                  // Envoi de l'email à l'utilisateur
+                  sendResetPasswordEmail(row.Email, row.Username, row.UUID);
+
+                  // Renvoie l'UUID et le Username dans la réponse au client
+                  socket.emit('reset_password_response', { UUID: row.UUID, username: row.Username, success: true });
+              } else {
+                  // Si aucun utilisateur n'est trouvé, afficher un message approprié
+                  console.log('User not found');
+                  socket.emit('reset_password_response', { error: 'User not found' });
+              }
+          });
+
+      });
 
   /**
    * Handle message forwarding to RASA server

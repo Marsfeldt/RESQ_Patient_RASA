@@ -43,7 +43,9 @@ rasaServerSocket.on('reconnect_failed', () => {
 nodeServerSocket.on('connect', () => {
     logWithTimestamp('Connected to Node.js Server Socket:', nodeServerSocket.id);
 });
-
+nodeServerSocket.on('forgotpassword', () => {
+    logWithTimestamp('Connected to Node.js Server Socket:', nodeServerSocket.id);
+});
 nodeServerSocket.on('connect_error', (error) => {
     logWithTimestamp('Connection to Node.js Server failed:', error.message, error);
 });
