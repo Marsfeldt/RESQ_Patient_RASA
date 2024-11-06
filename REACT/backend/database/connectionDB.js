@@ -2,11 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 // Define the correct path for all databases
-const usersDBPath = path.join(__dirname, '../../../DATA/DATABASE/Users.db');
-const chatConversationsDBPath = path.join(__dirname, '../../../DATA/DATABASE/ChatConversations.db');
-const connectionLogDBPath = path.join(__dirname, '../../../DATA/DATABASE/ConnectionLog.db');
-const interactionsDatabaseDBPath = path.join(__dirname, '../../../DATA/DATABASE/InteractionsDatabase.db');
-const testDatabaseDBPath = path.join(__dirname, '../../../DATA/DATABASE/TestDatabase.db');
+const RESQDBPath = path.join(__dirname, '../../../DATA/DATABASE/RESQ.db');
 
 // Function to connect to a database and handle errors
 function connectToDatabase(dbPath, dbName) {
@@ -21,9 +17,5 @@ function connectToDatabase(dbPath, dbName) {
 
 // Export all database connections
 module.exports = {
-    userDB: connectToDatabase(usersDBPath, 'Users'),
-    chatConversationsDB: connectToDatabase(chatConversationsDBPath, 'ChatConversations'),
-    connectionLogDB: connectToDatabase(connectionLogDBPath, 'ConnectionLog'),
-    interactionsDatabaseDB: connectToDatabase(interactionsDatabaseDBPath, 'InteractionsDatabase'),
-    testDatabaseDB: connectToDatabase(testDatabaseDBPath, 'TestDatabase'),
+    RESQDB: connectToDatabase(RESQDBPath, 'RESQ'),
 };

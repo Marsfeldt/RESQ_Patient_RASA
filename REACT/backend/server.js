@@ -10,11 +10,7 @@ const cors = require('cors');
 
 // Import database connections
 const {
-  userDB,
-  chatConversationsDB,
-  connectionLogDB,
-  interactionsDatabaseDB,
-  testDatabaseDB,
+  RESQDB,
 } = require('./database/connectionDB');
 
 // Create an Express application
@@ -55,12 +51,12 @@ app.post('/forgot-password', (req, res) => {
   if (!username) {
     return res
       .status(400)
-      .json({ status: 'error', error: 'Username is required' });
+      .json({ status: 'error', error: 'username is required' });
   }
 
   // Check if the user exists in the database
-  userDB.get(
-    'SELECT * FROM users WHERE username = ?',
+  RESQDB.get(
+    'SELECT * FROM user WHERE username = ?',
     [username],
     (err, row) => {
       if (err) {
@@ -83,10 +79,10 @@ app.post('/forgot-password', (req, res) => {
       const expirationTime = new Date(Date.now() + 3600000); // 1 hour from now
 
       // Save the token and expiration time to the database
-      const updateQuery = `UPDATE users SET resetToken = ?, resetTokenExpires = ? WHERE username = ?`;
+      const updateQuery = `UPDATE user SET resetToken = ?, resetTokenExpires = ? WHERE username = ?`;
       const params = [resetToken, expirationTime.toISOString(), username];
 
-      userDB.run(updateQuery, params, function (updateErr) {
+      RESQDB.run(updateQuery, params, function (updateErr) {
         if (updateErr) {
           console.error('Database update error:', updateErr.message);
           return res
@@ -130,21 +126,21 @@ app.post('/forgot-password', (req, res) => {
 
 /**
  * Handle user registration
- * Expects username, email, password, and dateOfBirth from the front-end
+ * Expects username, email, password, and date_of_birth from the front-end
  */
 app.post('/register', (req, res) => {
-  const { username, email, password, dateOfBirth } = req.body;
+  const { username, email, password, date_of_birth } = req.body;
 
   // Validate received data
-  if (!username || !email || !password || !dateOfBirth) {
+  if (!username || !email || !password || !date_of_birth) {
     return res
       .status(400)
       .json({ status: 'error', error: 'All fields are required' });
   }
 
   // Check if the username already exists
-  userDB.get(
-    'SELECT * FROM users WHERE Username = ?',
+  RESQDB.get(
+    'SELECT * FROM user WHERE username = ?',
     [username],
     (err, row) => {
       if (err) {
@@ -155,10 +151,10 @@ app.post('/register', (req, res) => {
       }
 
       if (row) {
-        // Username already exists
+        // username already exists
         return res
           .status(400)
-          .json({ status: 'error', error: 'Username already exists' });
+          .json({ status: 'error', error: 'username already exists' });
       }
 
       // Hash the password
@@ -170,12 +166,12 @@ app.post('/register', (req, res) => {
             .json({ status: 'error', error: 'Error hashing password' });
         }
 
-        // Generate a UUID
+        // Generate a uuid
         const uuid = crypto.randomUUID();
 
         // Insert the new user into the database
         const insertQuery = `
-          INSERT INTO users (UUID, Username, Email, Password, dateOfBirth, AccountCreatedTime)
+          INSERT INTO user (uuid, username, email, password, date_of_birth, account_creation_time)
           VALUES (?, ?, ?, ?, ?, ?)
         `;
         const params = [
@@ -183,11 +179,11 @@ app.post('/register', (req, res) => {
           username,
           email,
           hashedPassword,
-          dateOfBirth,
+          date_of_birth,
           new Date().toISOString(),
         ];
 
-        userDB.run(insertQuery, params, function (insertErr) {
+        RESQDB.run(insertQuery, params, function (insertErr) {
           if (insertErr) {
             console.error(
               'Database insert error:',
@@ -205,7 +201,6 @@ app.post('/register', (req, res) => {
   );
 });
 
-
 /**
  * Handle user login request
  * Expects username and password from the front-end
@@ -213,8 +208,8 @@ app.post('/register', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  userDB.get(
-    'SELECT * FROM users WHERE Username = ?',
+  RESQDB.get(
+    'SELECT * FROM user WHERE username = ?',
     [username],
     (err, row) => {
       if (err) {
@@ -233,7 +228,7 @@ app.post('/login', (req, res) => {
           });
       }
 
-      if (!row.Password) {
+      if (!row.password) {
         console.error('Hashed password is undefined.');
         return res
           .status(500)
@@ -246,7 +241,7 @@ app.post('/login', (req, res) => {
       // Compare the password with the stored hash
       bcrypt.compare(
         password,
-        row.Password,
+        row.password,
         (compareErr, isMatch) => {
           if (compareErr) {
             console.error(
@@ -264,7 +259,7 @@ app.post('/login', (req, res) => {
           if (isMatch) {
             return res.json({
               status: 'ok',
-              userUUID: row.UUID,
+              useruuid: row.uuid,
             });
           } else {
             return res
@@ -369,7 +364,7 @@ app.post('/interaction_log', (req, res) => {
   // Validate interaction data
   if (
     !interactionData ||
-    !interactionData.UUID ||
+    !interactionData.uuid ||
     !interactionData.InteractionType
   ) {
     return res
@@ -390,11 +385,11 @@ io.on('connection', (socket) => {
    * Expects user registration data to be sent from the client
    */
   socket.on('create_account', (data, callback) => {
-    const { uuid, username, email, password, dateOfBirth } = data;
+    const { uuid, username, email, password, date_of_birth } = data;
 
     // Check if the username already exists in the database
-    userDB.get(
-      'SELECT * FROM users WHERE username = ?',
+    RESQDB.get(
+      'SELECT * FROM user WHERE username = ?',
       [username],
       (err, row) => {
         if (err) {
@@ -403,7 +398,7 @@ io.on('connection', (socket) => {
         } else if (row) {
           callback({
             status: 'error',
-            error: 'Username already exists',
+            error: 'username already exists',
           });
         } else {
           // Hash the user's password before saving it
@@ -417,7 +412,7 @@ io.on('connection', (socket) => {
             } else {
               // Insert the new user into the database
               const insertQuery = `
-                INSERT INTO users (uuid, username, email, password, dateOfBirth, AccountCreatedTime)
+                INSERT INTO user (uuid, username, email, password, date_of_birth, account_creation_time)
                 VALUES (?, ?, ?, ?, ?, ?)
               `;
               const params = [
@@ -425,11 +420,11 @@ io.on('connection', (socket) => {
                 username,
                 email,
                 hashedPassword,
-                dateOfBirth,
+                date_of_birth,
                 new Date().toISOString(),
               ];
 
-              userDB.run(insertQuery, params, function (insertErr) {
+              RESQDB.run(insertQuery, params, function (insertErr) {
                 if (insertErr) {
                   console.error(
                     'Database insert error:',

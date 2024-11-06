@@ -107,7 +107,7 @@ class DatabaseHandler:
         # Fetch the user's stage based on their uuid
         with self.connection as connection:
             cursor = connection.cursor()
-            cursor.execute(f'SELECT stage FROM {tableName} WHERE UUID = ?', (uuid,))
+            cursor.execute(f'SELECT stage.name FROM {tableName} LEFT JOIN user ON user.stage_id = stage.id WHERE UUID = ?', (uuid,))
             stage = cursor.fetchone()
             return stage
 
@@ -126,7 +126,7 @@ class DatabaseHandler:
         # Fetch username and stage for a user based on their uuid
         with self.connection as connection:
             cursor = connection.cursor()
-            cursor.execute(f'SELECT Username, Stage FROM {tableName} WHERE UUID = ?', (uuid,))
+            cursor.execute(f'SELECT user.username, stage.name FROM {tableName} LEFT JOIN user ON user.stage_id = stage.id WHERE UUID = ?', (uuid,))
             result = cursor.fetchone()
             if result:
                 return result  # Return fetched values (username and stage)
@@ -201,8 +201,8 @@ class DatabaseHandler:
             print('======== RESULTS ========')
 
             # Update the user's stage in the database
-            userDB = DatabaseHandler("./DATA/DATABASE/Users.db")
-            userDB.transition_user_stage("users", uuid, clean_int_max_stage)
+            RESQDB = DatabaseHandler("./DATA/DATABASE/RESQ.db")
+            RESQDB.transition_user_stage("users", uuid, clean_int_max_stage)
 
     def fetch_user_responses(self, tableName, uuid):
         # Fetch user responses based on their uuid
