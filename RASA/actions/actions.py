@@ -36,7 +36,6 @@ class ActionLoadQuestionnaire(Action):
         #file_path = "data/questionnaires/sf-sis.yml"
         #file_path = "data/questionnaires/new_structure.yml"
         #file_path = "data/questionnaires/phq-9.yml"
-        #file_path = "data/questionnaires/test.yml"
         try:
             questionnaire = load_questionnaire(file_path)
         except FileNotFoundError:
