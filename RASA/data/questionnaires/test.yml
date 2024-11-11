@@ -1,0 +1,64 @@
+name: "TEST QUESTIONNAIRE"
+description: "TEST"
+questions:
+  - id: "q1"
+    question_text: "In the past week, how would you rate the strength of your leg that was most affected by your stroke? Please rate it on a scale from one to five, one being unusable, and five being very strong."
+    type: "multiple_choice"
+    options:
+      - response: "one"
+        score: 1
+      - response: "two"
+        score: 2
+      - response: "three"
+        score: 3
+      - response: "four"
+        score: 4
+      - response: "five"
+        score: 5
+    next:
+      provide_number: "q5"
+  - id: "q5"
+    question_text: "yes or no"
+    type: "yes_no"
+    next:
+      affirm: "q6"
+      deny: "q6"
+    scores:
+      affirm: 5
+      deny: 0
+  - id: "q6"
+    question_text: "In the past week, how often did you feel that you have nothing to look forward to, one meaning never, and five meaning all the time."
+    type: "multiple_choice"
+    options:
+      - response: "one"
+        score: 1
+      - response: "two"
+        score: 2
+      - response: "three"
+        score: 3
+      - response: "four"
+        score: 4
+      - response: "five"
+        score: 5
+    next:
+      provide_number: "q7"
+  - id: "q7"
+    question_text: "In the past week, how difficult on a scale from one to five was it to understand what was being said to you in a conversation?"
+    type: "multiple_choice"
+    options:
+      - response: "one"
+        score: 1
+      - response: "two"
+        score: 2
+      - response: "three"
+        score: 3
+      - response: "four"
+        score: 4
+      - response: "five"
+        score: 5
+    next:
+      provide_number: "q8"
+  - id: "q8"
+    question_text: "Thank you! I've recorded your score."
+    type: "text"
+    next: "end"

@@ -1,0 +1,108 @@
+name: "PHQ-9"
+description: "The PHQ-9 is a screening tool used to assess the severity of depression in stroke patients, aiding in diagnosis and monitoring of depressive symptoms."
+questions:
+  - id: "q1"
+    question_text: "Are you ready to answer a few questions about your mood?"
+    type: "yes_no"
+    next:
+      affirm: "q3"
+      deny: "q2"
+  - id: "q2"
+    question_text: "Ok. I'll ask again later."
+    type: "text"
+    next: "end"
+  - id: "q3"
+    question_text: "It might be difficult to talk about these. If you feel uncomfortable, you can say 'stop' at any time to break out of the questionnaire. You can also choose not to answer a question, and we will move on to the next. We ask these questions because many people have issues with their mood after having a stroke, and it's important to track this. For all of these questions, we are considering the last two weeks. For answering each question, please choose from the following: not at all, several days, more than half the days, every day"
+    type: "text"
+    next: "q4"
+  - id: "q4"
+    question_text: "Little interest or pleasure in doing things."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q5"
+      invalid_response: "q5"
+    skip: "q5"
+    max_attempts: 2
+  - id: "q5"
+    question_text: "Feeling down, depressed, or hopeless."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q6"
+      invalid_response: "q6"
+    skip: "q6"
+    max_attempts: 2
+  - id: "q6"
+    question_text: "Trouble falling or staying asleep, or sleeping too much."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q7"
+      invalid_response: "q7"
+    skip: "q7"
+    max_attempts: 2
+  - id: "q7"
+    question_text: "Feeling tired or having little energy."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q8"
+      invalid_response: "q8"
+    skip: "q8"
+    max_attempts: 2
+  - id: "q8"
+    question_text: "Poor appetite or overeating."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q9"
+      invalid_response: "q9"
+    skip: "q9"
+    max_attempts: 2
+  - id: "q9"
+    question_text: "Feeling bad about yourself - or that you are a failure or have let yourself or your family down."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q10"
+      invalid_response: "q10"
+    skip: "q10"
+    max_attempts: 2
+  - id: "q10"
+    question_text: "Trouble concentrating on things, such as reading the newspaper or watching television."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q11"
+      invalid_response: "q11"
+    skip: "q11"
+    max_attempts: 2
+  - id: "q11"
+    question_text: "Moving or speaking so slowly that other people could have noticed? Or the opposite - being so fidgety or restless that you have been moving around a lot more than usual."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q12"
+      invalid_response: "q12"
+    skip: "q12"
+    max_attempts: 2
+  - id: "q12"
+    question_text: "This last question might be particularly difficult. Remember, you don't have to answer. Are you ready?"
+    type: "yes_no"
+    next:
+      affirm: "q13"
+      deny: "end"
+  - id: "q13"
+    question_text: "Thoughts that you would be better off dead or hurting yourself in some way."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q14"
+      invalid_response: "q14"
+    skip: "q14"
+    max_attempts: 2
+  - id: "q14"
+    question_text: "I'm sorry to hear that you are feeling this way. Have you considered talking with someone? Talking about problems can help. Your GP, stroke team, or other professionals will also have many ways that they could help you."
+    type: "text"
+    next: "end"

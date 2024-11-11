@@ -1,387 +1,234 @@
 from typing import Any, Text, Dict, List
-import sys
-import os
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-root_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
-
-sys.path.append(root_dir)
-
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
-from DatabaseHandler import DatabaseHandler
+import yaml
+import json
+from text_to_num import text2num
+import logging
 
-RESQ_db_path = os.path.join(root_dir, 'DATA', 'DATABASE', 'RESQ.db')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-if not os.path.exists(RESQ_db_path):
-    logger.error(f"RESQ database not found at {RESQ_db_path}")
-
-# Initialisation des bases de données
-RESQDB = DatabaseHandler(RESQ_db_path)
-questionnaireDatabase1 = DatabaseHandler(RESQ_db_path)
-
-
-def acquire_user_identification_variables(tracker: Tracker):
-    try:
-        logger.debug(f"UUID: {tracker.sender_id}")
-        result = RESQDB.fetch_user_identification_variables('stage', tracker.sender_id)
-        if result is None or len(result) != 2:
-            logger.error(f"User identification variables not found for sender_id: {tracker.sender_id}")
-            return None, None
-        username, stage = result
-        if stage is None:  # temporary workaround
-            stage = 1
-        logger.debug(f"stage: {stage}")
-        return username, int(stage)
-    except Exception as e:
-        logger.error(f"Error fetching user identification variables: {e}")
-        return None, None
-
-def acquire_user_strategy(tracker: Tracker):
-    try:
-        strategy = RESQDB.fetch_variable_from_uuid('user', 'Strategy', tracker.sender_id)
-        if strategy is None:
-            logger.error(f"User strategy not found for sender_id: {tracker.sender_id}")
-            return None
-        logger.error(f"strategy:{strategy}")
-        return strategy
-    except Exception as e:
-        logger.error(f"Error fetching user strategy: {e}")
-        return None
-
-def match_sequence(user_sequence, scoring_sequences):
-    try:
-        for stage, sequence in scoring_sequences.items():
-            if len(user_sequence) == len(sequence) and all(
-                    user_seq == exp_seq for user_seq, exp_seq in zip(user_sequence, sequence)):
-                return stage
-        return None
-    except Exception as e:
-        logger.error(f"Error matching sequence: {e}")
-        return None
-
-
-def determine_stage(tracker: Tracker):
-    # Conditions de scoring
-    scoring_sequences = {
-        "Pre-Contemplation": ['no', 'no'],
-        "Contemplation": ['no', 'yes', 'no'],
-        "Preparation": ['no', 'yes', 'yes'],
-        "Action": ['yes', 'no'],
-        "Maintenance": ['yes', 'yes'],
-    }
-
-    stage_mapping = {
-        "Pre-Contemplation": 1,
-        "Contemplation": 2,
-        "Preparation": 3,
-        "Action": 4,
-        "Maintenance": 5
-    }
-
-    #need this to work !!!!!!!!!!!!!!!
-    user_score_sequence = questionnaireDatabase1.fetch_user_responses('QuestionnaireName1', tracker.sender_id)
-    logger.error(user_score_sequence)
-    matched_stage = match_sequence(user_score_sequence, scoring_sequences)
-
-    stage_definitions = [
-        "I do not intend to be more physically active in the foreseeable future, around 6 Months",
-        "I do intend to be more physically active in the next 6 months",
-        "I do intend to be more physically active already in the upcoming month",
-        "I am already physically active and have been for the past 6 months",
-        "I am currently in a regular routine of being physically active and intend to continue"
-    ]
-
-    matched_stage_definition = stage_definitions[
-        list(scoring_sequences.keys()).index(matched_stage)] if matched_stage else None
-
-    if matched_stage:
-        new_stage = stage_mapping[matched_stage]
-        RESQDB.transition_user_stage('user', tracker.sender_id, new_stage)
-
-    return matched_stage, matched_stage_definition
-
-
-def readiness_to_change_questionnaire(username, stage, stage_def):
-    questionnaire = [
-        "Do you currently engage in regular physical activity?",
-        "Do you intend to engage in regular physical activity in the next 6 months?",
-        "Do you intend to engage in regular physical activity in the next 30 days?",
-        "Have you been regularly physically active for the past six months?",
-        f'Thank you {username}, very much for your answers. From my assessment you belong in {stage}, with the following definition: “{stage_def}”. Do you agree with this assessment?'
-    ]
+# Helper function to load the questionnaire from a YAML file
+def load_questionnaire(file_path: Text) -> Dict:
+    with open(file_path, 'r') as file:
+        questionnaire = yaml.safe_load(file)
     return questionnaire
 
-
-def readiness_to_change_questionnaire_strat3(username, stage, stage_def):
-    logger.error(f"readiness_to_change_questionnaire_strat3 executed")
-    questionnaire = [
-        "Do you currently engage in regular physical activity?",
-        "Do you intend to engage in regular physical activity in the next 6 months?",
-        "Do you intend to engage in regular physical activity in the next 30 days?",
-        "Have you been regularly physically active for the past six months?",
-        "Have you ever done cardio?",
-        "Have you ever tried strength training?",
-        "Have you participated in any group fitness classes before?",
-        "Do you like outdoor activites like biking?",
-        f'Thank you {username}, very much for your answers. From my assessment you belong in {stage}, with the following definition: “{stage_def}”. Do you agree with this assessment?'
-    ]
-    return questionnaire
-
-
-strategy_responses = {
-    "Q1_YES_R": "That's wonderful to hear! Taking care of your physical health is important, and it's great to know you're making it a priority.",
-    "Q1_NO_R": "That's okay! It's never too late to start incorporating physical activity into your routine. Whenever you're ready, I'm here to offer support and guidance.",
-    "Q2_YES_R": "That's fantastic! Setting goals for your future health shows real dedication. I'm here to cheer you on through every step of the way.",
-    "Q2_NO_R": "No problem at all! Sometimes it takes time to plan out our goals. Whenever you're ready to take that step, I'm here to assist you in any way I can.",
-    "Q3_YES_R": "That's fantastic! Making short-term goals is a great way to kickstart your journey to a healthier lifestyle. I'm here to support you as you work towards achieving them.",
-    "Q3_NO_R": "No worries! It's important to move at a pace that feels comfortable for you. Whenever you're ready to start incorporating physical activity into your routine, I'm here to help you get started.",
-    "Q4_YES_R": "That's amazing dedication! Consistency is key when it comes to maintaining a healthy lifestyle, and it sounds like you've been doing a fantastic job.",
-    "Q4_NO_R": "That's okay! Sometimes life gets busy, and our priorities shift. Whenever you're ready to get back into a regular routine, I'm here to support you every step of the way."
-}
-
-#never called, can probably be removed
-strategy_3_responses = {
-    "Q1_R_S3": "Have you ever done cardio?",
-    "Q2_R_S3": "Have you ever tried strength training?",
-    "Q3_R_S3": "Have you participated in any group fitness classes before?",
-    "Q4_R_S3": "Do you like outdoor activites like biking?",
-}
-
-stages = [
-    "pre-contemplation",
-    "contemplation",
-    "preparation",
-    "action",
-    "maintenance"
-]
-
-
-
-class ActionInitializeUserStage(Action):
-    def name(self):
-        return "action_initialize_user_stage"
-
-    def run(self, dispatcher, tracker, domain):
-        try:
-            user_id = tracker.sender_id
-            stage = RESQDB.fetch_userStage_from_uuid('stage', user_id)
-            logger.error(f"stage:{stage}")
-            return [SlotSet("userStage", stage)]
-        except Exception as e:
-            logger.error(f"Error initializing user stage: {e}")
-            return []
-
-    def shutdown(self):
-        try:
-            self.conn.close()
-        except Exception as e:
-            logger.error(f"Error during shutdown: {e}")
-
-
-class ActionStartQuestionnaire(Action):
+class ActionLoadQuestionnaire(Action):
     def name(self) -> Text:
-        return "action_start_questionnaire"
+        return "action_load_questionnaire"
 
-    def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        try:
-            dispatcher.utter_message(
-                text="Alright, let's get started! Keep in mind that for exercise to be regular, it should be done for approximately 150 minutes with moderate intensity per week, including walking, cycling, swimming, or dancing."
-            )
-            # Get user info
-            username, stage = acquire_user_identification_variables(tracker)
-            if username is None or stage is None:
-                dispatcher.utter_message(text="I couldn't retrieve your user data. Let's start with the first question.")
-                next_question = readiness_to_change_questionnaire(username="User", stage=None, stage_def=None)[0]
-                dispatcher.utter_message(text=next_question)
-                return [SlotSet("current_question_index", 0), SlotSet("strategy", None)]
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-            strategy = acquire_user_strategy(tracker)
-            if strategy is None:
-                dispatcher.utter_message(text="It seems we couldn't retrieve your strategy. Starting with the default question.")
-                next_question = readiness_to_change_questionnaire(username=username, stage=None, stage_def=None)[0]
-                dispatcher.utter_message(text=next_question)
-                return [SlotSet("current_question_index", 0), SlotSet("strategy", None)]
-
-            # Check if user already has responses
-            user_score_sequence = questionnaireDatabase1.fetch_user_responses('QuestionnaireName1', tracker.sender_id)
-            if not user_score_sequence:
-                # Start the questionnaire if no responses are found
-                next_question = readiness_to_change_questionnaire(username=username, stage=None, stage_def=None)[0]
-                dispatcher.utter_message(text=next_question)
-                return [SlotSet("current_question_index", 0), SlotSet("strategy", strategy)]
-            else:
-                # If responses exist, determine the user's stage
-                matched_stage, matched_stage_definition = determine_stage(tracker)
-                dispatcher.utter_message(text="It seems you have already started the questionnaire. Let's continue.")
-
-                # Ask the next relevant question based on the user's current stage and previous responses
-                current_question_index = 0  # This can be adjusted depending on saved progress
-                next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                                  stage_def=matched_stage_definition)[current_question_index]
-                dispatcher.utter_message(text=next_question)
-
-                return [SlotSet("current_question_index", current_question_index), SlotSet("strategy", strategy)]
-        except Exception as e:
-            logger.error(f"Error starting questionnaire: {e}")
-            dispatcher.utter_message(text="Something went wrong when starting the questionnaire. Please try again later.")
+        current_question_id = tracker.get_slot("current_question")
+        if current_question_id and current_question_id != "end":
+            dispatcher.utter_message(text="You're already in the middle of a questionnaire. Please continue.")
             return []
 
+        # Load the questionnaire from the YAML file
+        #file_path = "data/questionnaires/onboarding_questionnaire.yml"
+        #file_path = "data/questionnaires/modified_rankin_scale.yml"
+        file_path = "data/questionnaires/nadl.yml"
+        #file_path = "data/questionnaires/sf-sis.yml"
+        #file_path = "data/questionnaires/new_structure.yml"
+        #file_path = "data/questionnaires/phq-9.yml"
+        #file_path = "data/questionnaires/test.yml"
+        try:
+            questionnaire = load_questionnaire(file_path)
+        except FileNotFoundError:
+            logger.error(f"Sorry, I couldn't find the questionnaire '{file_path}'.")
+            return []
+
+        # Load external multiple-choice options
+        options_file_path = "data/questionnaires/multiple_choice_options.yml"  # Path to external options file
+        try:
+            options_data = load_questionnaire(options_file_path)
+        except FileNotFoundError:
+            logger.error(f"Sorry, I couldn't find the options file '{options_file_path}'.")
+            return []
+
+        # Process questions and replace options_type with options from options file
+        for question in questionnaire['questions']:
+            if question.get('type') == "multiple_choice":
+                if 'options_type' in question:
+                    options_type = question['options_type']
+                    if options_type in options_data:
+                        question['options'] = options_data[options_type]
+                    else:
+                        logger.error(f"Options type '{options_type}' not found in '{options_file_path}'.")
+                        return []
+
+        # Reset the score for the questionnaire
+        updated_scores = self._reset_questionnaire_score(tracker, questionnaire['name'])
+
+        first_question = questionnaire['questions'][0]['id']
+        first_question_text = questionnaire['questions'][0]['question_text']
+
+        logger.info(f"Starting the {questionnaire['name']}.")
+        dispatcher.utter_message(text=first_question_text)
+
+        return [SlotSet("current_questionnaire", questionnaire), SlotSet("current_question", first_question), SlotSet("questionnaire_scores", updated_scores)]
+
+    def _reset_questionnaire_score(self, tracker, questionnaire_name):
+        # Reset the total score for the current questionnaire
+        current_scores = tracker.get_slot('questionnaire_scores') or []
+        updated_scores = [item for item in current_scores if item['name'] != questionnaire_name]
+        updated_scores.append({"name": questionnaire_name, "score": 0})
+        return updated_scores
 
 
 class ActionAskNextQuestion(Action):
     def name(self) -> Text:
         return "action_ask_next_question"
 
-    def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        try:
-            matched_stage, matched_stage_definition = determine_stage(tracker)
-            current_question_index = tracker.get_slot('current_question_index')
-            user_response = tracker.latest_message["text"].lower()
-            username, stage = acquire_user_identification_variables(tracker)
-            strategy = tracker.get_slot("strategy")
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-            if strategy != 3:
-                next_question_index = self.get_next_question_index(current_question_index, user_response)
-                response_message = self.get_response_message(current_question_index, user_response, strategy)
-                if response_message:
-                    dispatcher.utter_message(text=response_message)
+        questionnaire = tracker.get_slot("current_questionnaire")
+        current_question_id = tracker.get_slot("current_question")
+        user_intent = tracker.latest_message['intent']['name']
+        user_response = tracker.latest_message['text']  # Capture user response as text
 
-                if next_question_index is not None:
-                    next_question = readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                                      stage_def=matched_stage_definition)[
-                        next_question_index]
-                    dispatcher.utter_message(text=next_question)
-                    return [SlotSet('current_question_index', next_question_index)]
-                else:
-                    summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                                        stage_def=matched_stage_definition)[4]
-                    dispatcher.utter_message(text=summary_message)
-                    RESQDB.update_tutorial_completion('user', tracker.sender_id, 1)
-                    return [SlotSet('current_question_index', None)]
-            else:
-                next_question_index = self.get_next_question_index(current_question_index, user_response, strategy)
-                if next_question_index is not None:
-                    next_question = readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage,
-                                                                             stage_def=matched_stage_definition)[
-                        next_question_index]
-                    dispatcher.utter_message(text=next_question)
-                    return [SlotSet('current_question_index', next_question_index)]
-                else:
-                    summary_message = readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                                        stage_def=matched_stage_definition)[4]
-                    dispatcher.utter_message(text=summary_message)
-                    RESQDB.update_tutorial_completion('user', tracker.sender_id, 1)
-                    return [SlotSet('current_question_index', None)]
-        except Exception as e:
-            logger.error(f"Error asking next question: {e}")
+        user_response = self._normalize_response(user_response, user_intent)
+
+        if not questionnaire or not current_question_id:
+            logger.error("Error: No current questionnaire or question found.")
             return []
 
-    def get_next_question_index(self, current_question_index, user_response, strategy=None):
-        try:
-            if current_question_index == 0:
-                return 3 if user_response == "yes" else 1
-            elif current_question_index == 1:
-                return 2 if user_response == "yes" else (None if strategy != 3 else 4)
-            elif current_question_index == 2:
-                return None if strategy != 3 else 4
-            elif current_question_index == 3:
-                return None if strategy != 3 else 4
-            elif current_question_index in [4, 5, 6, 7]:
-                return current_question_index + 1
+        current_question = next((q for q in questionnaire['questions'] if q['id'] == current_question_id), None)
+        if not current_question:
+            logger.error(f"Error: Question '{current_question_id}' not found.")
+            return []
+
+        # Handle scoring for multiple_choice type
+        if current_question['type'] == "multiple_choice":
+            score = self._get_score_from_multiple_choice(current_question, user_intent)
+        # Handle scoring for intent-based (yes_no) questions
+        elif current_question['type'] == "yes_no":
+            score = self._get_score_from_intent(current_question, user_intent)
+        else:
+            score = 0  # Default case if no score is applicable
+
+        # Update the total score for the active questionnaire
+        updated_scores = self._update_total_score(tracker, questionnaire['name'], score)
+
+        # Dispatch the current score for this question
+        #dispatcher.utter_message(text=f"Score for this question: {score}.")
+        logger.info(f"Score for this question: '{score}'")
+        logger.info(f"Updated total score for {questionnaire['name']}: {self._get_current_total_score(updated_scores, questionnaire['name'])}.")
+
+        # Store the updated scores in the slot
+        events = [SlotSet("questionnaire_scores", updated_scores)]
+
+        # Proceed to the next question or finish questionnaire
+        next_question_id = self._get_next_question_id(current_question, user_intent)
+        if next_question_id == "end":
+            # Ensure final score is displayed correctly before ending
+            events += self._finalize_score(dispatcher, tracker, questionnaire['name'], updated_scores)
+            return events
+        else:
+            next_question_events = self._proceed_to_next_question(dispatcher, tracker, current_question_id, next_question_id)
+            return events + next_question_events
+
+    def _normalize_response(self, response: Text, intent: Text) -> Any:
+        # Check if the intent is 'provide_number' before converting text to number
+        if intent == "provide_number":
+            try:
+                # Convert word-form numbers to integer
+                converted_number = text2num(response, lang='en')
+                logger.info(f"Converted '{response}' to {converted_number}")  # Debug message to show conversion
+                return converted_number
+            except ValueError:
+                try:
+                    return int(response)
+                except ValueError:
+                    return response  # Return original response if not a number
+        return response  # Return original response if intent is not 'provide_number'
+
+    def _get_score_from_multiple_choice(self, question, user_intent):
+        # Look up the score based on user's response text
+        for option in question.get('options', []):
+            logger.info(f"option: {option}")
+            if option['response'] == user_intent:
+                logger.info(option['score'])
+                return option['score']
+        return 0
+
+    def _get_score_from_intent(self, question, user_intent):
+        # Look up the score based on the user's intent (e.g., affirm/deny for yes/no)
+        return question.get('scores', {}).get(user_intent, 0)
+
+    def _update_total_score(self, tracker, questionnaire_name, score):
+        # Update the total score for the current questionnaire
+        current_scores = tracker.get_slot('questionnaire_scores') or []
+        current_total = next((item['score'] for item in current_scores if item['name'] == questionnaire_name), 0)
+
+        # Increment the total score
+        updated_total = current_total + score
+        updated_scores = [item for item in current_scores if item['name'] != questionnaire_name]
+        updated_scores.append({"name": questionnaire_name, "score": updated_total})
+
+        return updated_scores  # Return the updated scores list
+
+    def _get_current_total_score(self, scores, questionnaire_name):
+        # Retrieve the current total score from the scores list
+        return next((item['score'] for item in scores if item['name'] == questionnaire_name), 0)
+
+    def _get_next_question_id(self, current_question, user_intent):
+        # For multiple_choice questions, determine next question based on user intent matching one of the option intents
+        if current_question.get('type') == "multiple_choice":
+            # Check if user's intent matches any of the options' intents
+            options = current_question.get('options', [])
+            valid_intents = [option['response'] for option in options]
+
+            if user_intent in valid_intents:
+                return current_question['next'].get('valid_response')
             else:
-                return None
-        except Exception as e:
-            logger.error(f"Error determining next question index: {e}")
-            return None
+                return current_question['next'].get('invalid_response')
 
-    def get_response_message(self, current_question_index, user_response, strategy):
-        try:
-            if strategy == 2:
-                response_key = f"Q{current_question_index + 1}_{user_response.upper()}_R"
-                return strategy_responses.get(response_key, "")
-            return ""
-        except Exception as e:
-            logger.error(f"Error generating response message: {e}")
-            return ""
+        # For other types, use the existing logic based on 'next' mappings
+        if isinstance(current_question['next'], dict):
+            return current_question['next'].get(user_intent)
+        return current_question['next']
 
+    def _proceed_to_next_question(self, dispatcher, tracker, current_question_id, next_question_id):
+        responses = tracker.get_slot("responses")
+        responses_dict = json.loads(responses) if responses else {}
+        responses_dict[current_question_id] = tracker.latest_message['text']
+        events = [SlotSet("responses", json.dumps(responses_dict)), SlotSet("attempts", 0)]  # Reset attempts
 
-class ActionProcessAnswer(Action):
+        questionnaire = tracker.get_slot("current_questionnaire")
+        next_question = next((q for q in questionnaire['questions'] if q['id'] == next_question_id), None)
+        if next_question:
+            dispatcher.utter_message(text=next_question['question_text'])
+            events.append(SlotSet("current_question", next_question_id))
+        else:
+            logger.error(f"Error: Next question '{next_question_id}' not found.")
+
+        return events
+
+    def _finalize_score(self, dispatcher, tracker, questionnaire_name, updated_scores):
+        # Final score at the end of the questionnaire
+        final_score = self._get_current_total_score(updated_scores, questionnaire_name)
+
+        dispatcher.utter_message(text=f"Thank you for completing the questionnaire.")
+        logger.info(f"Your total score for {questionnaire_name} is {final_score}.")
+        logger.info(f"All scores: {updated_scores}")
+
+        return [SlotSet("current_question", "end")]
+
+class ActionStopQuestionnaire(Action):
     def name(self) -> Text:
-        return "action_process_answer"
+        return "action_stop_questionnaire"
 
-    def run(
-            self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict
-    ) -> List[Dict[Text, Any]]:
-        try:
-            user_answer = tracker.latest_message["text"].lower()
-            username, stage = acquire_user_identification_variables(tracker)
-            matched_stage, matched_stage_definition = determine_stage(tracker)
-            strategy = tracker.get_slot("strategy")
-            current_question_index = tracker.get_slot("current_question_index")
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-            if user_answer in ["yes", "no"]:
-
-                if strategy != 3:
-                    current_question = readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                                         stage_def=matched_stage_definition)[current_question_index]
-                else:
-                    current_question = readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage,
-                                                                                stage_def=matched_stage_definition)[current_question_index]
-
-                data = {
-                    'UUID': tracker.sender_id,
-                    'Username': username,
-                    'UserResponse': user_answer,
-                    'QuestionText': current_question
-                }
-                questionnaireDatabase1.insert_data("QuestionnaireName1", data)
-                if current_question_index is not None and current_question_index < len(
-                        readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                          stage_def=matched_stage_definition)) - 1 and strategy != 3:
-                    next_question_index = current_question_index + 1
-                    return [
-                        SlotSet("current_question_index", next_question_index),
-                        {"event": "user", "timestamp": None, "metadata": None,
-                         "text": readiness_to_change_questionnaire(username=username, stage=matched_stage,
-                                                                   stage_def=matched_stage_definition)[
-                             next_question_index]}
-                    ]
-                elif current_question_index is not None and current_question_index < len(
-                        readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage,
-                                                                 stage_def=matched_stage_definition)) - 1 and strategy == 3:
-                    next_question_index = current_question_index + 1
-                    return [
-                        SlotSet("current_question_index", next_question_index),
-                        {"event": "user", "timestamp": None, "metadata": None,
-                         "text": readiness_to_change_questionnaire_strat3(username=username, stage=matched_stage,
-                                                                          stage_def=matched_stage_definition)[
-                             next_question_index]}
-                    ]
-                else:
-                    dispatcher.utter_message(
-                        text="Thank you very much for your time. I will begin preparations to create your customized exercise plan for you. If you return tomorrow, I will have the plan ready for you. If you would like a reminder for when the plan is ready you can provide your phone number.")
-                    return [SlotSet("current_question_index", None)]
-            else:
-                dispatcher.utter_message(
-                    text="Please respond with either 'YES' or 'NO'")
-        except Exception as e:
-            logger.error(f"Error processing answer: {e}")
-
-        return [SlotSet('current_question_index', None)]
-
-
-class ActionDefaultFallback(Action):
-    def name(self) -> Text:
-        return "action_default_fallback"
-
-    def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        dispatcher.utter_message(
-            "I'm sorry, I didn't quite understand that. Can you please try to rephrase the question?")
-        return []
+        dispatcher.utter_message(text="You've chosen to stop the questionnaire. Thank you for your time.")
+        return [SlotSet("current_question", "end")]

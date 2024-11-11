@@ -1,0 +1,216 @@
+name: "NADL"
+description: "NADL (Non-Ambulatory Daily Living) refers to the essential daily activities that stroke patients must perform but are unable to complete independently due to mobility impairments, requiring assistance for tasks such as bathing, dressing, or transferring."
+questions:
+  - id: "q1"
+    question_text: "Are you ready to answer a few questions about everyday activities?"
+    type: "yes_no"
+    next:
+      affirm: "q3"
+      deny: "q2"
+  - id: "q2"
+    question_text: "Ok. I'll ask again later."
+    type: "text"
+    next: "end"
+  - id: "q3"
+    question_text: "Please answer whether you do these activities, and if so, whether you did them with help, alone with difficulty, or alone."
+    type: "text"
+    next: "q4"
+  - id: "q4"
+    question_text: "Do you walk over uneven ground?"
+    type: "yes_no"
+    next:
+      affirm: "q5"
+      deny: "q7"
+  - id: "q5"
+    question_text: "Do you need help from others?"
+    type: "yes_no"
+    scores:
+      affirm: 1
+    next:
+      affirm: "q8"
+      deny: "q6"
+  - id: "q6"
+    question_text: "Would you say you do it with difficulty?"
+    type: "yes_no"
+    scores:
+      affirm: 3
+      deny: 4
+    next:
+      affirm: "q8"
+      deny: "q8"
+  - id: "q7"
+    question_text: "Has this changed because of your stroke?"
+    type: "yes_no"
+    scores:
+      affirm: 0
+    next:
+      affirm: "q8"
+      deny: "q25"
+  - id: "q8"
+    question_text: "Do you cross roads?"
+    type: "yes_no"
+    next:
+      affirm: "q9"
+      deny: "q11"
+  - id: "q9"
+    question_text: "Do you need help from others?"
+    type: "yes_no"
+    scores:
+      affirm: 1
+    next:
+      affirm: "q12"
+      deny: "q10"
+  - id: "q10"
+    question_text: "Would you say you do it with difficulty?"
+    type: "yes_no"
+    scores:
+      affirm: 3
+      deny: 4
+    next:
+      affirm: "q12"
+      deny: "q12"
+  - id: "q11"
+    question_text: "Has this changed because of your stroke?"
+    type: "yes_no"
+    scores:
+      affirm: 0
+    next:
+      affirm: "q12"
+      deny: "q26"
+  - id: "q12"
+    question_text: "Do you take hot drinks from one room to the other?"
+    type: "yes_no"
+    next:
+      affirm: "q13"
+      deny: "q15"
+  - id: "q13"
+    question_text: "Do you need help from others?"
+    type: "yes_no"
+    scores:
+      affirm: 1
+    next:
+      affirm: "q16"
+      deny: "q14"
+  - id: "q14"
+    question_text: "Would you say you do it with difficulty?"
+    type: "yes_no"
+    scores:
+      affirm: 3
+      deny: 4
+    next:
+      affirm: "q16"
+      deny: "q16"
+  - id: "q15"
+    question_text: "Has this changed because of your stroke?"
+    type: "yes_no"
+    scores:
+      affirm: 0
+    next:
+      affirm: "q16"
+      deny: "q27"
+  - id: "q16"
+    question_text: "Do you do the washing up?"
+    type: "yes_no"
+    next:
+      affirm: "q17"
+      deny: "q19"
+  - id: "q17"
+    question_text: "Do you need help from others?"
+    type: "yes_no"
+    scores:
+      affirm: 1
+    next:
+      affirm: "q20"
+      deny: "q18"
+  - id: "q18"
+    question_text: "Would you say you do it with difficulty?"
+    type: "yes_no"
+    scores:
+      affirm: 3
+      deny: 4
+    next:
+      affirm: "q20"
+      deny: "q20"
+  - id: "q19"
+    question_text: "Has this changed because of your stroke?"
+    type: "yes_no"
+    scores:
+      affirm: 0
+    next:
+      affirm: "q20"
+      deny: "q28"
+  - id: "q20"
+    question_text: "Do you make yourself a hot snack?"
+    type: "yes_no"
+    next:
+      affirm: "q21"
+      deny: "q23"
+  - id: "q21"
+    question_text: "Do you need help from others?"
+    type: "yes_no"
+    scores:
+      affirm: 1
+    next:
+      affirm: "q24"
+      deny: "q22"
+  - id: "q22"
+    question_text: "Would you say you do it with difficulty?"
+    type: "yes_no"
+    scores:
+      affirm: 3
+      deny: 4
+    next:
+      affirm: "q24"
+      deny: "q24"
+  - id: "q23"
+    question_text: "Has this changed because of your stroke?"
+    type: "yes_no"
+    scores:
+      affirm: 0
+    next:
+      affirm: "q24"
+      deny: "q29"
+  - id: "q24"
+    question_text: "Thank you! I've recorded your response."
+    type: "text"
+    next: "end"
+  - id: "q25"
+    question_text: "If you had to could you do it?"
+    type: "yes_no"
+    scores:
+      deny: 0
+    next:
+      affirm: "q5"
+      deny: "q8"
+  - id: "q26"
+    question_text: "If you had to could you do it?"
+    type: "yes_no"
+    scores:
+      deny: 0
+    next:
+      affirm: "q9"
+      deny: "q12"
+  - id: "q27"
+    question_text: "If you had to could you do it?"
+    type: "yes_no"
+    scores:
+      deny: 0
+    next:
+      affirm: "q13"
+      deny: "q16"
+  - id: "q28"
+    question_text: "If you had to could you do it?"
+    type: "yes_no"
+    scores:
+      deny: 0
+    next:
+      affirm: "q17"
+      deny: "q20"
+  - id: "q29"
+    question_text: "If you had to could you do it?"
+    type: "yes_no"
+    scores:
+      deny: 0
+    next:
+      affirm: "q21"
+      deny: "q24"

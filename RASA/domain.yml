@@ -1,111 +1,59 @@
 version: "3.1"
 
-session_config:
-  session_expiration_time: 60
-  carry_over_slots_to_new_session: true
-
-entities:
-  - userStage
-  - getQuestionnaireNumber
-  - user_answer
-  - current_question_index
-  - recently_asked_questionnaire
-  - readiness_questionnaire_finished
-
-slots:
-  userStage:
-    type: float
-    initial_value: 1
-    influence_conversation: false
-    mappings:
-    - type: custom
-  strategy:
-    type: float
-    initial_value: 1
-    influence_conversation: false
-    mappings:
-    - type: custom
-  current_question_index:
-    type: float
-    initial_value: 0
-    influence_conversation: false
-    mappings:
-    - type: custom
-  recently_asked_questionnaire:
-    type: bool
-    mappings:
-    - type: custom
-  readiness_questionnaire_finished:
-    type: bool
-    initial_value: false
-    mappings:
-    - type: custom
-  current_question_type:
-    type: text
-    initial_value: 'None'
-    influence_conversation: false
-    mappings:
-    - type: custom
-  getQuestionnaireNumber:
-    type: float
-    initial_value: 1
-    influence_conversation: false
-    mappings:
-    - type: custom
-  user_answer:
-    type: float  # Adjust the type according to your entity type
-    mappings:
-    - type: custom
+intents:
+  - start_questionnaire
+  - provide_response
+  - cant_remember
+  - affirm
+  - deny
+  - not_at_all
+  - several_days
+  - more_than_half_the_days
+  - every_day
+  - confused
+  - provide_number
+  - skip
+  - stop
 
 actions:
-  - action_start_questionnaire
-  - action_process_answer
+  - action_load_questionnaire
   - action_ask_next_question
-  - action_initialize_user_stage
-  - action_default_fallback
-  
+  - action_stop_questionnaire
 
-intents:
-  - greet
-  - goodbye
-  - experience_level
-  - exercise_goals
-  - im_ready
-  - grateful
-  - start_questionnaire
-  - answer_question
+slots:
+  current_questionnaire:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: custom
+  current_question:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: custom
+  responses:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: custom
+  attempts:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: custom
+  total_score:
+    type: float
+    influence_conversation: false
+    initial_value: 0
+    mappings:
+      - type: custom
+  questionnaire_scores:
+    type: list
+    influence_conversation: false
+    mappings:
+      - type: custom
 
-responses:
-  utter_greet:
-  - text: "I’m Freja and I will be your personal companion to support you on your journey towards a healthier lifestyle. How much experience do you have with physical activity and exercise routines?"
 
-  utter_goal_info:
-  - text: "That is fine! I am ready to help anyone regardless of their personal experience. My goal is to help you increase your physical activity and achieve your fitness goals in a way that’s tailored to your needs. What are your current exercise goals?"
-
-  utter_get_to_know:
-  - text: "Great! setting goals for yourself is fundemental in keeping a good routine. Before I can get started with your personalized exercise profile, I would like to get to know you a little better. Let me know when you are ready"
-
-  utter_respond_to_phonenumber:
-  - text: "That was all for today, thank you very much. I will remind you tomorrow when your exercise plan has been made, have a great day!"
-
-  utter_cheer_up:
-  - text: "Here is something to cheer you up:"
-    image: "https://i.imgur.com/nGF1K8f.jpg"
-
-  utter_did_that_help:
-  - text: "Did that help you?"
-
-  utter_happy:
-  - text: "Great, carry on!"
-
-  utter_goodbye:
-  - text: "Bye"
-
-  utter_iamabot:
-  - text: "I am a bot, powered by Rasa."
-
-  utter_behavioural_stage:
-  - text: "Your stage is {userStage}"
-
-  utter_appreciation:
-  - text: "You are very welcome!"
+entities:
+  - text
+  - number

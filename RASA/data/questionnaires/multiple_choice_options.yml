@@ -1,0 +1,9 @@
+provide_frequency:
+  - response: "not_at_all"
+    score: 1
+  - response: "several_days"
+    score: 2
+  - response: "more_than_half_the_days"
+    score: 3
+  - response: "every_day"
+    score: 4

@@ -1,141 +1,119 @@
 version: "3.1"
-
 nlu:
-- intent: greet
-  examples: |
-    - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+  - intent: start_questionnaire
+    examples: |
+      - Start the questionnaire
+      - Begin the survey
+      - I want to start the questionnaire
+      - Let's begin the survey
+      - I would like to take the questionnaire
+  - intent: provide_response
+    examples: |
+      - I watched Inception
+      - I just saw The Matrix
+      - I watched Titanic
+      - I saw a movie called Avatar
+      - I read The Great Gatsby
+      - The Bible
+      - Stephen King
+      - Designated survivor
+  - intent: cant_remember
+    examples: |
+      - I can't remember the last movie I watched
+      - I don't remember
+      - No idea
+      - I can't recall any movie
+      - I can't remember the last magazine i read
+      - I can't remember the last show I watched
+  - intent: affirm
+    examples: |
+      - yes
+      - yep
+      - sure
+      - absolutely
+      - yeah
+      - of course
+      - definitely
+      - that's right
+      - correct
+      - I agree
+  - intent: deny
+    examples: |
+      - no
+      - nope
+      - not really
+  - intent: every_day
+    examples: |
+      - every day
+      - on a daily basis
+      - each day
+      - day after day
+      - all days
+      - I experience this every day
 
-- intent: experience_level
-  examples: |
-    - I'm new
-    - I'm learning
-    - I'm trying
-    - I'm okay
-    - I'm active
-    - I'm into it
-    - I'm getting there
-    - I'm experienced
-    - I'm just starting
-    - I'm not sure
-    - I'm a beginner
-    - I'm just getting into it
-    - I'm not very experienced
-    - I'm fairly experienced
-    - I'm quite experienced
-    - I'm a bit rusty
-    - I'm not an expert
-    - I'm somewhat experienced
-    - I'm pretty experienced
-    - I'm a novice
-    - I'm seasoned
-    - I'm a pro
-    - I'm still figuring things out
-    - I'm not too experienced
-    - I'm not very familiar with it
-    - I'm not a complete beginner
-    - I'm not a total newbie
-    - I'm pretty new to this
-    - I'm somewhat familiar with it
-    - I'm not totally new
-    - I'm somewhat new to this
+  - intent: several_days
+    examples: |
+      - several days
+      - a few days
+      - for a few days
+      - some days
+      - a couple of days
 
-- intent: exercise_goals
-  examples: |
-    - Lose weight and get fitter.
-    - to get stronger
-    - to exercise more
-    - to start doing exercise
-    - to start training
-    - to begin training
-    - to do more exercise
-    - to get more active
-    - to be faster
-    - to lose weight
-    - to start exercising
-    - to begin exercising
-    - to build muscle mass
+  - intent: more_than_half_the_days
+    examples: |
+      - more than half the days
+      - most of the days
+      - nearly every day
+      - almost every day
 
-- intent: phone_number
-  examples: |
-    - 12345678
-    - 23456789
-    - 34567890
-    - 45678901
-    - 56789012
-    - 67890123
-    - 78901234
-    - 89012345
-    - 90123456
-    - 01234567
-    - my phone number is 90123456
-    - my number is 89012345
-    - here is my number 23456789
-
-- intent: im_ready
-  examples: |
-    - I'm ready
-    - Ready when you are!
-    - Lets go
-    - Im ready
-    - I am ready
-    - Lets begin
-
-- intent: goodbye
-  examples: |
-    - cu
-    - good by
-    - cee you later
-    - good night
-    - bye
-    - goodbye
-    - have a nice day
-    - see you around
-    - bye bye
-    - see you later
-
-- intent: grateful
-  examples: |
-    - Thank you
-    - Thanks
-    - Thanks a lot
-    - Thank you very much
-    - I appreciate it
-    - That was very helpful
-    - I'm grateful
-    - You've been a great help
-
-#######################################################
-# Questionnaire Related Intents
-#######################################################
-# QI = Questionnaire Intent
-
-- intent: start_questionnaire
-  examples: |
-    - Kan jeg starte spørgeskemaet
-    - Start spørgeskemaet
-    - Kan vi begynde med spørgskemaet
-    - Skal vi starte spørgeskemaet
-    - Begynd spørgeskemaet
-    - Jeg har tid til spørgeskemaet
-    - Jeg vil gerne svar på spørgeskemaet
-  
-- intent: answer_question
-  examples: |
-    - No
-    - no
-    - Yes
-    - yes
-    - nO
-    - yEs
+  - intent: not_at_all
+    examples: |
+      - not at all
+      - never
+      - absolutely not
+      - no, not at all
+  - intent: confused
+    examples: |
+      - I don't understand
+      - Could you explain further?
+      - Could you give more details?
+      - What?
+      - What
+      - What does this mean?
+      - Explain please
+  - intent: provide_number
+    examples: |
+      - one
+      - 1
+      - first
+      - two
+      - 2
+      - second
+      - three
+      - 3
+      - third
+      - four
+      - 4
+      - five
+      - 5
+      - six
+      - 6
+      - thirteen
+      - twenty
+      - eighty
+      - eighteen
+      - seventeen
+      - ninety
+      - hundred
+      - 100
+  - intent: skip
+    examples: |
+      - skip
+      - move on
+      - go to the next question
+  - intent: stop
+    examples: |
+      - stop
+      - end the questionnaire
+      - I want to stop
+      - I don't want to continue

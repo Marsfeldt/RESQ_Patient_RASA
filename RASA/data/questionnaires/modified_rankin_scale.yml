@@ -1,0 +1,147 @@
+name: "Modified Rankin Scale (mRS)"
+description: "A clinical scale used to assess the degree of disability or dependence in daily activities of people who have suffered a stroke."
+questions:
+  - id: "q1"
+    question_text: "Are you ready to answer a few questions that will help determine your modified Rankin score?"
+    type: "yes_no"
+    next:
+      affirm: "q3"
+      deny: "end"
+      confused: "q2"
+  - id: "q2"
+    question_text: "The modified Rankin Scale assesses the effect of the stroke on your daily life. Determining your Rankin score at different points in your recovery helps measure your progress."
+    type: "text"
+    next: "q1"
+  - id: "q3"
+    question_text: "I'd like to talk about things you were able to do before the stroke, and whether the stroke has changed your ability to do them now."
+    type: "text"
+    next: "q4"
+  - id: "q4"
+    question_text: "These questions are about your ability to do things, not about whether you like or want to do them. With that in mind, let's get started."
+    type: "text"
+    next: "q5"
+  - id: "q5"
+    question_text: "Are you completely back to the way you were right before your stroke?"
+    type: "yes_no"
+    next:
+      affirm: "q6"
+      deny: "q7"
+      confused: "q21"
+  - id: "q6"
+    question_text: "Are you experiencing any new symptoms or difficulties since the stroke?"
+    type: "yes_no"
+    scores:
+      deny: 0
+    next:
+      affirm: "q7"
+      deny: "end"
+  - id: "q7"
+    question_text: "Can you do everything that you where doing right before your stroke, even if slower and not as much?"
+    type: "yes_no"
+    next:
+      affirm: "q8"
+      deny: "q9"
+      confused: "q22"
+  - id: "q8"
+    question_text: "Are you able to work, or study?"
+    type: "yes_no"
+    next:
+      affirm: "q12"
+      deny: "q14"
+  - id: "q9"
+    question_text: "If you had to, could you live alone without any help from another person? This means being able to bathe, use the toilet, shop, prepare or get meals, and manage finances."
+    type: "yes_no"
+    next:
+      affirm: "q15"
+      deny: "q10"
+  - id: "q10"
+    question_text: "Can you walk from one room to another without help from another person?"
+    type: "yes_no"
+    options:
+      - response: "deny"
+        score: 3
+    next:
+      affirm: "end"
+      deny: "q11"
+  - id: "q11"
+    question_text: "Could you do it if absolutely necessary?"
+    type: "yes_no"
+    options:
+      - response: "affirm"
+        score: 3
+      - response: "deny"
+        score: 4
+    next:
+      affirm: "end"
+      deny: "end"
+  - id: "q12"
+    question_text: "Can you take care of your family?"
+    type: "yes_no"
+    next:
+      affirm: "q13"
+      deny: "q14"
+  - id: "q13"
+    question_text: "Can you still do all the things you liked to do in your free time?"
+    type: "yes_no"
+    scores:
+      affirm: 1
+    next:
+      affirm: "end"
+      deny: "q9"
+  - id: "q14"
+    question_text: "Were you doing so before the stroke?"
+    type: "yes_no"
+    next:
+      affirm: "q9"
+      deny: "q12"
+  - id: "q15"
+    question_text: "Where you doing so before the stroke?"
+    type: "yes_no"
+    next:
+      affirm: "q9"
+      deny: "q13"
+  - id: "q16"
+    question_text: "Could you make a simple meal without the help from another person?"
+    type: "yes_no"
+    next:
+      affirm: "q17"
+      deny: "q10"
+  - id: "q17"
+    question_text: "Can you do basic household chores, like clearing away plates after eating or putting away clothes?"
+    type: "yes_no"
+    next:
+      affirm: "q18"
+      deny: "q10"
+  - id: "q18"
+    question_text: "If you had to, could you go to the shops and buy a loaf of bread?"
+    type: "yes_no"
+    next:
+      affirm: "q19"
+      deny: "q10"
+  - id: "q19"
+    question_text: "Can you look after your own income or pension? Can you arrange to pay bills?"
+    type: "yes_no"
+    next:
+      affirm: "q20"
+      deny: "q10"
+  - id: "q20"
+    question_text: "Could you call a taxi or take the bus to get to where you need to go?"
+    type: "yes_no"
+    options:
+      - response: "affirm"
+        score: 2
+    next:
+      affirm: "end"
+      deny: "q10"
+  - id: "q21"
+    question_text: "This question is asking if you're symptom-free and have no difficulties resulting from the stroke. Answer no if you are experiencing any symptoms as a result of the stroke."
+    type: "text"
+    next: "q5"
+  - id: "q22"
+    question_text: "This question is asking if the effects of the stroke are preventing you from doing things you did before the stroke. Answer no if there is anything you used to do before the stroke but no longer can. Answer yes if you can do everything you used to do, even if it takes you more time."
+    type: "text"
+    next: "q7"
+  - id: "q23"
+    question_text: "This question is specifically about activities you need to do to be able to live and take car of yourself without the help of another person. Answer yes if you could live on your own without help."
+    type: "text"
+    next: "q9"

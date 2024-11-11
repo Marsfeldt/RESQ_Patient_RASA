@@ -1,0 +1,149 @@
+name: "SF-SIS"
+description: "The Stroke Impact Scale (SF-SIS) is a shortened version of the Stroke Impact Scale, used to evaluate the impact of stroke on a patient's physical, emotional, and social functioning, providing insight into their quality of life and recovery progress."
+questions:
+  - id: "q1"
+    question_text: "Are you ready to answer a few questions about how you're getting on?"
+    type: "yes_no"
+    next:
+      affirm: "q3"
+      deny: "q2"
+  - id: "q2"
+    question_text: "Ok. I'll ask again later."
+    type: "text"
+    next: "end"
+  - id: "q3"
+    question_text: "For each of these questions, please respond on a scale from one to five."
+    type: "text"
+    next: "q4"
+  - id: "q4"
+    question_text: "In the past week, how would you rate the strength of your leg that was most affected by your stroke? Please rate it on a scale from one to five, one being unusable, and five being very strong."
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q5"
+  - id: "q5"
+    question_text: "In the past week, how difficult was it for you to think quickly, one meaning you couldn't do it, and five meaning it wasn't difficult at all."
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q6"
+  - id: "q6"
+    question_text: "In the past week, how often did you feel that you have nothing to look forward to, one meaning never, and five meaning all the time."
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q7"
+  - id: "q7"
+    question_text: "In the past week, how difficult on a scale from one to five was it to understand what was being said to you in a conversation?"
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q8"
+  - id: "q8"
+    question_text: "In the past two weeks, how difficult was it to do light household tasks or chores (for example dust, make a bed, take out the rubbish, do the dishes)?"
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q9"
+  - id: "q9"
+    question_text: "In the past two weeks, how difficult was it to walk without losing balance, one meaning you couldn't do it, and five meaning it wasn't difficult at all?"
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q10"
+  - id: "q10"
+    question_text: "In the past two weeks, how difficult was it to use your hand that was most affected by your stroke, to pick up a coin, one meaning you couldn't do it, and five meaning it wasn't difficult at all?"
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q11"
+  - id: "q11"
+    question_text: "During the past four weeks, how much of the time have you been limited in your social activities, one meaning never, and five meaning all the time?"
+    type: "multiple_choice"
+    options:
+      - response: 1
+        score: 1
+      - response: 2
+        score: 2
+      - response: 3
+        score: 3
+      - response: 4
+        score: 4
+      - response: 5
+        score: 5
+    next:
+      provide_number: "q12"
+  - id: "q12"
+    question_text: "Thank you! I've recorded your score."
+    type: "text"
+    next: "end"

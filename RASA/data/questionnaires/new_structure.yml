@@ -1,0 +1,35 @@
+name: "New structure"
+description: "Testing new structure"
+questions:
+  - id: "q1"
+    question_text: "Are you ready to answer a few questions about your mood?"
+    type: "yes_no"
+    next:
+      affirm: "q3"
+      deny: "q2"
+  - id: "q2"
+    question_text: "Ok. I'll ask again later."
+    type: "text"
+    next: "end"
+  - id: "q3"
+    question_text: "It might be difficult to talk about these. If you feel uncomfortable, you can say 'stop' at any time to break out of the questionnaire. You can also choose not to answer a question, and we will move on to the next. We ask these questions because many people have issues with their mood after having a stroke, and it's important to track this. For all of these questions, we are considering the last two weeks. For answering each question, please choose from the following: not at all, several days, more than half the days, every day"
+    type: "text"
+    next: "q4"
+  - id: "q4"
+    question_text: "Little interest or pleasure in doing things."
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "q5"
+      invalid_response: "q5"
+    skip: "q5"
+    max_attempts: 2
+  - id: "q5"
+    question_text: "Googoo gaga caca prout"
+    type: "multiple_choice"
+    options_type: "provide_frequency"
+    next:
+      valid_response: "end"
+      invalid_response: "end"
+    skip: "end"
+    max_attempts: 2

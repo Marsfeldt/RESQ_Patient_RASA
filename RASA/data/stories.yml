@@ -1,22 +1,37 @@
 version: "3.1"
 
 stories:
-
-- story: onboarding
-  steps:
-  - intent: greet
-  - action: utter_greet
-  - intent: experience_level
-  - action: utter_goal_info
-  - intent: exercise_goals
-  - action: utter_get_to_know
-
-- story: handle user answers in a loop
-  steps:
-  - intent: answer_question
-  - action: action_process_answer
-  - action: action_ask_next_question
-
-# --------------------------------------
-#               User Stages
-# --------------------------------------
+  - story: health_survey
+    steps:
+      - intent: start_questionnaire
+      - action: action_load_questionnaire
+      - slot_was_set:
+          - current_question: "q1"
+      - intent: affirm
+      - action: action_ask_next_question
+      - intent: provide_response
+      - action: action_ask_next_question
+      - intent: cant_remember
+      - action: action_ask_next_question
+      - intent: provide_response
+      - action: action_ask_next_question
+      - intent: cant_remember
+      - action: action_ask_next_question
+      - intent: affirm
+      - action: action_ask_next_question
+      - intent: deny
+      - action: action_ask_next_question
+      - intent: every_day
+      - action: action_ask_next_question
+      - intent: several_days
+      - action: action_ask_next_question
+      - intent: more_than_half_the_days
+      - action: action_ask_next_question
+      - intent: not_at_all
+      - action: action_ask_next_question
+      - intent: confused
+      - action: action_ask_next_question
+      - intent: provide_number
+      - action: action_ask_next_question
+      - intent: stop
+      - action: action_stop_questionnaire

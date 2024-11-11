@@ -1,23 +1,7 @@
 version: "3.1"
 
 rules:
-
-- rule: Say goodbye anytime the user says goodbye
-  steps:
-  - intent: goodbye
-  - action: utter_goodbye
-
-- rule: Always start questionnaire if asked
-  steps:
-  - intent: im_ready
-  - action: action_start_questionnaire
-
-- rule: Always provide ending when phone number has been sent
-  steps:
-  - intent: phone_number
-  - action: utter_respond_to_phonenumber
-
-- rule: Always respond to grateful
-  steps:
-  - intent: grateful
-  - action: utter_appreciation
+  - rule: Stop the questionnaire
+    steps:
+      - intent: stop
+      - action: action_stop_questionnaire
